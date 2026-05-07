@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "name": "Critico",
+    "description": "Categoria com maior impacto operacional",
+    "questions": "[\"Entrega no prazo?\",\"Qualidade dentro do padrao?\"]",
+    "documents": "[\"ISO 9001\",\"Plano de acao\"]",
+    "companyId": 1
+  }
+]

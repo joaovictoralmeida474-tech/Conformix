@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  password    String
+  evaluations Evaluation[]
+}
+
+model Supplier {
+  id          Int          @id @default(autoincrement())
+  name        String
+  cnpj        String
+  categoryId  Int
+  status      String
+  nextReview  DateTime?
+  category    Category     @relation(fields: [categoryId], references: [id])
+  evaluations Evaluation[]
+  rncs        RNC[]
+}
+
+model Category {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String
+  questions   String
+  documents   String
+  suppliers   Supplier[]
+}
+
+model Evaluation {
+  id             Int      @id @default(autoincrement())
+  supplierId     Int
+  evaluatorId    Int
+  invoiceNumber  String?
+  observations   String?
+  evaluationDate DateTime?
+  finalScore     Float
+  classification String
+  createdAt      DateTime @default(now())
+
+  supplier  Supplier @relation(fields: [supplierId], references: [id])
+  evaluator User     @relation(fields: [evaluatorId], references: [id])
+}
+
+model RNC {
+  id               Int       @id @default(autoincrement())
+  supplierId       Int
+  description      String
+  status           String
+  cause            String?
+  correctiveAction String?
+  responsible      String?
+  deadline         DateTime?
+  treatmentDate    DateTime?
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+}
