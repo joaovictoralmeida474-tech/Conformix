@@ -1,10 +1,9 @@
 node_modules/
-.env
-.env.*
-!.env.example
-/generated/prisma
 *.log
 *.err.log
 *.db
 *.db-journal
 *.bak
+.env
+.env.*
+!.env.example
