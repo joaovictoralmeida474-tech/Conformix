@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../services/supabase";
-import { saveSupabaseSession } from "../utils/authStorage";
+import { api } from "../services/api";
+import { getDefaultRouteForUser } from "../utils/access";
+import { saveSession } from "../utils/authStorage";
 
 export default function Login() {
   const [form, setForm] = useState({
@@ -249,19 +250,19 @@ export default function Login() {
     setError("");
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      const { data } = await api.post("/auth/login", {
         email: form.email,
         password: form.password,
       });
 
-      if (authError) {
-        throw authError;
-      }
-
-      saveSupabaseSession(data?.session, rememberMe);
-      nav("/dashboard");
+      saveSession({
+        token: data?.token || null,
+        user: data?.user || null,
+        rememberMe,
+      });
+      nav(getDefaultRouteForUser(data?.user), { replace: true });
     } catch (err) {
-      setError(err.message || "Nao foi possivel entrar");
+      setError(err.response?.data?.error || err.message || "Nao foi possivel entrar");
     } finally {
       setIsLoading(false);
     }

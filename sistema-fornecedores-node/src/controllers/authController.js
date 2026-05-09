@@ -24,6 +24,32 @@ async function login(req, res) {
   }
 }
 
+async function me(req, res) {
+  try {
+    const user =
+      req.user?.id && req.user?.email
+        ? {
+            id: req.user.id,
+            email: req.user.email,
+            role: req.user.role || 'USER',
+            permissions: Array.isArray(req.user.permissions) ? req.user.permissions : []
+          }
+        : await authService.getCurrentUser(req.user?.id);
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'Usuario nao encontrado'
+      });
+    }
+
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message
+    });
+  }
+}
+
 async function logout(req, res) {
   try {
     const userId = req.user?.id;
@@ -42,5 +68,6 @@ async function logout(req, res) {
 
 module.exports = {
   login,
+  me,
   logout
 };

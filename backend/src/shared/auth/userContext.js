@@ -1,0 +1,109 @@
+import { prisma } from "../database/prisma.js";
+import { ROLE_PERMISSION_MAP, normalizeRole } from "./permissions.js";
+
+function serializeDepartment(department) {
+  if (!department) return null;
+
+  return {
+    id: department.id,
+    name: department.name,
+    slug: department.slug,
+    active: department.active,
+    companyId: department.companyId
+  };
+}
+
+function serializeCompany(company) {
+  if (!company) return null;
+
+  return {
+    id: company.id,
+    name: company.name
+  };
+}
+
+export function serializeUserContext(user) {
+  const rolePermissionsFromDb = (user.rolePermissions || [])
+    .map((item) => item.permission?.key)
+    .filter(Boolean);
+  const userPermissionsFromDb = (user.userPermissions || [])
+    .map((item) => item.permission?.key)
+    .filter(Boolean);
+  const permissions = userPermissionsFromDb.length
+    ? userPermissionsFromDb
+    : rolePermissionsFromDb.length
+    ? rolePermissionsFromDb
+    : ROLE_PERMISSION_MAP[normalizeRole(user.role)] || [];
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: normalizeRole(user.role),
+    active: user.active,
+    companyId: user.companyId,
+    departmentId: user.departmentId || null,
+    company: serializeCompany(user.company),
+    department: serializeDepartment(user.department),
+    permissions,
+    permissionsSource: userPermissionsFromDb.length ? "custom" : "role"
+  };
+}
+
+export async function getUserContextById(userId) {
+  if (!userId) return null;
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: Number(userId)
+    },
+    include: {
+      company: {
+        select: {
+          id: true,
+          name: true
+        }
+      },
+      department: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          active: true,
+          companyId: true
+        }
+      },
+      userPermissions: {
+        include: {
+          permission: {
+            select: {
+              key: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!user || !user.active) {
+    return null;
+  }
+
+  const rolePermissions = await prisma.rolePermission.findMany({
+    where: {
+      role: normalizeRole(user.role)
+    },
+    include: {
+      permission: {
+        select: {
+          key: true
+        }
+      }
+    }
+  });
+
+  return serializeUserContext({
+    ...user,
+    rolePermissions
+  });
+}

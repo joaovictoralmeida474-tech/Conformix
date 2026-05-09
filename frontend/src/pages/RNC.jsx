@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
+import { PERMISSIONS, hasPermission } from "../utils/access";
 
 const initialForm = {
   status: "ABERTA",
@@ -29,6 +30,8 @@ function isResolvedStatus(value) {
 }
 
 export default function RNC() {
+  const currentUser = JSON.parse(window.localStorage.getItem("user") || "null");
+  const canManageRnc = hasPermission(currentUser, PERMISSIONS.RNC_MANAGE);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [form, setForm] = useState(initialForm);
@@ -89,134 +92,84 @@ export default function RNC() {
         </div>
       </header>
 
-      <section className="supplier-list-card">
-        <div className="supplier-table-wrap">
-          <table className="supplier-table">
-            <thead>
-              <tr>
-                <th>Fornecedor</th>
-                <th>Descricao</th>
-                <th>Responsavel</th>
-                <th>Prazo</th>
-                <th>Status</th>
-                <th>Acoes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length ? (
-                items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <strong>{item.supplier?.name || "-"}</strong>
-                      <span>RNC #{item.id}</span>
-                    </td>
-                    <td>{item.description || "RNC sem descricao."}</td>
-                    <td>{item.responsible || "-"}</td>
-                    <td>{formatDate(item.deadline)}</td>
-                    <td>{formatStatus(item.status)}</td>
-                    <td>
-                      <div className="supplier-action-row">
-                        <button
-                          className="supplier-row-button"
-                          type="button"
-                          onClick={() => selectItem(item)}
-                        >
-                          {isResolvedStatus(item.status) ? "Editar" : "Tratar"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="dashboard-empty-copy">
-                    Nenhuma RNC encontrada.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
       {error ? <p className="error-text">{error}</p> : null}
       {message ? <p className="success-text">{message}</p> : null}
 
       {selectedItem ? (
-        <div className="rnc-modal-overlay" onClick={() => setSelectedItem(null)}>
-          <section className="supplier-form-panel rnc-modal-panel" onClick={(event) => event.stopPropagation()}>
-            <div className="supplier-form-heading">
-              <div>
-                <span className="dashboard-card-eyebrow supplier-hero-kicker">
-                  {isResolvedStatus(selectedItem.status) ? "Edicao de RNC" : "Tratativa de RNC"}
-                </span>
-                <h2>
-                  {isResolvedStatus(selectedItem.status)
-                    ? `Editar RNC #${selectedItem.id}`
-                    : `Tratar RNC #${selectedItem.id}`}
-                </h2>
-                <p>{selectedItem.supplier?.name || "-"}</p>
+        <section className="supplier-form-panel rnc-treatment-panel">
+          <div className="supplier-form-heading">
+            <div>
+              <span className="dashboard-card-eyebrow supplier-hero-kicker">
+                {isResolvedStatus(selectedItem.status) ? "Edicao de RNC" : "Tratativa de RNC"}
+              </span>
+              <h2>
+                {isResolvedStatus(selectedItem.status)
+                  ? `Editar RNC #${selectedItem.id}`
+                  : `Tratar RNC #${selectedItem.id}`}
+              </h2>
+              <p>{selectedItem.supplier?.name || "-"}</p>
+            </div>
+            <div className="supplier-hero-actions supplier-hero-actions-right">
+              <button
+                className="supplier-toolbar-button supplier-toolbar-button-muted"
+                type="button"
+                onClick={() => setSelectedItem(null)}
+              >
+                Voltar
+              </button>
+            </div>
+          </div>
+
+          <div className="supplier-form-grid">
+            <div className="supplier-form-field supplier-form-field-full">
+              <label>Descricao</label>
+              <textarea
+                className="supplier-form-textarea"
+                value={form.description}
+                onChange={(event) => setForm({ ...form, description: event.target.value })}
+              />
+            </div>
+
+            <div className="supplier-form-field supplier-form-field-full">
+              <label>Causa raiz</label>
+              <textarea
+                className="supplier-form-textarea"
+                value={form.cause}
+                onChange={(event) => setForm({ ...form, cause: event.target.value })}
+              />
+            </div>
+
+            <div className="supplier-form-field supplier-form-field-full">
+              <label>Acao corretiva</label>
+              <textarea
+                className="supplier-form-textarea"
+                value={form.correctiveAction}
+                onChange={(event) => setForm({ ...form, correctiveAction: event.target.value })}
+              />
+            </div>
+
+            <div className="supplier-form-two-columns">
+              <div className="supplier-form-field">
+                <label>Responsavel</label>
+                <input
+                  className="supplier-form-input"
+                  value={form.responsible}
+                  onChange={(event) => setForm({ ...form, responsible: event.target.value })}
+                />
               </div>
-              <div className="supplier-hero-actions supplier-hero-actions-right">
-                <button
-                  className="supplier-toolbar-button supplier-toolbar-button-muted"
-                  type="button"
-                  onClick={() => setSelectedItem(null)}
-                >
-                  Fechar
-                </button>
+              <div className="supplier-form-field">
+                <label>Prazo</label>
+                <input
+                  className="supplier-form-input"
+                  type="date"
+                  value={form.deadline}
+                  onChange={(event) => setForm({ ...form, deadline: event.target.value })}
+                />
               </div>
             </div>
 
-            <div className="supplier-form-grid">
-              <div className="supplier-form-field supplier-form-field-full">
-                <label>Descricao</label>
-                <textarea
-                  className="supplier-form-textarea"
-                  value={form.description}
-                  onChange={(event) => setForm({ ...form, description: event.target.value })}
-                />
-              </div>
-
-              <div className="supplier-form-field supplier-form-field-full">
-                <label>Causa raiz</label>
-                <textarea
-                  className="supplier-form-textarea"
-                  value={form.cause}
-                  onChange={(event) => setForm({ ...form, cause: event.target.value })}
-                />
-              </div>
-
-              <div className="supplier-form-field supplier-form-field-full">
-                <label>Acao corretiva</label>
-                <textarea
-                  className="supplier-form-textarea"
-                  value={form.correctiveAction}
-                  onChange={(event) => setForm({ ...form, correctiveAction: event.target.value })}
-                />
-              </div>
-
-              <div className="supplier-form-two-columns">
-                <div className="supplier-form-field">
-                  <label>Responsavel</label>
-                  <input
-                    className="supplier-form-input"
-                    value={form.responsible}
-                    onChange={(event) => setForm({ ...form, responsible: event.target.value })}
-                  />
-                </div>
-                <div className="supplier-form-field">
-                  <label>Prazo</label>
-                  <input
-                    className="supplier-form-input"
-                    type="date"
-                    value={form.deadline}
-                    onChange={(event) => setForm({ ...form, deadline: event.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="supplier-form-field supplier-form-field-full">
+            <div className="supplier-form-two-columns">
+              <div className="supplier-form-field">
                 <label>Data da tratativa</label>
                 <input
                   className="supplier-form-input"
@@ -226,20 +179,7 @@ export default function RNC() {
                 />
               </div>
 
-              <div className="supplier-form-field supplier-form-field-full">
-                <label>Acao no status do fornecedor</label>
-                <select
-                  className="supplier-form-input"
-                  value={form.supplierStatusAction}
-                  onChange={(event) => setForm({ ...form, supplierStatusAction: event.target.value })}
-                >
-                  <option value="">Manter status atual</option>
-                  <option value="ATIVO">Ativar fornecedor</option>
-                  <option value="BLOQUEADO">Bloquear fornecedor</option>
-                </select>
-              </div>
-
-              <div className="supplier-form-field supplier-form-field-full">
+              <div className="supplier-form-field">
                 <label>Status</label>
                 <select
                   className="supplier-form-input"
@@ -251,16 +191,83 @@ export default function RNC() {
                   <option value="CONCLUIDA">Concluida</option>
                 </select>
               </div>
-
-              <div className="supplier-form-actions">
-                <button className="supplier-save-button" type="button" onClick={save}>
-                  {isResolvedStatus(selectedItem.status) ? "Salvar edicao" : "Salvar tratativa"}
-                </button>
-              </div>
             </div>
-          </section>
-        </div>
-      ) : null}
+
+            <div className="supplier-form-field supplier-form-field-full">
+              <label>Acao no status do fornecedor</label>
+              <select
+                className="supplier-form-input"
+                value={form.supplierStatusAction}
+                onChange={(event) => setForm({ ...form, supplierStatusAction: event.target.value })}
+              >
+                <option value="">Manter status atual</option>
+                <option value="ATIVO">Ativar fornecedor</option>
+                <option value="BLOQUEADO">Bloquear fornecedor</option>
+              </select>
+            </div>
+
+            <div className="supplier-form-actions">
+              <button className="supplier-save-button" type="button" onClick={save}>
+                {isResolvedStatus(selectedItem.status) ? "Salvar edicao" : "Salvar tratativa"}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="supplier-list-card">
+          <div className="supplier-table-wrap">
+            <table className="supplier-table">
+              <thead>
+                <tr>
+                  <th>Fornecedor</th>
+                  <th>Descricao</th>
+                  <th>Responsavel</th>
+                  <th>Prazo</th>
+                  <th>Status</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.length ? (
+                  items.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <strong>{item.supplier?.name || "-"}</strong>
+                        <span>RNC #{item.id}</span>
+                      </td>
+                      <td>{item.description || "RNC sem descricao."}</td>
+                      <td>{item.responsible || "-"}</td>
+                      <td>{formatDate(item.deadline)}</td>
+                      <td>{formatStatus(item.status)}</td>
+                      <td>
+                        <div className="supplier-action-row">
+                          {canManageRnc ? (
+                            <button
+                              className="supplier-row-button"
+                              type="button"
+                              onClick={() => selectItem(item)}
+                            >
+                              {isResolvedStatus(item.status) ? "Editar" : "Tratar"}
+                            </button>
+                          ) : (
+                            <span className="dashboard-empty-copy">Somente leitura</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="dashboard-empty-copy">
+                      Nenhuma RNC encontrada.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

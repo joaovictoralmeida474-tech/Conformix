@@ -6,14 +6,26 @@ function isBrowser() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
-function readRaw(key) {
+function readLocal(key) {
   if (!isBrowser()) return null;
   return window.localStorage.getItem(key);
+}
+
+function readSession(key) {
+  if (!isBrowser() || typeof window.sessionStorage === "undefined") return null;
+  return window.sessionStorage.getItem(key);
+}
+
+function readRaw(key) {
+  return readSession(key) ?? readLocal(key);
 }
 
 function removeRaw(key) {
   if (!isBrowser()) return;
   window.localStorage.removeItem(key);
+  if (typeof window.sessionStorage !== "undefined") {
+    window.sessionStorage.removeItem(key);
+  }
 }
 
 export function getStoredToken() {
@@ -57,52 +69,28 @@ export function getRememberMePreference() {
   }
 }
 
-export function mapSupabaseUser(user) {
-  if (!user || typeof user !== "object") {
-    return null;
-  }
-
-  const metadata = user.user_metadata && typeof user.user_metadata === "object"
-    ? user.user_metadata
-    : {};
-
-  return {
-    id: user.id,
-    email: user.email || "",
-    name: metadata.name || metadata.full_name || user.email || "Administrador",
-    role: metadata.role || metadata.user_role || "ADMIN",
-  };
-}
-
 export function saveSession({ token, user, rememberMe }) {
   if (!isBrowser()) return;
+  const targetStorage = rememberMe ? window.localStorage : window.sessionStorage;
+  const secondaryStorage = rememberMe ? window.sessionStorage : window.localStorage;
+
+  secondaryStorage.removeItem(TOKEN_KEY);
+  secondaryStorage.removeItem(USER_KEY);
+  secondaryStorage.removeItem(REMEMBER_ME_KEY);
 
   if (token) {
-    window.localStorage.setItem(TOKEN_KEY, token);
+    targetStorage.setItem(TOKEN_KEY, token);
   } else {
     removeRaw(TOKEN_KEY);
   }
 
   if (user && typeof user === "object") {
-    window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+    targetStorage.setItem(USER_KEY, JSON.stringify(user));
   } else {
     removeRaw(USER_KEY);
   }
 
-  window.localStorage.setItem(REMEMBER_ME_KEY, JSON.stringify(Boolean(rememberMe)));
-}
-
-export function saveSupabaseSession(session, rememberMe = getRememberMePreference()) {
-  if (!session) {
-    clearSession();
-    return;
-  }
-
-  saveSession({
-    token: session.access_token || null,
-    user: mapSupabaseUser(session.user),
-    rememberMe,
-  });
+  targetStorage.setItem(REMEMBER_ME_KEY, JSON.stringify(Boolean(rememberMe)));
 }
 
 export function clearSession() {

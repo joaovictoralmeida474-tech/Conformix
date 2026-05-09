@@ -16,23 +16,77 @@ model Company {
   id         Int        @id @default(autoincrement())
   name       String
   users      User[]
+  departments Department[]
   suppliers  Supplier[]
   categories Category[]
   alerts     Alert[]
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  name        String       @default("Administrador")
-  email       String       @unique
-  password    String
-  role        String       @default("ADMIN")
-  active      Boolean      @default(true)
+  id            Int          @id @default(autoincrement())
+  name          String       @default("Administrador")
+  email         String       @unique
+  password      String
+  role          String       @default("USER")
+  active        Boolean      @default(true)
+  companyId     Int
+  departmentId  Int?
+  authUserId    String?      @unique @db.Uuid
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
+  lastLoginAt   DateTime?
+  company       Company      @relation(fields: [companyId], references: [id])
+  department    Department?  @relation(fields: [departmentId], references: [id])
+  auditLogs     AuditLog[]
+  evaluations   Evaluation[]
+  userPermissions UserPermission[]
+}
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String
+  description String?
+  active      Boolean  @default(true)
   companyId   Int
-  authUserId  String?      @unique @db.Uuid
-  company     Company      @relation(fields: [companyId], references: [id])
-  auditLogs   AuditLog[]
-  evaluations Evaluation[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users       User[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, slug])
+}
+
+model Permission {
+  id              Int              @id @default(autoincrement())
+  key             String           @unique
+  name            String
+  description     String?
+  createdAt       DateTime         @default(now())
+  rolePermissions RolePermission[]
+  userPermissions UserPermission[]
+}
+
+model RolePermission {
+  id           Int        @id @default(autoincrement())
+  role         String
+  permissionId Int
+  createdAt    DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([role, permissionId])
+}
+
+model UserPermission {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  permissionId Int
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
 }
 
 model Category {

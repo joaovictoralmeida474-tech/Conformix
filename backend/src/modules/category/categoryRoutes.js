@@ -1,6 +1,7 @@
 import express from "express";
 
-import { auth } from "../../shared/middlewares/auth.js";
+import { PERMISSIONS } from "../../shared/auth/permissions.js";
+import { auth, requirePermission } from "../../shared/middlewares/auth.js";
 import {
   createCategory,
   deleteCategory,
@@ -10,9 +11,9 @@ import {
 
 const router = express.Router();
 
-router.get("/", auth, listCategories);
-router.post("/", auth, createCategory);
-router.put("/:id", auth, updateCategory);
-router.delete("/:id", auth, deleteCategory);
+router.get("/", auth, requirePermission(PERMISSIONS.CATEGORIES_VIEW), listCategories);
+router.post("/", auth, requirePermission(PERMISSIONS.CATEGORIES_MANAGE), createCategory);
+router.put("/:id", auth, requirePermission(PERMISSIONS.CATEGORIES_MANAGE), updateCategory);
+router.delete("/:id", auth, requirePermission(PERMISSIONS.CATEGORIES_MANAGE), deleteCategory);
 
 export default router;

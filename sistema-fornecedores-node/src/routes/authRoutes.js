@@ -7,6 +7,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
 // LOGIN
 router.post('/login', authController.login);
 
+// SESSION
+router.get('/me', authMiddleware, authController.me);
+
 // LOGOUT
 router.get('/logout', authMiddleware, authController.logout);
 

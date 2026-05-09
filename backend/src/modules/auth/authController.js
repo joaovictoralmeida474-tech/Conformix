@@ -17,3 +17,12 @@ export async function login(req, res) {
     res.status(400).json({ error: error.message });
   }
 }
+
+export async function me(req, res) {
+  try {
+    const user = await authService.me(req.user.id);
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}

@@ -1,87 +1,103 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 
 import { prisma } from "../../shared/database/prisma.js";
+import { ROLES, normalizeRole } from "../../shared/auth/permissions.js";
+import { signAccessToken } from "../../shared/middlewares/auth.js";
+import { getUserContextById } from "../../shared/auth/userContext.js";
+import { log as writeAuditLog } from "../audit/auditService.js";
+import { assertStrongPassword } from "../../shared/utils/passwordPolicy.js";
 
 function normalizeEmail(email) {
-  return email?.trim().toLowerCase();
+  return String(email || "").trim().toLowerCase();
 }
 
-function signToken(user) {
-  return jwt.sign(
-    {
-      id: user.id,
-      role: user.role,
-      companyId: user.companyId
-    },
-    process.env.JWT_SECRET || "SECRET",
-    { expiresIn: process.env.JWT_EXPIRES_IN || "8h" }
-  );
-}
+async function ensureDepartmentForRole({ companyId, departmentId, role }) {
+  const normalizedRole = normalizeRole(role);
 
-function getSupabaseAdminConfig() {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error(
-      "Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no backend para registrar usuarios"
-    );
+  if (normalizedRole === ROLES.SUPER_ADMIN) {
+    return null;
   }
 
-  return { supabaseUrl, serviceRoleKey };
-}
-
-async function createSupabaseUser({ email, password, name, role }) {
-  const { supabaseUrl, serviceRoleKey } = getSupabaseAdminConfig();
-
-  const response = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`
-    },
-    body: JSON.stringify({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        name: name?.trim() || "Administrador",
-        role
-      }
-    })
-  });
-
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(payload?.msg || payload?.message || "Falha ao criar usuario no Supabase");
+  if (!departmentId) {
+    throw new Error("Departamento obrigatorio para ADMIN e USER");
   }
 
-  return payload;
-}
-
-async function deleteSupabaseUser(authUserId) {
-  if (!authUserId) return;
-
-  const { supabaseUrl, serviceRoleKey } = getSupabaseAdminConfig();
-
-  await fetch(`${supabaseUrl}/auth/v1/admin/users/${authUserId}`, {
-    method: "DELETE",
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`
+  const department = await prisma.department.findFirst({
+    where: {
+      id: Number(departmentId),
+      companyId: Number(companyId),
+      active: true
     }
   });
+
+  if (!department) {
+    throw new Error("Departamento nao encontrado");
+  }
+
+  return department.id;
 }
 
-export async function register({ email, password, role, companyName, companyId, name }) {
+async function createUserRecord({ email, password, role, companyId, departmentId, name, active = true }) {
   const normalizedEmail = normalizeEmail(email);
 
   if (!normalizedEmail || !password) {
     throw new Error("Email e senha sao obrigatorios");
   }
+
+  assertStrongPassword(password);
+
+  const existing = await prisma.user.findUnique({
+    where: { email: normalizedEmail }
+  });
+
+  if (existing) {
+    throw new Error("Email ja cadastrado");
+  }
+
+  const normalizedRole = normalizeRole(role);
+  const hash = await bcrypt.hash(password, 10);
+  const normalizedName = String(name || "").trim() || "Usuario";
+  const resolvedDepartmentId = await ensureDepartmentForRole({
+    companyId,
+    departmentId,
+    role: normalizedRole
+  });
+
+  const user = await prisma.user.create({
+    data: {
+      name: normalizedName,
+      email: normalizedEmail,
+      password: hash,
+      role: normalizedRole,
+      active: Boolean(active),
+      companyId: Number(companyId),
+      departmentId: resolvedDepartmentId
+    }
+  });
+
+  return getUserContextById(user.id);
+}
+
+export async function register({ email, password, role, companyName, companyId, departmentId, name }) {
+  const requestedRole = normalizeRole(role || ROLES.ADMIN);
+
+  if (requestedRole !== ROLES.ADMIN) {
+    throw new Error("Cadastro publico permite apenas contas administrativas da propria empresa");
+  }
+
+  if (companyId) {
+    throw new Error("Cadastro publico nao pode vincular usuarios a empresas existentes");
+  }
+
+  const normalizedCompanyName = String(companyName || "").trim() || "Nova Empresa";
+  const normalizedName = String(name || "").trim() || "Administrador";
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail || !password) {
+    throw new Error("Email e senha sao obrigatorios");
+  }
+
+  assertStrongPassword(password);
 
   const existing = await prisma.user.findUnique({
     where: { email: normalizedEmail }
@@ -92,86 +108,112 @@ export async function register({ email, password, role, companyName, companyId, 
   }
 
   const hash = await bcrypt.hash(password, 10);
-  const normalizedRole = (role || "ADMIN").toUpperCase();
-  const normalizedName = String(name || "").trim() || "Administrador";
-  const authUser = await createSupabaseUser({
-    email: normalizedEmail,
-    password,
-    name: normalizedName,
-    role: normalizedRole
+
+  const company = await prisma.company.create({
+    data: {
+      name: normalizedCompanyName,
+      departments: {
+        create: {
+          name: "Operacoes",
+          slug: "operacoes",
+          description: "Departamento inicial da empresa"
+        }
+      }
+    },
+    include: {
+      departments: true
+    }
   });
 
-  try {
-    if (companyId) {
-      const user = await prisma.user.create({
-        data: {
-          name: normalizedName,
-          email: normalizedEmail,
-          password: hash,
-          role: normalizedRole,
-          companyId: Number(companyId),
-          authUserId: authUser.id
-        }
-      });
-
-      return {
-        user,
-        token: signToken(user)
-      };
+  const department = company.departments[0];
+  const user = await prisma.user.create({
+    data: {
+      name: normalizedName,
+      email: normalizedEmail,
+      password: hash,
+      role: requestedRole,
+      companyId: company.id,
+      departmentId: department?.id || null
     }
+  });
 
-    const company = await prisma.company.create({
-      data: {
-        name: companyName?.trim() || "Nova Empresa",
-        users: {
-          create: {
-            name: normalizedName,
-            email: normalizedEmail,
-            password: hash,
-            role: normalizedRole,
-            authUserId: authUser.id
-          }
-        }
-      },
-      include: {
-        users: true
-      }
-    });
+  const context = await getUserContextById(user.id);
 
-    const user = company.users[0];
-
-    return {
-      user,
-      token: signToken(user)
-    };
-  } catch (error) {
-    await deleteSupabaseUser(authUser.id).catch(() => null);
-    throw error;
-  }
+  return {
+    user: context,
+    token: signAccessToken(context)
+  };
 }
 
 export async function login({ email, password }) {
   const user = await prisma.user.findUnique({
-    where: { email: normalizeEmail(email) }
+    where: {
+      email: normalizeEmail(email)
+    }
   });
 
   if (!user) {
-    throw new Error("Usuario nao encontrado");
+    throw new Error("Credenciais invalidas");
+  }
+
+  if (!user.active) {
+    throw new Error("Credenciais invalidas");
   }
 
   const valid = await bcrypt.compare(password || "", user.password);
 
   if (!valid) {
-    throw new Error("Senha invalida");
+    throw new Error("Credenciais invalidas");
   }
 
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      companyId: user.companyId
+  await prisma.user.update({
+    where: {
+      id: user.id
     },
-    token: signToken(user)
+    data: {
+      lastLoginAt: new Date()
+    }
+  });
+
+  const context = await getUserContextById(user.id);
+
+  await writeAuditLog(user.id, "login", {
+    entity: "auth",
+    entityId: user.id,
+    details: `Login realizado por ${context?.name || user.email}`
+  });
+
+  return {
+    user: context,
+    token: signAccessToken(context)
   };
+}
+
+export async function me(userId) {
+  const user = await getUserContextById(userId);
+
+  if (!user) {
+    throw new Error("Usuario nao encontrado");
+  }
+
+  return user;
+}
+
+export async function updatePassword(userId, password) {
+  if (!password) {
+    throw new Error("Senha obrigatoria");
+  }
+
+  assertStrongPassword(password);
+
+  const hash = await bcrypt.hash(password, 10);
+
+  await prisma.user.update({
+    where: {
+      id: Number(userId)
+    },
+    data: {
+      password: hash
+    }
+  });
 }

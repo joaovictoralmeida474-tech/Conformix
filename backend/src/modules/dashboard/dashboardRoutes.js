@@ -1,10 +1,11 @@
 import express from "express";
 
-import { auth } from "../../shared/middlewares/auth.js";
+import { PERMISSIONS } from "../../shared/auth/permissions.js";
+import { auth, requirePermission } from "../../shared/middlewares/auth.js";
 import { getDashboard } from "./dashboardController.js";
 
 const router = express.Router();
 
-router.get("/", auth, getDashboard);
+router.get("/", auth, requirePermission(PERMISSIONS.DASHBOARD_VIEW), getDashboard);
 
 export default router;

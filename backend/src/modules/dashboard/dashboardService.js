@@ -30,6 +30,19 @@ function buildAlerts(suppliers, rncs) {
       return diff >= 0 && diff <= 15 * 24 * 60 * 60 * 1000;
     });
 
+    const expiredDocuments = (supplier.documents || []).filter((item) => {
+      if (!item.expiresAt) return false;
+      return new Date(item.expiresAt).getTime() < Date.now();
+    });
+
+    if (expiredDocuments.length) {
+      alerts.push({
+        type: "documento_vencido",
+        supplierId: supplier.id,
+        message: `${expiredDocuments.length} documento(s) do fornecedor ${supplier.name} estao vencidos.`
+      });
+    }
+
     if (expiringDocuments.length) {
       alerts.push({
         type: "documento_vencendo",
@@ -84,6 +97,7 @@ export async function getMetrics(companyId) {
   ]);
 
   const total = suppliers.length;
+  const criticalSuppliers = suppliers.filter((item) => item.supplierType === "CRITICO").length;
   const bloqueados = suppliers.filter((item) => item.status === "BLOQUEADO").length;
   const rnc = openRncs.filter((item) => item.status === "ABERTA").length;
   const expiring = suppliers.filter((item) => {
@@ -124,6 +138,7 @@ export async function getMetrics(companyId) {
 
   return {
     total,
+    criticalSuppliers,
     bloqueados,
     rnc,
     expiring,

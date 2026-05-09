@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { supabase } from "../services/supabase";
-import { getStoredToken, saveSupabaseSession } from "../utils/authStorage";
+import { api } from "../services/api";
+import { getDefaultRouteForUser, hasPermission } from "../utils/access";
+import {
+  clearSession,
+  getRememberMePreference,
+  getStoredToken,
+  getStoredUser,
+  saveSession
+} from "../utils/authStorage";
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, permissions = [], roles = [] }) {
   const [isChecking, setIsChecking] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(getStoredToken()));
+  const [user, setUser] = useState(getStoredUser());
 
   useEffect(() => {
     let isMounted = true;
@@ -13,27 +20,43 @@ export default function ProtectedRoute({ children }) {
     async function validateSession() {
       const token = getStoredToken();
 
-      if (token) {
+      if (!token) {
         if (isMounted) {
-          setIsAuthenticated(true);
+          setUser(null);
           setIsChecking(false);
         }
         return;
       }
 
-      const { data } = await supabase.auth.getSession();
-      const session = data?.session || null;
+      const storedUser = getStoredUser();
 
-      if (!isMounted) return;
-
-      if (session) {
-        saveSupabaseSession(session);
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
+      if (storedUser && isMounted) {
+        setUser(storedUser);
       }
 
-      setIsChecking(false);
+      try {
+        const { data } = await api.get("/auth/me");
+
+        saveSession({
+          token,
+          user: data,
+          rememberMe: getRememberMePreference()
+        });
+
+        if (isMounted) {
+          setUser(data);
+        }
+      } catch {
+        clearSession();
+
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsChecking(false);
+        }
+      }
     }
 
     validateSession();
@@ -47,8 +70,16 @@ export default function ProtectedRoute({ children }) {
     return null;
   }
 
-  if (!isAuthenticated) {
+  if (!getStoredToken() || !user) {
     return <Navigate to="/" replace />;
+  }
+
+  if (roles.length && !roles.includes(user.role)) {
+    return <Navigate to={getDefaultRouteForUser(user)} replace />;
+  }
+
+  if (permissions.length && !permissions.every((item) => hasPermission(user, item))) {
+    return <Navigate to={getDefaultRouteForUser(user)} replace />;
   }
 
   return children;

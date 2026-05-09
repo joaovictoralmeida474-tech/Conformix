@@ -10,7 +10,13 @@ function authMiddleware(req, res, next) {
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'SECRET');
+    const secret = String(process.env.JWT_SECRET || '').trim();
+
+    if (!secret || secret.toUpperCase() === 'SECRET') {
+      throw new Error('JWT_SECRET invalido');
+    }
+
+    const decoded = jwt.verify(token, secret);
     req.user = decoded;
 
     next();

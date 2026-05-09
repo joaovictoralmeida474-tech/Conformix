@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { clearSession, getStoredUser } from "../utils/authStorage";
 import conformixLogo from "../assets/conformix-logo-v2-transparent.png";
-import { supabase } from "../services/supabase";
+import { PERMISSIONS, canAccessAdmin, hasPermission } from "../utils/access";
 
 function getInitials(name) {
   return String(name || "")
@@ -17,6 +17,7 @@ function getInitials(name) {
 function getRoleLabel(role) {
   const normalized = String(role || "").trim().toUpperCase();
   const labels = {
+    SUPER_ADMIN: "Super Admin",
     ADMIN: "Administrador",
     MANAGER: "Gestor",
     GESTOR: "Gestor",
@@ -33,15 +34,27 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const links = [
-    { to: "/dashboard", label: "Dashboard", icon: "ri-dashboard-line" },
-    { to: "/suppliers", label: "Fornecedores", icon: "ri-building-2-line" },
-    { to: "/categories", label: "Categorias", icon: "ri-price-tag-3-line" },
-    { to: "/rnc", label: "RNC", icon: "ri-alert-line" },
-    { to: "/audit", label: "Auditoria", icon: "ri-file-list-3-line" }
-  ];
+    hasPermission(user, PERMISSIONS.DASHBOARD_VIEW)
+      ? { to: "/dashboard", label: "Dashboard", icon: "ri-dashboard-line" }
+      : null,
+    hasPermission(user, PERMISSIONS.SUPPLIERS_VIEW)
+      ? { to: "/suppliers", label: "Fornecedores", icon: "ri-building-2-line" }
+      : null,
+    hasPermission(user, PERMISSIONS.CATEGORIES_VIEW)
+      ? { to: "/categories", label: "Categorias", icon: "ri-price-tag-3-line" }
+      : null,
+    hasPermission(user, PERMISSIONS.RNC_VIEW)
+      ? { to: "/rnc", label: "RNC", icon: "ri-alert-line" }
+      : null,
+    hasPermission(user, PERMISSIONS.AUDIT_VIEW)
+      ? { to: "/audit", label: "Auditoria", icon: "ri-file-list-3-line" }
+      : null,
+    canAccessAdmin(user)
+      ? { to: "/admin", label: "Admin", icon: "ri-shield-user-line" }
+      : null
+  ].filter(Boolean);
 
   async function logout() {
-    await supabase.auth.signOut();
     clearSession();
     navigate("/");
   }

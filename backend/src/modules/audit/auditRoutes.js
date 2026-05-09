@@ -1,10 +1,11 @@
 import express from "express";
 
-import { auth, isAdmin } from "../../shared/middlewares/auth.js";
+import { PERMISSIONS } from "../../shared/auth/permissions.js";
+import { auth, requirePermission } from "../../shared/middlewares/auth.js";
 import { listAuditLogs } from "./auditController.js";
 
 const router = express.Router();
 
-router.get("/", auth, isAdmin, listAuditLogs);
+router.get("/", auth, requirePermission(PERMISSIONS.AUDIT_VIEW), listAuditLogs);
 
 export default router;

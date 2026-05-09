@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { api } from "../services/api";
-import { getStoredToken } from "../utils/authStorage";
+import { PERMISSIONS, hasPermission } from "../utils/access";
+import { getStoredUser } from "../utils/authStorage";
 
 const initialSupplierForm = {
   name: "",
@@ -179,6 +180,10 @@ function escapeHtml(value) {
 }
 
 export default function Suppliers() {
+  const currentUser = getStoredUser();
+  const canManageSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_MANAGE);
+  const canEvaluateSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_EVALUATE);
+  const canExportSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_EXPORT);
   const [suppliers, setSuppliers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [supplierForm, setSupplierForm] = useState(initialSupplierForm);
@@ -293,6 +298,7 @@ export default function Suppliers() {
   }
 
   function openNewSupplier() {
+    if (!canManageSuppliers) return;
     resetSupplierEditor();
     setActivePanel("form");
     setMessage("");
@@ -397,6 +403,7 @@ export default function Suppliers() {
   }
 
   function editSupplier(supplier) {
+    if (!canManageSuppliers) return;
     setEditingId(supplier.id);
     setSelectedId(supplier.id);
     setSupplierForm(mapSupplierToForm(supplier));
@@ -414,6 +421,7 @@ export default function Suppliers() {
   }
 
   function openEvaluation(supplier) {
+    if (!canEvaluateSuppliers) return;
     setSelectedId(supplier.id);
     setActivePanel("evaluation");
     setEvaluationForm(initialEvaluationForm);
@@ -423,6 +431,7 @@ export default function Suppliers() {
   }
 
   async function deleteSupplier(id) {
+    if (!canManageSuppliers) return;
     const confirmed = window.confirm("Deseja realmente excluir este fornecedor?");
     if (!confirmed) return;
 
@@ -447,14 +456,46 @@ export default function Suppliers() {
     }
   }
 
-  function exportar() {
-    const token = getStoredToken();
-    if (!token) {
-      setError("Sessao expirada. Faca login novamente.");
-      return;
+  function getDownloadFilename(contentDisposition, fallbackName) {
+    const rawHeader = String(contentDisposition || "");
+    const utf8Match = rawHeader.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+      return decodeURIComponent(utf8Match[1]);
     }
 
-    window.open(`http://localhost:3000/api/suppliers/export/excel?token=${token}`, "_blank");
+    const quotedMatch = rawHeader.match(/filename\s*=\s*"([^"]+)"/i);
+    if (quotedMatch?.[1]) {
+      return quotedMatch[1];
+    }
+
+    return fallbackName;
+  }
+
+  async function triggerSecureDownload(url, fallbackName) {
+    try {
+      setError("");
+      const response = await api.get(url, {
+        responseType: "blob"
+      });
+      const blobUrl = window.URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = getDownloadFilename(
+        response.headers["content-disposition"],
+        fallbackName
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      setError(err.response?.data?.error || "Nao foi possivel baixar o arquivo.");
+    }
+  }
+
+  function exportar() {
+    if (!canExportSuppliers) return;
+    void triggerSecureDownload("/suppliers/export/excel", "fornecedores.xlsx");
   }
 
   async function submitEvaluation() {
@@ -503,31 +544,17 @@ export default function Suppliers() {
 
   function downloadDocument(documentId) {
     if (!selectedSupplier) return;
-
-    const token = getStoredToken();
-    if (!token) {
-      setError("Sessao expirada. Faca login novamente.");
-      return;
-    }
-
-    window.open(
-      `http://localhost:3000/api/suppliers/${selectedSupplier.id}/documents/${documentId}/download?token=${token}`,
-      "_blank"
+    void triggerSecureDownload(
+      `/suppliers/${selectedSupplier.id}/documents/${documentId}/download`,
+      `documento-${documentId}.pdf`
     );
   }
 
   function downloadEvaluationDocument(evaluationId) {
     if (!selectedSupplier) return;
-
-    const token = getStoredToken();
-    if (!token) {
-      setError("Sessao expirada. Faca login novamente.");
-      return;
-    }
-
-    window.open(
-      `http://localhost:3000/api/suppliers/${selectedSupplier.id}/evaluations/${evaluationId}/download?token=${token}`,
-      "_blank"
+    void triggerSecureDownload(
+      `/suppliers/${selectedSupplier.id}/evaluations/${evaluationId}/download`,
+      `avaliacao-${evaluationId}.pdf`
     );
   }
 
@@ -681,22 +708,28 @@ export default function Suppliers() {
               <button className="supplier-toolbar-button supplier-toolbar-button-muted" type="button" onClick={() => setActivePanel("list")}>
                 Voltar
               </button>
-              <button className="supplier-toolbar-button supplier-toolbar-button-primary" type="button" onClick={() => openEvaluation(selectedSupplier)}>
-                Avaliar
-              </button>
+              {canEvaluateSuppliers ? (
+                <button className="supplier-toolbar-button supplier-toolbar-button-primary" type="button" onClick={() => openEvaluation(selectedSupplier)}>
+                  Avaliar
+                </button>
+              ) : null}
               <button className="supplier-toolbar-button supplier-toolbar-button-muted" type="button" onClick={printDossier}>
                 PDF
               </button>
-              <button className="supplier-toolbar-button supplier-toolbar-button-muted" type="button" onClick={() => editSupplier(selectedSupplier)}>
-                Editar
-              </button>
-              <button
-                className="supplier-toolbar-button supplier-row-button-danger"
-                type="button"
-                onClick={() => deleteSupplier(selectedSupplier.id)}
-              >
-                Excluir
-              </button>
+              {canManageSuppliers ? (
+                <button className="supplier-toolbar-button supplier-toolbar-button-muted" type="button" onClick={() => editSupplier(selectedSupplier)}>
+                  Editar
+                </button>
+              ) : null}
+              {canManageSuppliers ? (
+                <button
+                  className="supplier-toolbar-button supplier-row-button-danger"
+                  type="button"
+                  onClick={() => deleteSupplier(selectedSupplier.id)}
+                >
+                  Excluir
+                </button>
+              ) : null}
             </div>
           </header>
 
@@ -1250,12 +1283,16 @@ export default function Suppliers() {
         </div>
 
         <div className="supplier-hero-actions">
-          <button className="supplier-toolbar-button supplier-toolbar-button-muted" type="button" onClick={exportar}>
-            Exportar Excel
-          </button>
-          <button className="supplier-toolbar-button supplier-toolbar-button-primary" type="button" onClick={openNewSupplier}>
-            Novo fornecedor
-          </button>
+          {canExportSuppliers ? (
+            <button className="supplier-toolbar-button supplier-toolbar-button-muted" type="button" onClick={exportar}>
+              Exportar Excel
+            </button>
+          ) : null}
+          {canManageSuppliers ? (
+            <button className="supplier-toolbar-button supplier-toolbar-button-primary" type="button" onClick={openNewSupplier}>
+              Novo fornecedor
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -1322,15 +1359,21 @@ export default function Suppliers() {
                         <button className="supplier-row-button" type="button" onClick={() => viewSupplier(supplier)}>
                           Ver
                         </button>
-                        <button className="supplier-row-button" type="button" onClick={() => openEvaluation(supplier)}>
-                          Avaliar
-                        </button>
-                        <button className="supplier-row-button" type="button" onClick={() => editSupplier(supplier)}>
-                          Editar
-                        </button>
-                        <button className="supplier-row-button supplier-row-button-danger" type="button" onClick={() => deleteSupplier(supplier.id)}>
-                          Excluir
-                        </button>
+                        {canEvaluateSuppliers ? (
+                          <button className="supplier-row-button" type="button" onClick={() => openEvaluation(supplier)}>
+                            Avaliar
+                          </button>
+                        ) : null}
+                        {canManageSuppliers ? (
+                          <button className="supplier-row-button" type="button" onClick={() => editSupplier(supplier)}>
+                            Editar
+                          </button>
+                        ) : null}
+                        {canManageSuppliers ? (
+                          <button className="supplier-row-button supplier-row-button-danger" type="button" onClick={() => deleteSupplier(supplier.id)}>
+                            Excluir
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>

@@ -25,6 +25,7 @@ ChartJS.register(
 export default function Dashboard() {
   const [data, setData] = useState({
     total: 0,
+    criticalSuppliers: 0,
     bloqueados: 0,
     rnc: 0,
     expiring: 0,
@@ -42,7 +43,6 @@ export default function Dashboard() {
     api.get("/dashboard").then((res) => setData(res.data));
   }, []);
 
-  const criticalSuppliers = data.risks.filter((value) => Number(value) >= 40).length;
   const chartLabels = data.labels.slice(0, 20);
   const chartScores = data.scores.slice(0, 20);
   const chartRisks = data.risks.slice(0, 20);
@@ -55,7 +55,7 @@ export default function Dashboard() {
     },
     {
       eyebrow: "Fornecedores criticos",
-      title: criticalSuppliers,
+      title: data.criticalSuppliers,
       description: "Maior prioridade"
     },
     {
@@ -64,6 +64,10 @@ export default function Dashboard() {
       description: "Indicador consolidado"
     }
   ];
+
+  const monitoringAlerts = data.alerts.filter((alert) =>
+    ["documento_vencido", "documento_vencendo", "avaliacao_vencida", "fornecedor_bloqueado"].includes(alert.type)
+  );
 
   return (
     <div className="dashboard-shell">
@@ -161,8 +165,8 @@ export default function Dashboard() {
               <h3>Alertas ativos</h3>
             </div>
             <div className="stack-list">
-              {data.alerts.length ? (
-                data.alerts.slice(0, 3).map((alert, index) => (
+              {monitoringAlerts.length ? (
+                monitoringAlerts.slice(0, 4).map((alert, index) => (
                   <div key={`${alert.type}-${alert.supplierId}-${index}`} className="dashboard-alert-item">
                     <strong>{alert.type.replaceAll("_", " ")}</strong>
                     <p>{alert.message}</p>

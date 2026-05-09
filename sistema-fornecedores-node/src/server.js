@@ -4,6 +4,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const axios = require('axios');
+const bcrypt = require('bcrypt');
 
 const prisma = require('./lib/prisma');
 const app = express();
@@ -76,8 +77,49 @@ async function ensureDefaultCategory() {
   }
 }
 
+async function ensureConfiguredUsers() {
+  const configuredUsers = [
+    {
+      email: process.env.BOOTSTRAP_SUPER_ADMIN_EMAIL,
+      password: process.env.BOOTSTRAP_SUPER_ADMIN_PASSWORD
+    }
+  ].filter((item) => item.email && item.password);
+
+  for (const account of configuredUsers) {
+    const normalizedEmail = account.email.trim().toLowerCase();
+    const hashedPassword = await bcrypt.hash(account.password, 10);
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, password: true }
+    });
+
+    if (!existingUser) {
+      await prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          password: hashedPassword
+        }
+      });
+      continue;
+    }
+
+    const samePassword =
+      !existingUser.password.startsWith('supabase:') &&
+      (await bcrypt.compare(account.password, existingUser.password));
+
+    if (!samePassword) {
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { password: hashedPassword }
+      });
+    }
+  }
+}
+
 async function startServer() {
   await ensureDefaultCategory();
+  await ensureConfiguredUsers();
 
   app.listen(process.env.PORT, () => {
     console.log(`Servidor rodando na porta ${process.env.PORT}`);

@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import { fileURLToPath } from "url";
+import { getMaxUploadSizeBytes } from "../config/security.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,5 +25,29 @@ function buildStorage(uploadRoot) {
   });
 }
 
-export const supplierDocumentsUpload = multer({ storage: buildStorage(supplierUploadRoot) });
-export const evaluationDocumentsUpload = multer({ storage: buildStorage(evaluationUploadRoot) });
+function pdfOnlyFilter(_, file, callback) {
+  const originalName = String(file.originalname || "").toLowerCase();
+  const mimeType = String(file.mimetype || "").toLowerCase();
+  const isPdf = mimeType === "application/pdf" || originalName.endsWith(".pdf");
+
+  if (!isPdf) {
+    callback(new Error("Apenas arquivos PDF sao permitidos"));
+    return;
+  }
+
+  callback(null, true);
+}
+
+function buildUpload(uploadRoot, maxFiles = 1) {
+  return multer({
+    storage: buildStorage(uploadRoot),
+    fileFilter: pdfOnlyFilter,
+    limits: {
+      fileSize: getMaxUploadSizeBytes(),
+      files: maxFiles
+    }
+  });
+}
+
+export const supplierDocumentsUpload = buildUpload(supplierUploadRoot, 20);
+export const evaluationDocumentsUpload = buildUpload(evaluationUploadRoot, 1);

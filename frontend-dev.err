@@ -1,0 +1,50 @@
+[2m15:55:36[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] Error:[0m Expected `}` but found `:`
+     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/RNC.jsx:270:9 [38;5;246m][0m
+     [38;5;246m│[0m
+ [38;5;246m270 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m)[0m[38;5;249m [0m:[38;5;249m [0m[38;5;249mn[0m[38;5;249mu[0m[38;5;249ml[0m[38;5;249ml[0m[38;5;249m}[0m
+ [38;5;240m    │[0m         ┬  
+ [38;5;240m    │[0m         ╰── `}` expected
+[38;5;246m─────╯[0m
+[39m
+  Plugin: [35mvite:oxc[39m
+  File: [36mC:/Users/ENGESP - ADM - 060/Desktop/joao/JV/PROGRAMAÇÃO/PROJETO - AVALIAÇÃO D EFORNECEDORES NODE.JS/frontend/src/pages/RNC.jsx[39m
+      at transformWithOxc (file:///C:/Users/ENGESP%20-%20ADM%20-%20060/Desktop/joao/JV/PROGRAMA%C3%87%C3%83O/PROJETO%20-%20AVALIA%C3%87%C3%83O%20D%20EFORNECEDORES%20NODE.JS/frontend/node_modules/vite/dist/node/chunks/node.js:3343:19)
+      at TransformPluginContext.transform (file:///C:/Users/ENGESP%20-%20ADM%20-%20060/Desktop/joao/JV/PROGRAMA%C3%87%C3%83O/PROJETO%20-%20AVALIA%C3%87%C3%83O%20D%20EFORNECEDORES%20NODE.JS/frontend/node_modules/vite/dist/node/chunks/node.js:3411:26)
+      at EnvironmentPluginContainer.transform (file:///C:/Users/ENGESP%20-%20ADM%20-%20060/Desktop/joao/JV/PROGRAMA%C3%87%C3%83O/PROJETO%20-%20AVALIA%C3%87%C3%83O%20D%20EFORNECEDORES%20NODE.JS/frontend/node_modules/vite/dist/node/chunks/node.js:30164:51)
+      at async loadAndTransform (file:///C:/Users/ENGESP%20-%20ADM%20-%20060/Desktop/joao/JV/PROGRAMA%C3%87%C3%83O/PROJETO%20-%20AVALIA%C3%87%C3%83O%20D%20EFORNECEDORES%20NODE.JS/frontend/node_modules/vite/dist/node/chunks/node.js:24512:26)
+      at async viteTransformMiddleware (file:///C:/Users/ENGESP%20-%20ADM%20-%20060/Desktop/joao/JV/PROGRAMA%C3%87%C3%83O/PROJETO%20-%20AVALIA%C3%87%C3%83O%20D%20EFORNECEDORES%20NODE.JS/frontend/node_modules/vite/dist/node/chunks/node.js:24306:20)
+[2m15:55:36[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] Failed to reload /src/pages/RNC.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+[2m16:20:46[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/login" 
+[2m16:20:46[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/login" 
+[2m16:22:22[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:22:22[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:24:32[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:24:32[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:24:34[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:24:34[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:24:35[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:24:35[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:25:11[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/login" 
+[2m16:25:11[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/login" 
+[2m16:25:12[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/login" 
+[2m16:25:12[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/login" 
+[2m16:25:13[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/login" 
+[2m16:25:13[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/login" 
+[2m16:27:53[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:27:53[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:27:56[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m16:27:56[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/home" 
+[2m15:12:53[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/env" 
+[2m15:12:53[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/env" 
+The request id "C:\Users\ENGESP - ADM - 060\Desktop\joao\JV\PROGRAMAÇÃO\PROJETO - AVALIAÇÃO D EFORNECEDORES NODE.JS\frontend\.env" is outside of Vite serving allow list.
+
+- C:/Users/ENGESP - ADM - 060/Desktop/joao/JV/PROGRAMAÇÃO/PROJETO - AVALIAÇÃO D EFORNECEDORES NODE.JS/frontend
+
+Refer to docs https://vite.dev/config/server-options.html#server-fs-allow for configurations and more details.
+
+[2m15:13:54[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/api" 
+[2m15:13:54[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/api" 
+[2m15:15:42[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/superadmin@conformix.local" 
+[2m15:15:42[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mNo routes matched location "/superadmin@conformix.local" 
