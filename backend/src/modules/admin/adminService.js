@@ -43,18 +43,22 @@ function serializeDepartment(department) {
 }
 
 function serializeAdminRecord(user) {
+  const normalizedRole = normalizeRole(user.role);
   const userPermissionsFromDb = (user.userPermissions || [])
     .map((item) => item.permission?.key)
     .filter(Boolean);
-  const permissions = userPermissionsFromDb.length
+  const permissions =
+    normalizedRole === ROLES.SUPER_ADMIN
+      ? ROLE_PERMISSION_MAP[ROLES.SUPER_ADMIN] || []
+      : userPermissionsFromDb.length
     ? userPermissionsFromDb
-    : ROLE_PERMISSION_MAP[normalizeRole(user.role)] || [];
+    : ROLE_PERMISSION_MAP[normalizedRole] || [];
 
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: normalizeRole(user.role),
+    role: normalizedRole,
     active: user.active,
     companyId: user.companyId,
     departmentId: user.departmentId,
@@ -74,7 +78,8 @@ function serializeAdminRecord(user) {
         }
       : null,
     permissions,
-    permissionsSource: userPermissionsFromDb.length ? "custom" : "role"
+    permissionsSource:
+      normalizedRole === ROLES.SUPER_ADMIN ? "role" : userPermissionsFromDb.length ? "custom" : "role"
   };
 }
 

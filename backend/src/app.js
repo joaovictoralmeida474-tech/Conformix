@@ -5,7 +5,7 @@ import helmet from "helmet";
 
 import routes from "./modules/index.js";
 import { seedPlatform } from "./shared/database/seed.js";
-import { getAllowedCorsOrigins, getJwtSecret } from "./shared/config/security.js";
+import { getAllowedCorsOrigins, getJwtSecret, isAllowedCorsOrigin } from "./shared/config/security.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -19,8 +19,9 @@ app.use(
 );
 app.use(
   cors({
+    credentials: true,
     origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) {
+      if (isAllowedCorsOrigin(origin, [...allowedOrigins])) {
         callback(null, true);
         return;
       }
@@ -41,10 +42,11 @@ app.use((error, _req, res, _next) => {
     return res.status(400).json({ error: "Arquivo excede o tamanho maximo permitido" });
   }
 
-  if (error?.message) {
-    return res.status(400).json({ error: error.message });
+  if (Number.isInteger(error?.statusCode) && error?.statusCode >= 400 && error?.message) {
+    return res.status(error.statusCode).json({ error: error.message });
   }
 
+  console.error("Erro interno nao tratado:", error);
   return res.status(500).json({ error: "Erro interno do servidor" });
 });
 

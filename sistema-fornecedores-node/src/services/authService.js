@@ -8,6 +8,35 @@ const {
 } = require('../utils/accessProfile');
 const supabaseAuthService = require('./supabaseAuthService');
 
+function parseConfiguredEmails(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function getAuthEmailCandidates(email) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const bootstrapEmail = String(process.env.BOOTSTRAP_SUPER_ADMIN_EMAIL || '')
+    .trim()
+    .toLowerCase();
+  const superAdminAliases = new Set([
+    'superadmin@conformix.local',
+    ...parseConfiguredEmails(process.env.SUPER_ADMIN_EMAILS),
+    ...parseConfiguredEmails(process.env.ADMIN_EMAILS)
+  ]);
+
+  const candidates = [];
+
+  if (superAdminAliases.has(normalizedEmail) && bootstrapEmail) {
+    candidates.push(bootstrapEmail);
+  }
+
+  candidates.push(normalizedEmail);
+
+  return [...new Set(candidates.filter(Boolean))];
+}
+
 async function tryLocalLogin(email, password) {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -45,64 +74,90 @@ async function tryLocalLogin(email, password) {
   };
 }
 
+async function tryLocalLoginCandidates(emailCandidates, password) {
+  for (const candidate of emailCandidates) {
+    const result = await tryLocalLogin(candidate, password);
+
+    if (result) {
+      return result;
+    }
+  }
+
+  return null;
+}
+
 async function login(email, password) {
   if (!email || !password) {
     return null;
   }
 
-  let authResponse;
+  const emailCandidates = getAuthEmailCandidates(email);
 
-  try {
-    authResponse = await supabaseAuthService.signInWithPassword(
-      email.trim().toLowerCase(),
-      password
-    );
-  } catch (error) {
-    if (error?.response?.status === 400 || error?.response?.status === 401) {
-      return tryLocalLogin(email, password);
-    }
+  for (const authEmail of emailCandidates) {
+    try {
+      const authResponse = await supabaseAuthService.signInWithPassword(
+        authEmail,
+        password
+      );
 
-    throw new Error(
-      error?.response?.data?.msg ||
-        error?.response?.data?.error_description ||
-        error.message
-    );
-  }
+      const supabaseUser = authResponse?.user;
 
-  const supabaseUser = authResponse?.user;
-
-  if (!supabaseUser?.email) {
-    return null;
-  }
-
-  let localUser = await prisma.user.findUnique({
-    where: { email: supabaseUser.email.trim().toLowerCase() },
-    select: {
-      id: true,
-      email: true
-    }
-  });
-
-  if (!localUser) {
-    localUser = await prisma.user.create({
-      data: {
-        email: supabaseUser.email.trim().toLowerCase(),
-        password: `supabase:${supabaseUser.id}`
-      },
-      select: {
-        id: true,
-        email: true
+      if (!supabaseUser?.email) {
+        continue;
       }
-    });
+
+      let localUser = await prisma.user.findUnique({
+        where: { email: supabaseUser.email.trim().toLowerCase() },
+        select: {
+          id: true,
+          email: true
+        }
+      });
+
+      if (!localUser) {
+        localUser = await prisma.user.create({
+          data: {
+            email: supabaseUser.email.trim().toLowerCase(),
+            password: `supabase:${supabaseUser.id}`
+          },
+          select: {
+            id: true,
+            email: true
+          }
+        });
+      }
+
+      const safeUser = buildAuthUser({
+        localUserId: localUser.id,
+        supabaseUser
+      });
+      const token = generateToken(safeUser);
+
+      return { user: safeUser, token };
+    } catch (error) {
+      if (
+        error?.code === 'ECONNREFUSED' ||
+        error?.code === 'ENOTFOUND' ||
+        error?.code === 'ETIMEDOUT' ||
+        error?.code === 'ECONNABORTED' ||
+        /SUPABASE_URL ou SUPABASE_ANON_KEY nao configurados/i.test(error?.message || '')
+      ) {
+        return tryLocalLoginCandidates(emailCandidates, password);
+      }
+
+      if (error?.response?.status === 400 || error?.response?.status === 401) {
+        continue;
+      }
+
+      throw new Error(
+        error?.response?.data?.msg ||
+          error?.response?.data?.error_description ||
+          error.message
+      );
+    }
   }
 
-  const safeUser = buildAuthUser({
-    localUserId: localUser.id,
-    supabaseUser
-  });
-  const token = generateToken(safeUser);
-
-  return { user: safeUser, token };
+  return tryLocalLoginCandidates(emailCandidates, password);
 }
 
 async function getCurrentUser(userId) {

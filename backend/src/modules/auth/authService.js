@@ -6,9 +6,48 @@ import { signAccessToken } from "../../shared/middlewares/auth.js";
 import { getUserContextById } from "../../shared/auth/userContext.js";
 import { log as writeAuditLog } from "../audit/auditService.js";
 import { assertStrongPassword } from "../../shared/utils/passwordPolicy.js";
+import { signInWithPassword as signInWithSupabase } from "./supabaseAuthService.js";
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
+}
+
+function normalizePasswordCandidates(password) {
+  const raw = String(password || "");
+  const trimmed = raw.trim();
+  return [...new Set([raw, trimmed].filter(Boolean))];
+}
+
+function getSuperAdminAliases() {
+  const configured = normalizeEmail(process.env.SUPER_ADMIN_EMAIL);
+  return new Set(["superadmin@conformix.local", configured].filter(Boolean));
+}
+
+function getAuthEmailCandidates(email) {
+  const normalizedEmail = normalizeEmail(email);
+  const aliases = getSuperAdminAliases();
+
+  if (!aliases.has(normalizedEmail)) {
+    return [normalizedEmail];
+  }
+
+  return [...new Set([normalizedEmail, ...aliases])];
+}
+
+function createAuthError(message = "Falha na autenticacao") {
+  const error = new Error(message);
+  error.code = "AUTH_INVALID_CREDENTIALS";
+  return error;
+}
+
+function isSupabaseUnavailableError(error) {
+  return (
+    error?.code === "ECONNREFUSED" ||
+    error?.code === "ENOTFOUND" ||
+    error?.code === "ETIMEDOUT" ||
+    error?.code === "ECONNABORTED" ||
+    /SUPABASE_URL ou SUPABASE_ANON_KEY nao configurados/i.test(error?.message || "")
+  );
 }
 
 async function ensureDepartmentForRole({ companyId, departmentId, role }) {
@@ -146,54 +185,160 @@ export async function register({ email, password, role, companyName, companyId, 
 }
 
 export async function login({ email, password }) {
-  const user = await prisma.user.findUnique({
-    where: {
-      email: normalizeEmail(email)
+  const emailCandidates = getAuthEmailCandidates(email);
+  const passwordCandidates = normalizePasswordCandidates(password);
+  let supabaseUnavailable = false;
+
+  for (const currentEmail of emailCandidates) {
+    for (const currentPassword of passwordCandidates) {
+      try {
+        const authResponse = await signInWithSupabase(currentEmail, currentPassword);
+        const supabaseUser = authResponse?.user;
+
+        if (!supabaseUser?.email) {
+          continue;
+        }
+
+        const normalizedSupabaseEmail = normalizeEmail(supabaseUser.email);
+        let user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { authUserId: supabaseUser.id },
+              { email: normalizedSupabaseEmail }
+            ]
+          }
+        });
+
+        if (!user) {
+          if (!getSuperAdminAliases().has(normalizedSupabaseEmail)) {
+            throw createAuthError();
+          }
+
+          let company = await prisma.company.findFirst({
+            where: {
+              name: String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim()
+            }
+          });
+
+          if (!company) {
+            company = await prisma.company.create({
+              data: {
+                name: String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim()
+              }
+            });
+          }
+
+          user = await prisma.user.create({
+            data: {
+              name: String(process.env.SUPER_ADMIN_NAME || "Super Admin").trim() || "Super Admin",
+              email: normalizedSupabaseEmail,
+              password: await bcrypt.hash(currentPassword, 10),
+              role: ROLES.SUPER_ADMIN,
+              active: true,
+              companyId: company.id,
+              departmentId: null,
+              authUserId: supabaseUser.id
+            }
+          });
+        } else {
+          user = await prisma.user.update({
+            where: {
+              id: user.id
+            },
+            data: {
+              email: normalizedSupabaseEmail,
+              active: true,
+              authUserId: supabaseUser.id,
+              lastLoginAt: new Date()
+            }
+          });
+        }
+
+        const context = await getUserContextById(user.id);
+
+        await writeAuditLog(user.id, "login", {
+          entity: "auth",
+          entityId: user.id,
+          details: `Login realizado por ${context?.name || normalizedSupabaseEmail}`
+        });
+
+        return {
+          user: context,
+          token: signAccessToken(context)
+        };
+      } catch (error) {
+        if (isSupabaseUnavailableError(error)) {
+          supabaseUnavailable = true;
+          continue;
+        }
+
+        if (error?.response?.status === 400 || error?.response?.status === 401) {
+          continue;
+        }
+
+        if (error?.code === "AUTH_INVALID_CREDENTIALS") {
+          continue;
+        }
+
+        throw error;
+      }
     }
-  });
-
-  if (!user) {
-    throw new Error("Credenciais invalidas");
   }
 
-  if (!user.active) {
-    throw new Error("Credenciais invalidas");
+  if (!supabaseUnavailable) {
+    throw createAuthError();
   }
 
-  const valid = await bcrypt.compare(password || "", user.password);
+  for (const currentEmail of emailCandidates) {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: currentEmail
+      }
+    });
 
-  if (!valid) {
-    throw new Error("Credenciais invalidas");
-  }
-
-  await prisma.user.update({
-    where: {
-      id: user.id
-    },
-    data: {
-      lastLoginAt: new Date()
+    if (!user || !user.active) {
+      continue;
     }
-  });
 
-  const context = await getUserContextById(user.id);
+    for (const currentPassword of passwordCandidates) {
+      const valid = await bcrypt.compare(currentPassword, user.password);
 
-  await writeAuditLog(user.id, "login", {
-    entity: "auth",
-    entityId: user.id,
-    details: `Login realizado por ${context?.name || user.email}`
-  });
+      if (!valid) {
+        continue;
+      }
 
-  return {
-    user: context,
-    token: signAccessToken(context)
-  };
+      await prisma.user.update({
+        where: {
+          id: user.id
+        },
+        data: {
+          lastLoginAt: new Date()
+        }
+      });
+
+      const context = await getUserContextById(user.id);
+
+      await writeAuditLog(user.id, "login", {
+        entity: "auth",
+        entityId: user.id,
+        details: `Login realizado por ${context?.name || user.email}`
+      });
+
+      return {
+        user: context,
+        token: signAccessToken(context)
+      };
+    }
+  }
+
+  throw createAuthError();
 }
 
 export async function me(userId) {
   const user = await getUserContextById(userId);
 
   if (!user) {
-    throw new Error("Usuario nao encontrado");
+    throw createAuthError("Usuario nao autenticado");
   }
 
   return user;

@@ -10,6 +10,25 @@ const prisma = require('./lib/prisma');
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
+function parseConfiguredEmails(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function getBootstrapSuperAdminEmails() {
+  return Array.from(
+    new Set(
+      [
+        'superadmin@conformix.local',
+        String(process.env.BOOTSTRAP_SUPER_ADMIN_EMAIL || '').trim().toLowerCase(),
+        ...parseConfiguredEmails(process.env.SUPER_ADMIN_EMAILS)
+      ].filter(Boolean)
+    )
+  );
+}
+
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
@@ -78,12 +97,13 @@ async function ensureDefaultCategory() {
 }
 
 async function ensureConfiguredUsers() {
-  const configuredUsers = [
-    {
-      email: process.env.BOOTSTRAP_SUPER_ADMIN_EMAIL,
-      password: process.env.BOOTSTRAP_SUPER_ADMIN_PASSWORD
-    }
-  ].filter((item) => item.email && item.password);
+  const bootstrapPassword = String(process.env.BOOTSTRAP_SUPER_ADMIN_PASSWORD || '');
+  const configuredEmails = new Set(getBootstrapSuperAdminEmails());
+
+  const configuredUsers = [...configuredEmails].map((email) => ({
+    email,
+    password: bootstrapPassword
+  })).filter((item) => item.email && item.password);
 
   for (const account of configuredUsers) {
     const normalizedEmail = account.email.trim().toLowerCase();

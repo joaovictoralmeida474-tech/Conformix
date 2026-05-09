@@ -1,9 +1,13 @@
 const DEFAULT_ALLOWED_ORIGINS = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
   "http://localhost:4173",
   "http://127.0.0.1:4173"
 ];
+
+const LOCALHOST_ORIGIN_PATTERN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
 
 function normalizeBoolean(value, defaultValue = false) {
   if (value === undefined || value === null || value === "") {
@@ -38,6 +42,12 @@ export function getAllowedCorsOrigins() {
   return parseOrigins(process.env.CORS_ALLOWED_ORIGINS);
 }
 
+export function isAllowedCorsOrigin(origin, allowedOrigins = []) {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  return LOCALHOST_ORIGIN_PATTERN.test(origin);
+}
+
 export function isPublicRegistrationEnabled() {
   return normalizeBoolean(process.env.ALLOW_PUBLIC_REGISTRATION, false);
 }
@@ -54,4 +64,18 @@ export function getMaxUploadSizeBytes() {
   const rawValue = Number(process.env.MAX_UPLOAD_SIZE_MB || 10);
   const megabytes = Number.isFinite(rawValue) && rawValue > 0 ? rawValue : 10;
   return Math.floor(megabytes * 1024 * 1024);
+}
+
+export function getAuthCookieName() {
+  return "conformix_auth";
+}
+
+export function getRememberMeDurationMs() {
+  const rawValue = Number(process.env.AUTH_REMEMBER_ME_DAYS || 7);
+  const days = Number.isFinite(rawValue) && rawValue > 0 ? rawValue : 7;
+  return Math.floor(days * 24 * 60 * 60 * 1000);
+}
+
+export function shouldUseSecureCookies() {
+  return normalizeBoolean(process.env.COOKIE_SECURE, false);
 }

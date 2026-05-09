@@ -8,37 +8,37 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model Company {
-  id         Int        @id @default(autoincrement())
-  name       String
-  users      User[]
+  id          Int          @id @default(autoincrement())
+  name        String
+  users       User[]
   departments Department[]
-  suppliers  Supplier[]
-  categories Category[]
-  alerts     Alert[]
+  suppliers   Supplier[]
+  categories  Category[]
+  alerts      Alert[]
 }
 
 model User {
-  id            Int          @id @default(autoincrement())
-  name          String       @default("Administrador")
-  email         String       @unique
-  password      String
-  role          String       @default("USER")
-  active        Boolean      @default(true)
-  companyId     Int
-  departmentId  Int?
-  authUserId    String?      @unique @db.Uuid
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @default(now()) @updatedAt
-  lastLoginAt   DateTime?
-  company       Company      @relation(fields: [companyId], references: [id])
-  department    Department?  @relation(fields: [departmentId], references: [id])
-  auditLogs     AuditLog[]
-  evaluations   Evaluation[]
+  id              Int              @id @default(autoincrement())
+  name            String           @default("Administrador")
+  email           String           @unique
+  password        String
+  role            String           @default("USER")
+  active          Boolean          @default(true)
+  companyId       Int
+  departmentId    Int?
+  authUserId      String?          @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  lastLoginAt     DateTime?
+  company         Company          @relation(fields: [companyId], references: [id])
+  department      Department?      @relation(fields: [departmentId], references: [id])
+  auditLogs       AuditLog[]
+  evaluations     Evaluation[]
   userPermissions UserPermission[]
 }
 
@@ -90,13 +90,13 @@ model UserPermission {
 }
 
 model Category {
-  id          Int       @id @default(autoincrement())
-  slug        String    @default("")
+  id          Int                        @id @default(autoincrement())
+  slug        String                     @default("")
   name        String
   description String?
-  active      Boolean   @default(true)
+  active      Boolean                    @default(true)
   companyId   Int
-  company     Company   @relation(fields: [companyId], references: [id])
+  company     Company                    @relation(fields: [companyId], references: [id])
   suppliers   Supplier[]
   questions   CategoryQuestion[]
   documents   CategoryRequiredDocument[]
@@ -106,85 +106,85 @@ model Category {
 }
 
 model CategoryQuestion {
-  id          Int        @id @default(autoincrement())
-  categoryId  Int
-  prompt      String
-  sortOrder   Int        @default(0)
-  active      Boolean    @default(true)
-  category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  answers     EvaluationAnswer[]
+  id         Int                @id @default(autoincrement())
+  categoryId Int
+  prompt     String
+  sortOrder  Int                @default(0)
+  active     Boolean            @default(true)
+  category   Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  answers    EvaluationAnswer[]
 }
 
 model CategoryRequiredDocument {
-  id               Int               @id @default(autoincrement())
-  categoryId       Int
-  name             String
-  sortOrder        Int               @default(0)
-  active           Boolean           @default(true)
-  category         Category          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  supplierDocs     SupplierDocument[]
+  id           Int                @id @default(autoincrement())
+  categoryId   Int
+  name         String
+  sortOrder    Int                @default(0)
+  active       Boolean            @default(true)
+  category     Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  supplierDocs SupplierDocument[]
 }
 
 model Supplier {
-  id                      Int                @id @default(autoincrement())
-  name                    String
-  tradeName               String?
-  cnpj                    String
-  contact                 String?
-  email                   String?
-  phone                   String?
-  addressLine             String?
-  addressNumber           String?
-  addressComplement       String?
-  district                String?
-  city                    String?
-  state                   String?
-  postalCode              String?
-  primaryActivity         String?
-  registrationStatus      String?
-  status                  String             @default("ATIVO")
-  supplierType            String             @default("BASICO")
-  score                   Float              @default(0)
-  riskIndex               Float              @default(0)
-  trend                   String             @default("ESTAVEL")
+  id                        Int                @id @default(autoincrement())
+  name                      String
+  tradeName                 String?
+  cnpj                      String
+  contact                   String?
+  email                     String?
+  phone                     String?
+  addressLine               String?
+  addressNumber             String?
+  addressComplement         String?
+  district                  String?
+  city                      String?
+  state                     String?
+  postalCode                String?
+  primaryActivity           String?
+  registrationStatus        String?
+  status                    String             @default("ATIVO")
+  supplierType              String             @default("BASICO")
+  score                     Float              @default(0)
+  riskIndex                 Float              @default(0)
+  trend                     String             @default("ESTAVEL")
   reactivationJustification String?
-  companyId               Int
-  company                 Company            @relation(fields: [companyId], references: [id])
-  categoryId              Int?
-  category                Category?          @relation(fields: [categoryId], references: [id])
-  lastEvaluationDate      DateTime?
-  nextReview              DateTime?
-  evaluations             Evaluation[]
-  rncs                    RNC[]
-  documents               SupplierDocument[]
-  alerts                  Alert[]
+  companyId                 Int
+  company                   Company            @relation(fields: [companyId], references: [id])
+  categoryId                Int?
+  category                  Category?          @relation(fields: [categoryId], references: [id])
+  lastEvaluationDate        DateTime?
+  nextReview                DateTime?
+  evaluations               Evaluation[]
+  rncs                      RNC[]
+  documents                 SupplierDocument[]
+  alerts                    Alert[]
 
   @@unique([companyId, cnpj])
 }
 
 model Evaluation {
-  id             Int                @id @default(autoincrement())
-  supplierId     Int
-  evaluatorId    Int
-  evaluationDate DateTime           @default(now())
-  qualityScore   Int?
-  deliveryScore  Int?
-  priceScore     Int?
-  serviceScore   Int?
-  reliabilityScore Int?
-  invoiceNumber  String?
-  observations   String?
-  answers        String?
+  id                     Int      @id @default(autoincrement())
+  supplierId             Int
+  evaluatorId            Int
+  evaluationDate         DateTime @default(now())
+  qualityScore           Int?
+  deliveryScore          Int?
+  priceScore             Int?
+  serviceScore           Int?
+  reliabilityScore       Int?
+  invoiceNumber          String?
+  observations           String?
+  answers                String?
   attachmentFilename     String?
   attachmentOriginalName String?
-  score          Float
-  classification String?
-  createdAt      DateTime           @default(now())
+  score                  Float
+  classification         String?
+  createdAt              DateTime @default(now())
 
-  supplier       Supplier           @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  evaluator      User               @relation(fields: [evaluatorId], references: [id])
-  rnc            RNC?
-  answerItems    EvaluationAnswer[]
+  supplier    Supplier           @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  evaluator   User               @relation(fields: [evaluatorId], references: [id])
+  rnc         RNC?
+  answerItems EvaluationAnswer[]
 }
 
 model EvaluationAnswer {
@@ -199,10 +199,10 @@ model EvaluationAnswer {
 }
 
 model RNC {
-  id               Int        @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   supplierId       Int
-  evaluationId     Int?       @unique
-  status           String     @default("ABERTA")
+  evaluationId     Int?      @unique
+  status           String    @default("ABERTA")
   actionPlan       String?
   description      String?
   cause            String?
@@ -210,10 +210,10 @@ model RNC {
   responsible      String?
   deadline         DateTime?
   treatedAt        DateTime?
-  createdAt        DateTime   @default(now())
+  createdAt        DateTime  @default(now())
 
-  supplier         Supplier   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  evaluation       Evaluation? @relation(fields: [evaluationId], references: [id], onDelete: SetNull)
+  supplier   Supplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  evaluation Evaluation? @relation(fields: [evaluationId], references: [id], onDelete: SetNull)
 }
 
 model SupplierDocument {

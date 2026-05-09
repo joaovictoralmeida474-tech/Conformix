@@ -21,6 +21,7 @@ async function signInWithPassword(email, password) {
     `${url}/auth/v1/token?grant_type=password`,
     { email, password },
     {
+      proxy: false,
       headers: {
         apikey: anonKey,
         Authorization: `Bearer ${anonKey}`,

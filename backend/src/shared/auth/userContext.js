@@ -1,5 +1,5 @@
 import { prisma } from "../database/prisma.js";
-import { ROLE_PERMISSION_MAP, normalizeRole } from "./permissions.js";
+import { ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "./permissions.js";
 
 function serializeDepartment(department) {
   if (!department) return null;
@@ -23,30 +23,35 @@ function serializeCompany(company) {
 }
 
 export function serializeUserContext(user) {
+  const normalizedRole = normalizeRole(user.role);
   const rolePermissionsFromDb = (user.rolePermissions || [])
     .map((item) => item.permission?.key)
     .filter(Boolean);
   const userPermissionsFromDb = (user.userPermissions || [])
     .map((item) => item.permission?.key)
     .filter(Boolean);
-  const permissions = userPermissionsFromDb.length
+  const permissions =
+    normalizedRole === ROLES.SUPER_ADMIN
+      ? ROLE_PERMISSION_MAP[ROLES.SUPER_ADMIN] || []
+      : userPermissionsFromDb.length
     ? userPermissionsFromDb
     : rolePermissionsFromDb.length
     ? rolePermissionsFromDb
-    : ROLE_PERMISSION_MAP[normalizeRole(user.role)] || [];
+    : ROLE_PERMISSION_MAP[normalizedRole] || [];
 
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: normalizeRole(user.role),
+    role: normalizedRole,
     active: user.active,
     companyId: user.companyId,
     departmentId: user.departmentId || null,
     company: serializeCompany(user.company),
     department: serializeDepartment(user.department),
     permissions,
-    permissionsSource: userPermissionsFromDb.length ? "custom" : "role"
+    permissionsSource:
+      normalizedRole === ROLES.SUPER_ADMIN ? "role" : userPermissionsFromDb.length ? "custom" : "role"
   };
 }
 

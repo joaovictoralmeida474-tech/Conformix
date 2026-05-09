@@ -2,7 +2,12 @@ import jwt from "jsonwebtoken";
 
 import { hasPermission, isAdminRole, normalizeRole } from "../auth/permissions.js";
 import { getUserContextById } from "../auth/userContext.js";
-import { getJwtSecret } from "../config/security.js";
+import {
+  getAuthCookieName,
+  getJwtSecret,
+  getRememberMeDurationMs,
+  shouldUseSecureCookies
+} from "../config/security.js";
 
 function extractToken(authorization = "") {
   if (authorization.startsWith("Bearer ")) {
@@ -10,6 +15,30 @@ function extractToken(authorization = "") {
   }
 
   return authorization || null;
+}
+
+function parseCookies(cookieHeader = "") {
+  return String(cookieHeader || "")
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((accumulator, item) => {
+      const separatorIndex = item.indexOf("=");
+      if (separatorIndex <= 0) return accumulator;
+
+      const key = item.slice(0, separatorIndex).trim();
+      const value = item.slice(separatorIndex + 1).trim();
+      accumulator[key] = decodeURIComponent(value);
+      return accumulator;
+    }, {});
+}
+
+function extractTokenFromRequest(req) {
+  const headerToken = extractToken(req.headers.authorization);
+  if (headerToken) return headerToken;
+
+  const cookies = parseCookies(req.headers.cookie);
+  return cookies[getAuthCookieName()] || null;
 }
 
 function signAccessToken(user) {
@@ -27,11 +56,48 @@ function signAccessToken(user) {
   );
 }
 
+export function setAuthCookie(res, token, rememberMe = false) {
+  const cookieOptions = [
+    `${getAuthCookieName()}=${encodeURIComponent(token)}`,
+    "HttpOnly",
+    "Path=/",
+    "SameSite=Strict",
+    "Priority=High"
+  ];
+
+  if (shouldUseSecureCookies()) {
+    cookieOptions.push("Secure");
+  }
+
+  if (rememberMe) {
+    cookieOptions.push(`Max-Age=${Math.floor(getRememberMeDurationMs() / 1000)}`);
+  }
+
+  res.setHeader("Set-Cookie", cookieOptions.join("; "));
+}
+
+export function clearAuthCookie(res) {
+  const cookieOptions = [
+    `${getAuthCookieName()}=`,
+    "HttpOnly",
+    "Path=/",
+    "SameSite=Strict",
+    "Priority=High",
+    "Max-Age=0"
+  ];
+
+  if (shouldUseSecureCookies()) {
+    cookieOptions.push("Secure");
+  }
+
+  res.setHeader("Set-Cookie", cookieOptions.join("; "));
+}
+
 export async function auth(req, res, next) {
-  const token = extractToken(req.headers.authorization);
+  const token = extractTokenFromRequest(req);
 
   if (!token) {
-    return res.status(401).json({ error: "Token nao informado" });
+    return res.status(401).json({ error: "Nao autorizado" });
   }
 
   try {
@@ -39,14 +105,14 @@ export async function auth(req, res, next) {
     const user = await getUserContextById(decoded.id);
 
     if (!user) {
-      return res.status(401).json({ error: "Usuario nao encontrado ou inativo" });
+      return res.status(401).json({ error: "Nao autorizado" });
     }
 
     req.user = user;
     req.token = token;
     return next();
   } catch {
-    return res.status(403).json({ error: "Token invalido" });
+    return res.status(401).json({ error: "Nao autorizado" });
   }
 }
 
@@ -55,7 +121,7 @@ export function requireRole(roles = []) {
 
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ error: "Usuario nao autenticado" });
+      return res.status(401).json({ error: "Nao autorizado" });
     }
 
     if (!normalizedRoles.includes(normalizeRole(req.user.role))) {
@@ -69,7 +135,7 @@ export function requireRole(roles = []) {
 export function requirePermission(permission) {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ error: "Usuario nao autenticado" });
+      return res.status(401).json({ error: "Nao autorizado" });
     }
 
     if (!hasPermission(req.user, permission)) {

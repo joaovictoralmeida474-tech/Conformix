@@ -1,6 +1,5 @@
-const TOKEN_KEY = "token";
-const USER_KEY = "user";
 const REMEMBER_ME_KEY = "rememberMe";
+let memoryUser = null;
 
 function isBrowser() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -29,29 +28,11 @@ function removeRaw(key) {
 }
 
 export function getStoredToken() {
-  const token = readRaw(TOKEN_KEY);
-
-  if (!token || token === "null" || token === "undefined") {
-    return null;
-  }
-
-  return token;
+  return null;
 }
 
 export function getStoredUser() {
-  const rawUser = readRaw(USER_KEY);
-
-  if (!rawUser || rawUser === "null" || rawUser === "undefined") {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(rawUser);
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch {
-    removeRaw(USER_KEY);
-    return null;
-  }
+  return memoryUser && typeof memoryUser === "object" ? memoryUser : null;
 }
 
 export function getRememberMePreference() {
@@ -69,32 +50,18 @@ export function getRememberMePreference() {
   }
 }
 
-export function saveSession({ token, user, rememberMe }) {
+export function saveSession({ user, rememberMe }) {
   if (!isBrowser()) return;
   const targetStorage = rememberMe ? window.localStorage : window.sessionStorage;
   const secondaryStorage = rememberMe ? window.sessionStorage : window.localStorage;
 
-  secondaryStorage.removeItem(TOKEN_KEY);
-  secondaryStorage.removeItem(USER_KEY);
   secondaryStorage.removeItem(REMEMBER_ME_KEY);
-
-  if (token) {
-    targetStorage.setItem(TOKEN_KEY, token);
-  } else {
-    removeRaw(TOKEN_KEY);
-  }
-
-  if (user && typeof user === "object") {
-    targetStorage.setItem(USER_KEY, JSON.stringify(user));
-  } else {
-    removeRaw(USER_KEY);
-  }
+  memoryUser = user && typeof user === "object" ? user : null;
 
   targetStorage.setItem(REMEMBER_ME_KEY, JSON.stringify(Boolean(rememberMe)));
 }
 
 export function clearSession() {
-  removeRaw(TOKEN_KEY);
-  removeRaw(USER_KEY);
+  memoryUser = null;
   removeRaw(REMEMBER_ME_KEY);
 }

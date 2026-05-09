@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { PERMISSIONS, hasPermission } from "../utils/access";
+import { getStoredUser } from "../utils/authStorage";
 
 const initialForm = {
   status: "ABERTA",
@@ -30,7 +31,7 @@ function isResolvedStatus(value) {
 }
 
 export default function RNC() {
-  const currentUser = JSON.parse(window.localStorage.getItem("user") || "null");
+  const currentUser = getStoredUser();
   const canManageRnc = hasPermission(currentUser, PERMISSIONS.RNC_MANAGE);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -44,7 +45,6 @@ export default function RNC() {
       setItems(response.data);
     } catch (loadError) {
       setError("Nao foi possivel carregar as RNCs.");
-      console.error(loadError);
     }
   }
 

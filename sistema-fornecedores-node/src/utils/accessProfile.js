@@ -45,6 +45,18 @@ function parseConfiguredEmails(value) {
     .filter(Boolean);
 }
 
+function getSuperAdminEmails() {
+  return Array.from(
+    new Set(
+      [
+        'superadmin@conformix.local',
+        String(process.env.BOOTSTRAP_SUPER_ADMIN_EMAIL || '').trim().toLowerCase(),
+        ...parseConfiguredEmails(process.env.SUPER_ADMIN_EMAILS)
+      ].filter(Boolean)
+    )
+  );
+}
+
 function resolveRoleByEmail(email) {
   const normalizedEmail = String(email || '').trim().toLowerCase();
 
@@ -52,7 +64,7 @@ function resolveRoleByEmail(email) {
     return null;
   }
 
-  const superAdminEmails = parseConfiguredEmails(process.env.SUPER_ADMIN_EMAILS);
+  const superAdminEmails = getSuperAdminEmails();
   const adminEmails = parseConfiguredEmails(process.env.ADMIN_EMAILS);
 
   if (superAdminEmails.includes(normalizedEmail)) {

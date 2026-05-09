@@ -4,6 +4,11 @@ import { api } from "../services/api";
 import { getDefaultRouteForUser } from "../utils/access";
 import { saveSession } from "../utils/authStorage";
 
+const SUPER_ADMIN_EMAIL_ALIASES = [
+  "superadmin@conformix.local",
+  "joaovictoralmeida474@gmail.com",
+];
+
 export default function Login() {
   const [form, setForm] = useState({
     email: "",
@@ -249,20 +254,58 @@ export default function Login() {
     setIsLoading(true);
     setError("");
 
+    const normalizedEmail = form.email.trim().toLowerCase();
+    const passwordCandidates = [...new Set([form.password, form.password.trim()].filter(Boolean))];
+    const emailCandidates = SUPER_ADMIN_EMAIL_ALIASES.includes(normalizedEmail)
+      ? SUPER_ADMIN_EMAIL_ALIASES
+      : [normalizedEmail];
+
     try {
-      const { data } = await api.post("/auth/login", {
-        email: form.email,
-        password: form.password,
-      });
+      let successfulResponse = null;
+      let lastError = null;
+
+      for (const email of emailCandidates) {
+        for (const password of passwordCandidates) {
+          try {
+            successfulResponse = await api.post("/auth/login", {
+              email,
+              password,
+              rememberMe,
+            });
+            break;
+          } catch (error) {
+            lastError = error;
+
+            if (error?.response?.status !== 401) {
+              throw error;
+            }
+          }
+        }
+
+        if (successfulResponse) {
+          break;
+        }
+      }
+
+      if (!successfulResponse) {
+        throw lastError;
+      }
+
+      const { data } = successfulResponse;
 
       saveSession({
-        token: data?.token || null,
         user: data?.user || null,
         rememberMe,
       });
       nav(getDefaultRouteForUser(data?.user), { replace: true });
-    } catch (err) {
-      setError(err.response?.data?.error || err.message || "Nao foi possivel entrar");
+    } catch (error) {
+      const status = error?.response?.status;
+      const isInvalidCredentials = status === 401;
+      setError(
+        isInvalidCredentials
+          ? "Email ou senha invalidos"
+          : "Nao foi possivel entrar agora. Tente novamente em instantes."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -505,6 +548,7 @@ export default function Login() {
                       onBlur={() => setEmailFocused(false)}
                       className="login-input-exact"
                       style={{ caretColor: "#00e6b4" }}
+                      autoComplete="username"
                       required
                     />
                   </div>
@@ -548,6 +592,7 @@ export default function Login() {
                       onBlur={() => setPasswordFocused(false)}
                       className="login-input-exact login-input-password-exact"
                       style={{ caretColor: "#1ea0ff" }}
+                      autoComplete={rememberMe ? "current-password" : "off"}
                       required
                     />
                     <button

@@ -1,28 +1,61 @@
 import * as authService from "./authService.js";
+import { clearAuthCookie, setAuthCookie } from "../../shared/middlewares/auth.js";
+
+function applyNoStore(res) {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+}
+
+function sendSafeAuthError(res, error) {
+  if (error?.code === "AUTH_INVALID_CREDENTIALS") {
+    return res.status(401).json({ error: "Email ou senha invalidos" });
+  }
+
+  if (error?.code === "AUTH_RATE_LIMIT") {
+    return res.status(429).json({ error: "Muitas tentativas. Tente novamente em alguns minutos." });
+  }
+
+  return res.status(400).json({ error: "Nao foi possivel concluir a autenticacao" });
+}
 
 export async function register(req, res) {
   try {
+    applyNoStore(res);
     const result = await authService.register(req.body);
-    res.status(201).json(result);
+    setAuthCookie(res, result.token, Boolean(req.body?.rememberMe));
+    res.status(201).json({ user: result.user });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    applyNoStore(res);
+    sendSafeAuthError(res, error);
   }
 }
 
 export async function login(req, res) {
   try {
+    applyNoStore(res);
     const result = await authService.login(req.body);
-    res.json(result);
+    setAuthCookie(res, result.token, Boolean(req.body?.rememberMe));
+    res.json({ user: result.user });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    applyNoStore(res);
+    sendSafeAuthError(res, error);
   }
 }
 
 export async function me(req, res) {
   try {
+    applyNoStore(res);
     const user = await authService.me(req.user.id);
     res.json(user);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    applyNoStore(res);
+    res.status(401).json({ error: "Nao autorizado" });
   }
+}
+
+export async function logout(_req, res) {
+  applyNoStore(res);
+  clearAuthCookie(res);
+  res.json({ success: true });
 }

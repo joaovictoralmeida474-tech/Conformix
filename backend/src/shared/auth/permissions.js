@@ -165,6 +165,7 @@ export function normalizeRole(role) {
 
 export function hasPermission(user, permission) {
   if (!permission) return true;
+  if (normalizeRole(user?.role) === ROLES.SUPER_ADMIN) return true;
   if (!user?.permissions?.length) return false;
   return user.permissions.includes(permission);
 }

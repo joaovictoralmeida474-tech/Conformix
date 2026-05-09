@@ -5,7 +5,6 @@ import { getDefaultRouteForUser, hasPermission } from "../utils/access";
 import {
   clearSession,
   getRememberMePreference,
-  getStoredToken,
   getStoredUser,
   saveSession
 } from "../utils/authStorage";
@@ -18,16 +17,6 @@ export default function ProtectedRoute({ children, permissions = [], roles = [] 
     let isMounted = true;
 
     async function validateSession() {
-      const token = getStoredToken();
-
-      if (!token) {
-        if (isMounted) {
-          setUser(null);
-          setIsChecking(false);
-        }
-        return;
-      }
-
       const storedUser = getStoredUser();
 
       if (storedUser && isMounted) {
@@ -38,7 +27,6 @@ export default function ProtectedRoute({ children, permissions = [], roles = [] 
         const { data } = await api.get("/auth/me");
 
         saveSession({
-          token,
           user: data,
           rememberMe: getRememberMePreference()
         });
@@ -70,7 +58,7 @@ export default function ProtectedRoute({ children, permissions = [], roles = [] 
     return null;
   }
 
-  if (!getStoredToken() || !user) {
+  if (!user) {
     return <Navigate to="/" replace />;
   }
 

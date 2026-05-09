@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { api } from "../services/api";
 import { clearSession, getStoredUser } from "../utils/authStorage";
 import conformixLogo from "../assets/conformix-logo-v2-transparent.png";
 import { PERMISSIONS, canAccessAdmin, hasPermission } from "../utils/access";
@@ -55,6 +56,12 @@ export default function Sidebar() {
   ].filter(Boolean);
 
   async function logout() {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // Limpa a sessao local mesmo se a API estiver indisponivel.
+    }
+
     clearSession();
     navigate("/");
   }

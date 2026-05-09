@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import axios from "axios";
 
 import { prisma } from "./prisma.js";
 import {
@@ -133,6 +134,21 @@ async function ensureSuperAdmin() {
   });
 
   if (existing) {
+    const passwordMatches = await bcrypt.compare(password, existing.password);
+
+    await prisma.user.update({
+      where: {
+        id: existing.id
+      },
+      data: {
+        name,
+        password: passwordMatches ? existing.password : hash,
+        role: ROLES.SUPER_ADMIN,
+        active: true,
+        companyId: company.id,
+        departmentId: null
+      }
+    });
     return;
   }
 
@@ -146,6 +162,56 @@ async function ensureSuperAdmin() {
       departmentId: null,
       active: true
     }
+  });
+}
+
+async function ensureSupabaseSuperAdmin() {
+  const url = String(process.env.SUPABASE_URL || "").trim().replace(/\/$/, "");
+  const serviceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const email = String(process.env.SUPER_ADMIN_EMAIL || "").trim().toLowerCase();
+  const password = String(process.env.SUPER_ADMIN_PASSWORD || "");
+  const name = String(process.env.SUPER_ADMIN_NAME || "Super Admin").trim() || "Super Admin";
+
+  if (!url || !serviceRoleKey || !email || !password) {
+    return;
+  }
+
+  const headers = {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json"
+  };
+
+  const listResponse = await axios.get(`${url}/auth/v1/admin/users`, {
+    proxy: false,
+    headers
+  });
+
+  const users = Array.isArray(listResponse.data?.users) ? listResponse.data.users : [];
+  const existingUser = users.find((item) => String(item?.email || "").trim().toLowerCase() === email);
+  const payload = {
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      name
+    },
+    app_metadata: {
+      role: ROLES.SUPER_ADMIN
+    }
+  };
+
+  if (!existingUser?.id) {
+    await axios.post(`${url}/auth/v1/admin/users`, payload, {
+      proxy: false,
+      headers
+    });
+    return;
+  }
+
+  await axios.put(`${url}/auth/v1/admin/users/${existingUser.id}`, payload, {
+    proxy: false,
+    headers
   });
 }
 
@@ -252,6 +318,7 @@ export async function seedPlatform() {
   }
 
   await ensureSuperAdmin();
+  await ensureSupabaseSuperAdmin();
 
   if (isDemoDataEnabled()) {
     await ensureDemoCompany();
