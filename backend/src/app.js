@@ -10,6 +10,7 @@ import { getAllowedCorsOrigins, getJwtSecret, isAllowedCorsOrigin } from "./shar
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const allowedOrigins = new Set(getAllowedCorsOrigins());
+let startupPromise = null;
 
 app.disable("x-powered-by");
 app.use(
@@ -54,21 +55,31 @@ app.get("/health", (_, res) => {
   res.json({ status: "ok" });
 });
 
-async function start() {
-  try {
-    getJwtSecret();
-    await seedPlatform();
-  } catch (error) {
-    console.error("Falha ao validar seguranca inicial:", error.message);
-    process.exit(1);
+export async function initializeApp() {
+  if (!startupPromise) {
+    startupPromise = (async () => {
+      getJwtSecret();
+      await seedPlatform();
+    })().catch((error) => {
+      startupPromise = null;
+      throw error;
+    });
   }
 
-  app.listen(port, () => {
-    console.log(`API rodando na porta ${port}`);
-  });
+  return startupPromise;
 }
 
-start().catch((error) => {
-  console.error("Erro ao iniciar API:", error);
-  process.exit(1);
-});
+export default app;
+
+if (process.env.VERCEL !== "1") {
+  initializeApp()
+    .then(() => {
+      app.listen(port, () => {
+        console.log(`API rodando na porta ${port}`);
+      });
+    })
+    .catch((error) => {
+      console.error("Erro ao iniciar API:", error);
+      process.exit(1);
+    });
+}
