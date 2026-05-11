@@ -1,20 +1,18 @@
 import ExcelJS from "exceljs";
 import axios from "axios";
 import path from "path";
-import { fileURLToPath } from "url";
 
 import { prisma } from "../../shared/database/prisma.js";
 import { checkExpiry } from "../../shared/utils/checkExpiry.js";
+import { getEvaluationUploadsRoot, getSupplierUploadsRoot } from "../../shared/uploads.js";
 import {
   buildCompanyWhere,
   isSuperAdminScope,
   resolveTargetCompanyId
 } from "../../shared/auth/dataScope.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const supplierUploadsRoot = path.resolve(__dirname, "../../uploads/suppliers");
-const evaluationUploadsRoot = path.resolve(__dirname, "../../uploads/evaluations");
+const supplierUploadsRoot = getSupplierUploadsRoot();
+const evaluationUploadsRoot = getEvaluationUploadsRoot();
 
 const SUPPLIER_TYPE_CADENCE = {
   CRITICO: 30,

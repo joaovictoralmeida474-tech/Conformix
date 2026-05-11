@@ -1,13 +1,10 @@
 import fs from "fs";
-import path from "path";
 import multer from "multer";
-import { fileURLToPath } from "url";
 import { getMaxUploadSizeBytes } from "../config/security.js";
+import { getEvaluationUploadsRoot, getSupplierUploadsRoot } from "../uploads.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const supplierUploadRoot = path.resolve(__dirname, "../../uploads/suppliers");
-const evaluationUploadRoot = path.resolve(__dirname, "../../uploads/evaluations");
+const supplierUploadRoot = getSupplierUploadsRoot();
+const evaluationUploadRoot = getEvaluationUploadsRoot();
 
 fs.mkdirSync(supplierUploadRoot, { recursive: true });
 fs.mkdirSync(evaluationUploadRoot, { recursive: true });
