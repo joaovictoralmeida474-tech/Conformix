@@ -1,5 +1,3 @@
-import app, { initializeApp } from "../backend/src/app.js";
-
 function rebuildApiUrl(req) {
   const originalPath = String(req.query?.path || "").replace(/^\/+/, "");
   const searchParams = new URLSearchParams();
@@ -23,6 +21,7 @@ function rebuildApiUrl(req) {
 
 export default async function handler(req, res) {
   try {
+    const { default: app, initializeApp } = await import("../backend/src/app.js");
     await initializeApp();
     req.url = rebuildApiUrl(req);
     return app(req, res);
