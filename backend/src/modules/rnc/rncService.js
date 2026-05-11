@@ -1,4 +1,5 @@
 import { prisma } from "../../shared/database/prisma.js";
+import { buildSupplierCompanyWhere } from "../../shared/auth/dataScope.js";
 
 function addThirtyDays(baseDate) {
   const deadline = new Date(baseDate);
@@ -6,13 +7,9 @@ function addThirtyDays(baseDate) {
   return deadline;
 }
 
-export async function list(companyId) {
+export async function list(scope) {
   const items = await prisma.rNC.findMany({
-    where: {
-      supplier: {
-        companyId
-      }
-    },
+    where: buildSupplierCompanyWhere(scope),
     include: {
       supplier: {
         select: {
@@ -61,13 +58,11 @@ export async function list(companyId) {
   return items;
 }
 
-export async function update(companyId, id, data) {
+export async function update(scope, id, data) {
   const existing = await prisma.rNC.findFirst({
     where: {
       id: Number(id),
-      supplier: {
-        companyId
-      }
+      ...buildSupplierCompanyWhere(scope)
     }
   });
 

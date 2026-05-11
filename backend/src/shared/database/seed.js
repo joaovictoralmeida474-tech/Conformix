@@ -5,9 +5,15 @@ import { prisma } from "./prisma.js";
 import {
   PERMISSION_DEFINITIONS,
   ROLE_PERMISSION_MAP,
-  ROLES
+  ROLES,
+  normalizeRole
 } from "../auth/permissions.js";
+import {
+  buildSupabaseProfile,
+  ensureSupabaseProvisioningScope
+} from "../auth/supabaseProvisioning.js";
 import { isBootstrapSeedEnabled, isDemoDataEnabled } from "../config/security.js";
+import { listSupabaseUsers } from "../integrations/supabaseAdmin.js";
 
 function slugify(value) {
   return String(value || "")
@@ -215,6 +221,82 @@ async function ensureSupabaseSuperAdmin() {
   });
 }
 
+async function syncSupabaseUsersToLocal() {
+  const serviceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const url = String(process.env.SUPABASE_URL || "").trim();
+
+  if (!serviceRoleKey || !url) {
+    return;
+  }
+
+  const superAdminEmail = String(process.env.SUPER_ADMIN_EMAIL || "").trim().toLowerCase();
+  const users = await listSupabaseUsers();
+
+  for (const supabaseUser of users) {
+    const email = String(supabaseUser?.email || "").trim().toLowerCase();
+
+    if (!email) {
+      continue;
+    }
+
+    const profile = buildSupabaseProfile(supabaseUser);
+    let role = normalizeRole(profile.role);
+    let name = profile.name;
+    let scope = null;
+
+    if (email === superAdminEmail) {
+      role = ROLES.SUPER_ADMIN;
+      name = name || "Super Admin";
+      scope = await ensureSupabaseProvisioningScope({
+        ...profile,
+        role: ROLES.SUPER_ADMIN
+      });
+    } else {
+      scope = await ensureSupabaseProvisioningScope(profile);
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ authUserId: supabaseUser.id }, { email }]
+      }
+    });
+
+    const passwordHash = await bcrypt.hash(`supabase:${supabaseUser.id}`, 10);
+
+    if (existingUser) {
+      await prisma.user.update({
+        where: {
+          id: existingUser.id
+        },
+        data: {
+          name,
+          email,
+          role,
+          active: true,
+          companyId: scope.companyId,
+          departmentId: scope.departmentId,
+          authUserId: supabaseUser.id,
+          password: existingUser.password || passwordHash
+        }
+      });
+      continue;
+    }
+
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        role,
+        active: true,
+        companyId: scope.companyId,
+        departmentId: scope.departmentId,
+        authUserId: supabaseUser.id,
+        password: passwordHash
+      }
+    });
+  }
+}
+
 async function ensureDemoCompany() {
   const defaultAdminEmail = String(process.env.DEMO_ADMIN_EMAIL || "")
     .trim()
@@ -319,6 +401,7 @@ export async function seedPlatform() {
 
   await ensureSuperAdmin();
   await ensureSupabaseSuperAdmin();
+  await syncSupabaseUsersToLocal();
 
   if (isDemoDataEnabled()) {
     await ensureDemoCompany();

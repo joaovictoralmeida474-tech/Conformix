@@ -5,6 +5,11 @@ import { fileURLToPath } from "url";
 
 import { prisma } from "../../shared/database/prisma.js";
 import { checkExpiry } from "../../shared/utils/checkExpiry.js";
+import {
+  buildCompanyWhere,
+  isSuperAdminScope,
+  resolveTargetCompanyId
+} from "../../shared/auth/dataScope.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -261,11 +266,11 @@ function serializeSupplier(supplier) {
   };
 }
 
-async function findSupplier(companyId, id) {
+async function findSupplier(scope, id) {
   return prisma.supplier.findFirst({
     where: {
       id: Number(id),
-      companyId
+      ...buildCompanyWhere(scope)
     },
     include: {
       category: {
@@ -308,10 +313,70 @@ async function findSupplier(companyId, id) {
   });
 }
 
-export async function list(companyId, filters = {}) {
-  const where = {
-    companyId
+async function resolveCategoryForSupplier(scope, categoryId) {
+  const normalizedCategoryId = Number(categoryId);
+
+  if (!Number.isInteger(normalizedCategoryId) || normalizedCategoryId <= 0) {
+    return null;
+  }
+
+  const category = await prisma.category.findUnique({
+    where: {
+      id: normalizedCategoryId
+    },
+    select: {
+      id: true,
+      companyId: true,
+      name: true
+    }
+  });
+
+  if (!category) {
+    throw new Error("Categoria nao encontrada");
+  }
+
+  if (!isSuperAdminScope(scope) && Number(category.companyId) !== Number(scope.companyId)) {
+    throw new Error("Categoria fora do escopo do usuario");
+  }
+
+  return category;
+}
+
+async function resolveSupplierCompanyAndCategory(
+  scope,
+  data = {},
+  fallbackCategoryId = null,
+  fallbackCompanyId = null
+) {
+  const rawCategoryId = data.categoryId ?? fallbackCategoryId;
+  const category = await resolveCategoryForSupplier(scope, rawCategoryId);
+  const explicitCompanyId = Number(data.companyId);
+  const hasExplicitCompanyId = Number.isInteger(explicitCompanyId) && explicitCompanyId > 0;
+
+  if (category) {
+    if (hasExplicitCompanyId && Number(category.companyId) !== explicitCompanyId) {
+      throw new Error("A categoria selecionada nao pertence a empresa informada");
+    }
+
+    return {
+      companyId: Number(category.companyId),
+      categoryId: category.id
+    };
+  }
+
+  return {
+    companyId:
+      Number.isInteger(Number(fallbackCompanyId)) && Number(fallbackCompanyId) > 0
+        ? Number(data.companyId) > 0
+          ? resolveTargetCompanyId(scope, data.companyId)
+          : Number(fallbackCompanyId)
+        : resolveTargetCompanyId(scope, data.companyId),
+    categoryId: null
   };
+}
+
+export async function list(scope, filters = {}) {
+  const where = buildCompanyWhere(scope);
 
   if (filters.search) {
     where.name = {
@@ -364,8 +429,8 @@ export async function list(companyId, filters = {}) {
   return suppliers.map(serializeSupplier);
 }
 
-export async function getById(companyId, id) {
-  const supplier = await findSupplier(companyId, id);
+export async function getById(scope, id) {
+  const supplier = await findSupplier(scope, id);
 
   if (!supplier) {
     throw new Error("Fornecedor nao encontrado");
@@ -374,7 +439,8 @@ export async function getById(companyId, id) {
   return serializeSupplier(supplier);
 }
 
-export async function create(companyId, data) {
+export async function create(scope, data) {
+  const { companyId, categoryId } = await resolveSupplierCompanyAndCategory(scope, data);
   const normalizedCnpj = normalizeCNPJ(data.cnpj);
   if (!normalizedCnpj) {
     throw new Error("CNPJ obrigatorio");
@@ -404,7 +470,7 @@ export async function create(companyId, data) {
       trend: String(data.trend || "ESTAVEL").trim().toUpperCase(),
       reactivationJustification: String(data.reactivationJustification || "").trim() || null,
       companyId,
-      categoryId: data.categoryId ? Number(data.categoryId) : null,
+      categoryId,
       lastEvaluationDate: data.lastEvaluationDate ? new Date(data.lastEvaluationDate) : null,
       nextReview: data.nextReview ? new Date(data.nextReview) : null
     }
@@ -413,17 +479,24 @@ export async function create(companyId, data) {
   return getById(companyId, supplier.id);
 }
 
-export async function update(companyId, id, data) {
+export async function update(scope, id, data) {
   const existing = await prisma.supplier.findFirst({
     where: {
       id: Number(id),
-      companyId
+      ...buildCompanyWhere(scope)
     }
   });
 
   if (!existing) {
     throw new Error("Fornecedor nao encontrado");
   }
+
+  const { companyId, categoryId } = await resolveSupplierCompanyAndCategory(
+    scope,
+    data,
+    existing.categoryId,
+    existing.companyId
+  );
 
   await prisma.supplier.update({
     where: { id: Number(id) },
@@ -445,21 +518,22 @@ export async function update(companyId, id, data) {
       registrationStatus: String(data.registrationStatus || "").trim() || null,
       status: data.status ? normalizeStatus(data.status) : existing.status,
       supplierType: data.supplierType ? normalizeSupplierType(data.supplierType) : existing.supplierType,
-      categoryId: data.categoryId ? Number(data.categoryId) : null,
+      companyId,
+      categoryId,
       reactivationJustification: String(data.reactivationJustification || "").trim() || null,
       lastEvaluationDate: data.lastEvaluationDate ? new Date(data.lastEvaluationDate) : existing.lastEvaluationDate,
       nextReview: data.nextReview ? new Date(data.nextReview) : existing.nextReview
     }
   });
 
-  return getById(companyId, id);
+  return getById(scope, id);
 }
 
-export async function remove(companyId, id) {
+export async function remove(scope, id) {
   const supplier = await prisma.supplier.findFirst({
     where: {
       id: Number(id),
-      companyId
+      ...buildCompanyWhere(scope)
     }
   });
 
@@ -474,7 +548,9 @@ export async function remove(companyId, id) {
 
 export async function fetchCNPJ(cnpj) {
   const normalized = normalizeCNPJ(cnpj);
-  const response = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${normalized}`);
+  const response = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${normalized}`, {
+    proxy: false
+  });
   const data = response.data;
 
   return {
@@ -496,8 +572,8 @@ export async function fetchCNPJ(cnpj) {
   };
 }
 
-export async function syncDocuments(companyId, supplierId, documents = [], files = []) {
-  const supplier = await findSupplier(companyId, supplierId);
+export async function syncDocuments(scope, supplierId, documents = [], files = []) {
+  const supplier = await findSupplier(scope, supplierId);
 
   if (!supplier) {
     throw new Error("Fornecedor nao encontrado");
@@ -545,11 +621,11 @@ export async function syncDocuments(companyId, supplierId, documents = [], files
     });
   }
 
-  return getById(companyId, supplier.id);
+  return getById(scope, supplier.id);
 }
 
-export async function getDocumentFile(companyId, supplierId, documentId) {
-  const supplier = await findSupplier(companyId, supplierId);
+export async function getDocumentFile(scope, supplierId, documentId) {
+  const supplier = await findSupplier(scope, supplierId);
 
   if (!supplier) {
     throw new Error("Fornecedor nao encontrado");
@@ -568,8 +644,8 @@ export async function getDocumentFile(companyId, supplierId, documentId) {
   };
 }
 
-export async function getEvaluationFile(companyId, supplierId, evaluationId) {
-  const supplier = await findSupplier(companyId, supplierId);
+export async function getEvaluationFile(scope, supplierId, evaluationId) {
+  const supplier = await findSupplier(scope, supplierId);
 
   if (!supplier) {
     throw new Error("Fornecedor nao encontrado");
@@ -588,8 +664,8 @@ export async function getEvaluationFile(companyId, supplierId, evaluationId) {
   };
 }
 
-export async function createEvaluation(companyId, supplierId, evaluatorId, payload = {}, attachment = null) {
-  const supplier = await findSupplier(companyId, supplierId);
+export async function createEvaluation(scope, supplierId, evaluatorId, payload = {}, attachment = null) {
+  const supplier = await findSupplier(scope, supplierId);
 
   if (!supplier) {
     throw new Error("Fornecedor nao encontrado");
@@ -693,7 +769,7 @@ export async function createEvaluation(companyId, supplierId, evaluatorId, paylo
     }
   }
 
-  const refreshed = await findSupplier(companyId, supplier.id);
+  const refreshed = await findSupplier(scope, supplier.id);
   const riskIndex = riskIndexForSupplier(refreshed);
 
   await prisma.supplier.update({
@@ -701,10 +777,10 @@ export async function createEvaluation(companyId, supplierId, evaluatorId, paylo
     data: { riskIndex }
   });
 
-  return getById(companyId, supplier.id);
+  return getById(scope, supplier.id);
 }
 
-export async function exportSuppliers(companyId, res) {
+export async function exportSuppliers(scope, res) {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Fornecedores");
 
@@ -721,7 +797,7 @@ export async function exportSuppliers(companyId, res) {
   ];
 
   const data = await prisma.supplier.findMany({
-    where: { companyId },
+    where: buildCompanyWhere(scope),
     include: {
       category: true
     },

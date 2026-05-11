@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
 import { PERMISSIONS, hasPermission } from "../utils/access";
-import { getStoredUser } from "../utils/authStorage";
 
 const initialForm = {
   status: "ABERTA",
@@ -31,7 +31,7 @@ function isResolvedStatus(value) {
 }
 
 export default function RNC() {
-  const currentUser = getStoredUser();
+  const currentUser = useStoredUser();
   const canManageRnc = hasPermission(currentUser, PERMISSIONS.RNC_MANAGE);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { api } from "../services/api";
-import { clearSession, getStoredUser } from "../utils/authStorage";
+import { useStoredUser } from "../hooks/useStoredUser";
+import { clearSession } from "../utils/authStorage";
 import conformixLogo from "../assets/conformix-logo-v2-transparent.png";
 import { PERMISSIONS, canAccessAdmin, hasPermission } from "../utils/access";
 
@@ -31,7 +32,7 @@ function getRoleLabel(role) {
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const user = getStoredUser();
+  const user = useStoredUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const links = [

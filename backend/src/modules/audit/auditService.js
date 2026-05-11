@@ -1,4 +1,5 @@
 import { prisma } from "../../shared/database/prisma.js";
+import { buildSupplierCompanyWhere } from "../../shared/auth/dataScope.js";
 
 export async function log(userId, action, meta = {}) {
   await prisma.auditLog.create({
@@ -12,12 +13,10 @@ export async function log(userId, action, meta = {}) {
   });
 }
 
-export async function listByCompany(companyId) {
+export async function listByCompany(scope) {
   return prisma.auditLog.findMany({
     where: {
-      user: {
-        companyId
-      }
+      user: buildSupplierCompanyWhere(scope).supplier
     },
     include: {
       user: {

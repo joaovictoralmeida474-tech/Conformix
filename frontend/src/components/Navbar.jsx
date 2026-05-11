@@ -1,7 +1,7 @@
-import { getStoredUser } from "../utils/authStorage";
+import { useStoredUser } from "../hooks/useStoredUser";
 
 export default function Navbar({ themePreset = "tech-clean", onThemeChange }) {
-  const user = getStoredUser();
+  const user = useStoredUser();
   const today = new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "long",

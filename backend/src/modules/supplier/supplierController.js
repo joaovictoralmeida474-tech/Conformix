@@ -2,13 +2,13 @@ import * as supplierService from "./supplierService.js";
 import { log } from "../audit/auditService.js";
 
 export async function listSuppliers(req, res) {
-  const data = await supplierService.list(req.user.companyId, req.query);
+  const data = await supplierService.list(req.user, req.query);
   res.json(data);
 }
 
 export async function createSupplier(req, res) {
   try {
-    const supplier = await supplierService.create(req.user.companyId, req.body);
+    const supplier = await supplierService.create(req.user, req.body);
     await log(req.user.id, "create", {
       entity: "fornecedor",
       entityId: supplier.id,
@@ -22,7 +22,7 @@ export async function createSupplier(req, res) {
 
 export async function getSupplier(req, res) {
   try {
-    const supplier = await supplierService.getById(req.user.companyId, req.params.id);
+    const supplier = await supplierService.getById(req.user, req.params.id);
     res.json(supplier);
   } catch (error) {
     res.status(404).json({ error: error.message });
@@ -31,7 +31,7 @@ export async function getSupplier(req, res) {
 
 export async function updateSupplier(req, res) {
   try {
-    const supplier = await supplierService.update(req.user.companyId, req.params.id, req.body);
+    const supplier = await supplierService.update(req.user, req.params.id, req.body);
     await log(req.user.id, "update", {
       entity: "fornecedor",
       entityId: supplier.id,
@@ -45,7 +45,7 @@ export async function updateSupplier(req, res) {
 
 export async function deleteSupplier(req, res) {
   try {
-    await supplierService.remove(req.user.companyId, req.params.id);
+    await supplierService.remove(req.user, req.params.id);
     await log(req.user.id, "delete", {
       entity: "fornecedor",
       entityId: req.params.id,
@@ -75,7 +75,7 @@ export async function evaluateSupplier(req, res) {
     };
 
     const evaluation = await supplierService.createEvaluation(
-      req.user.companyId,
+      req.user,
       req.params.id,
       req.user.id,
       payload,
@@ -96,7 +96,7 @@ export async function evaluateSupplier(req, res) {
 export async function downloadEvaluationDocument(req, res) {
   try {
     const file = await supplierService.getEvaluationFile(
-      req.user.companyId,
+      req.user,
       req.params.id,
       req.params.evaluationId
     );
@@ -108,13 +108,13 @@ export async function downloadEvaluationDocument(req, res) {
 }
 
 export async function exportSupplierExcel(req, res) {
-  await supplierService.exportSuppliers(req.user.companyId, res);
+  await supplierService.exportSuppliers(req.user, res);
 }
 
 export async function downloadSupplierDocument(req, res) {
   try {
     const file = await supplierService.getDocumentFile(
-      req.user.companyId,
+      req.user,
       req.params.id,
       req.params.documentId
     );
@@ -132,7 +132,7 @@ export async function syncSupplierDocuments(req, res) {
       typeof rawDocuments === "string" ? JSON.parse(rawDocuments) : rawDocuments || [];
 
     const supplier = await supplierService.syncDocuments(
-      req.user.companyId,
+      req.user,
       req.params.id,
       documents,
       req.files || []

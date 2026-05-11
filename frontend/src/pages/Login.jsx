@@ -295,6 +295,7 @@ export default function Login() {
 
       saveSession({
         user: data?.user || null,
+        token: data?.token || null,
         rememberMe,
       });
       nav(getDefaultRouteForUser(data?.user), { replace: true });

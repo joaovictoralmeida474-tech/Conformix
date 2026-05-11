@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
+import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
 import { PERMISSIONS, ROLES, hasPermission, normalizeRole } from "../utils/access";
-import { getStoredUser } from "../utils/authStorage";
 
 const emptyUserForm = {
   name: "",
@@ -52,6 +52,28 @@ function getSectionFromPath(pathname) {
 
 function FieldHint({ children }) {
   return <small className="admin-field-hint">{children}</small>;
+}
+
+function getApiErrorMessage(err, fallbackMessage) {
+  const status = err?.response?.status;
+
+  if (typeof err?.response?.data?.error === "string" && err.response.data.error.trim()) {
+    return err.response.data.error;
+  }
+
+  if (status === 404) {
+    return "A rota de exclusao nao foi encontrada no backend em execucao. Recarregue a pagina e tente novamente.";
+  }
+
+  if (status === 400) {
+    return fallbackMessage;
+  }
+
+  if (typeof err?.message === "string" && err.message.trim()) {
+    return err.message;
+  }
+
+  return fallbackMessage;
 }
 
 function PermissionSelector({ catalog, selectedKeys, onToggle, title, emptyMessage }) {
@@ -158,7 +180,7 @@ function SectionTabs({ user }) {
 
 export default function AdminPortal() {
   const location = useLocation();
-  const user = getStoredUser();
+  const user = useStoredUser();
   const role = normalizeRole(user?.role);
   const section = getSectionFromPath(location.pathname);
 
@@ -454,6 +476,38 @@ export default function AdminPortal() {
       await Promise.all([loadSettings(), loadDepartments().catch(() => null), loadOverview().catch(() => null)]);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel criar a empresa.");
+    }
+  }
+
+  async function removeDepartment(recordId) {
+    if (!window.confirm("Deseja excluir este departamento?")) return;
+
+    try {
+      await api.delete(`/admin/departments/${recordId}`);
+      setMessage("Departamento excluido com sucesso.");
+      await Promise.all([
+        loadDepartments(),
+        loadSettings().catch(() => null),
+        loadOverview().catch(() => null)
+      ]);
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Nao foi possivel excluir o departamento."));
+    }
+  }
+
+  async function removeCompany(recordId) {
+    if (!window.confirm("Deseja excluir esta empresa?")) return;
+
+    try {
+      await api.delete(`/admin/companies/${recordId}`);
+      setMessage("Empresa excluida com sucesso.");
+      await Promise.all([
+        loadSettings(),
+        loadDepartments().catch(() => null),
+        loadOverview().catch(() => null)
+      ]);
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Nao foi possivel excluir a empresa."));
     }
   }
 
@@ -796,9 +850,18 @@ export default function AdminPortal() {
                       <td>{item.active ? "Ativo" : "Inativo"}</td>
                       <td>
                         {role === ROLES.SUPER_ADMIN && hasPermission(user, PERMISSIONS.DEPARTMENTS_MANAGE) ? (
-                          <button className="supplier-row-button" type="button" onClick={() => openDepartmentModal(item)}>
-                            Editar
-                          </button>
+                          <div className="supplier-action-row">
+                            <button className="supplier-row-button" type="button" onClick={() => openDepartmentModal(item)}>
+                              Editar
+                            </button>
+                            <button
+                              className="supplier-row-button supplier-row-button-danger"
+                              type="button"
+                              onClick={() => removeDepartment(item.id)}
+                            >
+                              Excluir
+                            </button>
+                          </div>
                         ) : (
                           <span className="dashboard-empty-copy">Somente leitura</span>
                         )}
@@ -842,6 +905,19 @@ export default function AdminPortal() {
                   <strong>{item.name}</strong>
                   <p>{item._count?.users || 0} usuarios</p>
                   <span>{item._count?.departments || 0} departamentos</span>
+                  <span>{item._count?.suppliers || 0} fornecedores</span>
+                  <span>{item._count?.categories || 0} categorias</span>
+                  {role === ROLES.SUPER_ADMIN ? (
+                    <div className="supplier-form-actions">
+                      <button
+                        className="supplier-row-button supplier-row-button-danger"
+                        type="button"
+                        onClick={() => removeCompany(item.id)}
+                      >
+                        Excluir empresa
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>

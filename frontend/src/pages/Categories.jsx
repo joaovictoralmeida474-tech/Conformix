@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
+import { ROLES, normalizeRole } from "../utils/access";
 
 const initialForm = {
   name: "",
   slug: "",
   description: "",
+  companyId: "",
   questions: [],
   documents: [],
   active: true
@@ -22,7 +25,10 @@ function stringifyLines(values = []) {
 }
 
 export default function Categories() {
+  const user = useStoredUser();
+  const role = normalizeRole(user?.role);
   const [categories, setCategories] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [questionText, setQuestionText] = useState("");
   const [documentText, setDocumentText] = useState("");
@@ -36,6 +42,16 @@ export default function Categories() {
     setCategories(response.data);
   }
 
+  async function loadCompanies() {
+    if (role !== ROLES.SUPER_ADMIN) {
+      setCompanies([]);
+      return;
+    }
+
+    const response = await api.get("/admin/settings");
+    setCompanies(response.data?.companies || []);
+  }
+
   async function saveCategory() {
     try {
       setError("");
@@ -43,6 +59,7 @@ export default function Categories() {
 
       const payload = {
         ...form,
+        companyId: form.companyId ? Number(form.companyId) : null,
         questions: parseLines(questionText),
         documents: parseLines(documentText)
       };
@@ -72,6 +89,7 @@ export default function Categories() {
       name: category.name || "",
       slug: category.slug || "",
       description: category.description || "",
+      companyId: category.companyId || "",
       questions: (category.questions || []).map((item) => item.prompt),
       documents: (category.documents || []).map((item) => item.name),
       active: category.active !== false
@@ -116,7 +134,21 @@ export default function Categories() {
 
   useEffect(() => {
     load();
-  }, []);
+    loadCompanies().catch(() => null);
+  }, [role]);
+
+  const visibleCategories = useMemo(() => {
+    if (role !== ROLES.SUPER_ADMIN) {
+      return categories;
+    }
+
+    const selectedCompanyId = Number(form.companyId || 0);
+    if (!selectedCompanyId) {
+      return categories;
+    }
+
+    return categories.filter((item) => Number(item.companyId) === selectedCompanyId);
+  }, [categories, form.companyId, role]);
 
   if (activePanel === "form") {
     return (
@@ -143,6 +175,23 @@ export default function Categories() {
 
           <div className="supplier-form-grid">
             <div className="supplier-form-two-columns">
+              {role === ROLES.SUPER_ADMIN ? (
+                <div className="supplier-form-field">
+                  <label>Empresa</label>
+                  <select
+                    className="supplier-form-input"
+                    value={form.companyId}
+                    onChange={(event) => setForm((current) => ({ ...current, companyId: event.target.value }))}
+                  >
+                    <option value="">Selecione uma empresa</option>
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
               <div className="supplier-form-field">
                 <label>Nome da categoria</label>
                 <input
@@ -253,8 +302,8 @@ export default function Categories() {
               </tr>
             </thead>
             <tbody>
-              {categories.length ? (
-                categories.map((category) => (
+              {visibleCategories.length ? (
+                visibleCategories.map((category) => (
                   <tr key={category.id}>
                     <td>
                       <strong>{category.name}</strong>

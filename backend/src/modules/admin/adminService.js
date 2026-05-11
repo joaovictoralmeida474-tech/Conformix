@@ -9,6 +9,11 @@ import {
 import { getUserContextById } from "../../shared/auth/userContext.js";
 import { log as writeAuditLog } from "../audit/auditService.js";
 import { assertStrongPassword } from "../../shared/utils/passwordPolicy.js";
+import {
+  deleteSupabaseUser,
+  updateSupabaseUserPassword,
+  upsertSupabaseUser
+} from "../../shared/integrations/supabaseAdmin.js";
 
 function slugify(value) {
   return String(value || "")
@@ -102,6 +107,22 @@ function serializeLog(item) {
         }
       : null
   };
+}
+
+function getSystemCompanyName() {
+  return String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim();
+}
+
+function isSystemCompany(company) {
+  return Boolean(company && String(company.name || "").trim() === getSystemCompanyName());
+}
+
+function isSystemDepartment(department) {
+  return Boolean(
+    department &&
+      String(department.slug || "").trim() === "administracao-global" &&
+      isSystemCompany(department.company)
+  );
 }
 
 async function ensureDepartmentForAdminScope(currentUser, departmentId) {
@@ -241,13 +262,16 @@ async function syncUserPermissions(userId, permissionKeys = []) {
     return;
   }
 
-  await prisma.userPermission.createMany({
-    data: permissions.map((item) => ({
-      userId: Number(userId),
-      permissionId: item.id
-    })),
-    skipDuplicates: true
-  });
+  await prisma.$transaction(
+    permissions.map((item) =>
+      prisma.userPermission.create({
+        data: {
+          userId: Number(userId),
+          permissionId: item.id
+        }
+      })
+    )
+  );
 }
 
 async function resolveScopedCompanyAndDepartment({
@@ -345,6 +369,41 @@ async function createUserWithRole({
 
   await syncUserPermissions(user.id, resolvedPermissionKeys);
 
+  try {
+    const supabaseUser = await upsertSupabaseUser({
+      email: normalizedEmail,
+      password,
+      name: user.name,
+      role: normalizedRole,
+      companyId: scope.companyId,
+      departmentId: scope.department?.id || null,
+      active: Boolean(active)
+    });
+
+    if (supabaseUser?.id) {
+      await prisma.user.update({
+        where: {
+          id: user.id
+        },
+        data: {
+          authUserId: supabaseUser.id
+        }
+      });
+    }
+  } catch (error) {
+    await prisma.userPermission.deleteMany({
+      where: {
+        userId: user.id
+      }
+    });
+    await prisma.user.delete({
+      where: {
+        id: user.id
+      }
+    });
+    throw error;
+  }
+
   return getUserContextById(user.id);
 }
 
@@ -353,7 +412,12 @@ export async function getOverview(currentUser) {
 
   if (currentRole === ROLES.SUPER_ADMIN) {
     const [companies, departments, users, admins, logs] = await Promise.all([
-      prisma.company.count(),
+      prisma.company.findMany({
+        select: {
+          id: true,
+          name: true
+        }
+      }),
       prisma.department.findMany({
         include: {
           company: {
@@ -402,15 +466,18 @@ export async function getOverview(currentUser) {
       })
     ]);
 
+    const visibleCompanies = companies.filter((item) => !isSystemCompany(item));
+    const visibleDepartments = departments.filter((item) => !isSystemDepartment(item));
+
     return {
       mode: "SUPER_ADMIN",
       stats: {
-        companies,
-        departments: departments.length,
+        companies: visibleCompanies.length,
+        departments: visibleDepartments.length,
         users,
         admins
       },
-      departments: departments.map(serializeDepartment),
+      departments: visibleDepartments.map(serializeDepartment),
       recentLogs: logs.map(serializeLog)
     };
   }
@@ -588,7 +655,7 @@ export async function updateUser(currentUser, userId, payload) {
     payload.permissionKeys || []
   );
 
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: {
       id: Number(userId)
     },
@@ -602,6 +669,26 @@ export async function updateUser(currentUser, userId, payload) {
   });
 
   await syncUserPermissions(userId, resolvedPermissionKeys);
+  const supabaseUser = await upsertSupabaseUser({
+    email: normalizedEmail,
+    name: updatedUser.name,
+    role: ROLES.USER,
+    companyId: scope.companyId,
+    departmentId: scope.department?.id || null,
+    active: payload.active ?? user.active
+  });
+
+  if (supabaseUser?.id && supabaseUser.id !== updatedUser.authUserId) {
+    await prisma.user.update({
+      where: {
+        id: Number(userId)
+      },
+      data: {
+        authUserId: supabaseUser.id
+      }
+    });
+  }
+
   await writeAuditLog(currentUser.id, "update", {
     entity: "user",
     entityId: Number(userId),
@@ -631,7 +718,7 @@ export async function setUserStatus(currentUser, userId, active) {
     }
   }
 
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: {
       id: Number(userId)
     },
@@ -639,6 +726,26 @@ export async function setUserStatus(currentUser, userId, active) {
       active: Boolean(active)
     }
   });
+
+  const supabaseUser = await upsertSupabaseUser({
+    email: updatedUser.email,
+    name: updatedUser.name,
+    role: updatedUser.role,
+    companyId: updatedUser.companyId,
+    departmentId: updatedUser.departmentId,
+    active: Boolean(active)
+  });
+
+  if (supabaseUser?.id && supabaseUser.id !== updatedUser.authUserId) {
+    await prisma.user.update({
+      where: {
+        id: Number(userId)
+      },
+      data: {
+        authUserId: supabaseUser.id
+      }
+    });
+  }
 
   await writeAuditLog(currentUser.id, "update", {
     entity: "user",
@@ -667,6 +774,10 @@ export async function deleteUser(currentUser, userId) {
     ) {
       throw new Error("Usuario fora do escopo do administrador");
     }
+  }
+
+  if (user.authUserId) {
+    await deleteSupabaseUser(user.authUserId);
   }
 
   await prisma.user.delete({
@@ -705,7 +816,7 @@ export async function resetUserPassword(currentUser, userId, password) {
   assertStrongPassword(password);
   const hash = await bcrypt.hash(String(password || ""), 10);
 
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: {
       id: Number(userId)
     },
@@ -713,6 +824,31 @@ export async function resetUserPassword(currentUser, userId, password) {
       password: hash
     }
   });
+
+  if (updatedUser.authUserId) {
+    await updateSupabaseUserPassword(updatedUser.authUserId, password);
+  } else {
+    const supabaseUser = await upsertSupabaseUser({
+      email: updatedUser.email,
+      password,
+      name: updatedUser.name,
+      role: updatedUser.role,
+      companyId: updatedUser.companyId,
+      departmentId: updatedUser.departmentId,
+      active: updatedUser.active
+    });
+
+    if (supabaseUser?.id) {
+      await prisma.user.update({
+        where: {
+          id: Number(userId)
+        },
+        data: {
+          authUserId: supabaseUser.id
+        }
+      });
+    }
+  }
 
   await writeAuditLog(currentUser.id, "update", {
     entity: "user",
@@ -813,7 +949,7 @@ export async function updateAdmin(currentUser, adminId, payload) {
     payload.permissionKeys || []
   );
 
-  await prisma.user.update({
+  const updatedAdmin = await prisma.user.update({
     where: {
       id: Number(adminId)
     },
@@ -827,6 +963,26 @@ export async function updateAdmin(currentUser, adminId, payload) {
   });
 
   await syncUserPermissions(adminId, resolvedPermissionKeys);
+  const supabaseAdmin = await upsertSupabaseUser({
+    email: normalizedEmail,
+    name: updatedAdmin.name,
+    role: ROLES.ADMIN,
+    companyId: scope.companyId,
+    departmentId: scope.department?.id || null,
+    active: payload.active ?? admin.active
+  });
+
+  if (supabaseAdmin?.id && supabaseAdmin.id !== updatedAdmin.authUserId) {
+    await prisma.user.update({
+      where: {
+        id: Number(adminId)
+      },
+      data: {
+        authUserId: supabaseAdmin.id
+      }
+    });
+  }
+
   await writeAuditLog(currentUser.id, "update", {
     entity: "admin",
     entityId: Number(adminId),
@@ -851,7 +1007,7 @@ export async function setAdminStatus(currentUser, adminId, active) {
     throw new Error("Admin nao encontrado");
   }
 
-  await prisma.user.update({
+  const updatedAdmin = await prisma.user.update({
     where: {
       id: Number(adminId)
     },
@@ -859,6 +1015,26 @@ export async function setAdminStatus(currentUser, adminId, active) {
       active: Boolean(active)
     }
   });
+
+  const supabaseAdmin = await upsertSupabaseUser({
+    email: updatedAdmin.email,
+    name: updatedAdmin.name,
+    role: updatedAdmin.role,
+    companyId: updatedAdmin.companyId,
+    departmentId: updatedAdmin.departmentId,
+    active: Boolean(active)
+  });
+
+  if (supabaseAdmin?.id && supabaseAdmin.id !== updatedAdmin.authUserId) {
+    await prisma.user.update({
+      where: {
+        id: Number(adminId)
+      },
+      data: {
+        authUserId: supabaseAdmin.id
+      }
+    });
+  }
 
   await writeAuditLog(currentUser.id, "update", {
     entity: "admin",
@@ -882,6 +1058,10 @@ export async function deleteAdmin(currentUser, adminId) {
 
   if (!admin || normalizeRole(admin.role) !== ROLES.ADMIN) {
     throw new Error("Admin nao encontrado");
+  }
+
+  if (admin.authUserId) {
+    await deleteSupabaseUser(admin.authUserId);
   }
 
   await prisma.user.delete({
@@ -915,7 +1095,7 @@ export async function resetAdminPassword(currentUser, adminId, password) {
   assertStrongPassword(password);
   const hash = await bcrypt.hash(String(password || ""), 10);
 
-  await prisma.user.update({
+  const updatedAdmin = await prisma.user.update({
     where: {
       id: Number(adminId)
     },
@@ -923,6 +1103,31 @@ export async function resetAdminPassword(currentUser, adminId, password) {
       password: hash
     }
   });
+
+  if (updatedAdmin.authUserId) {
+    await updateSupabaseUserPassword(updatedAdmin.authUserId, password);
+  } else {
+    const supabaseAdmin = await upsertSupabaseUser({
+      email: updatedAdmin.email,
+      password,
+      name: updatedAdmin.name,
+      role: updatedAdmin.role,
+      companyId: updatedAdmin.companyId,
+      departmentId: updatedAdmin.departmentId,
+      active: updatedAdmin.active
+    });
+
+    if (supabaseAdmin?.id) {
+      await prisma.user.update({
+        where: {
+          id: Number(adminId)
+        },
+        data: {
+          authUserId: supabaseAdmin.id
+        }
+      });
+    }
+  }
 
   await writeAuditLog(currentUser.id, "update", {
     entity: "admin",
@@ -964,7 +1169,12 @@ export async function listDepartments(currentUser) {
     orderBy: [{ companyId: "asc" }, { name: "asc" }]
   });
 
-  return departments.map(serializeDepartment);
+  const visibleDepartments =
+    normalizeRole(currentUser.role) === ROLES.SUPER_ADMIN
+      ? departments.filter((item) => !isSystemDepartment(item))
+      : departments;
+
+  return visibleDepartments.map(serializeDepartment);
 }
 
 export async function createDepartment(currentUser, payload) {
@@ -1090,6 +1300,51 @@ export async function updateDepartment(currentUser, departmentId, payload) {
   return serializeDepartment(updated);
 }
 
+export async function deleteDepartment(currentUser, departmentId) {
+  if (normalizeRole(currentUser.role) !== ROLES.SUPER_ADMIN) {
+    throw new Error("Acesso permitido somente ao SUPER_ADMIN");
+  }
+
+  const existing = await prisma.department.findUnique({
+    where: {
+      id: Number(departmentId)
+    },
+    include: {
+      company: {
+        select: {
+          id: true,
+          name: true
+        }
+      },
+      _count: {
+        select: {
+          users: true
+        }
+      }
+    }
+  });
+
+  if (!existing) {
+    throw new Error("Departamento nao encontrado");
+  }
+
+  if ((existing._count?.users || 0) > 0) {
+    throw new Error("Nao e possivel excluir departamento com usuarios ou admins vinculados");
+  }
+
+  await prisma.department.delete({
+    where: {
+      id: Number(departmentId)
+    }
+  });
+
+  await writeAuditLog(currentUser.id, "delete", {
+    entity: "department",
+    entityId: Number(departmentId),
+    details: `Departamento ${existing.name} excluido`
+  });
+}
+
 export async function createCompany(currentUser, payload) {
   if (normalizeRole(currentUser.role) !== ROLES.SUPER_ADMIN) {
     throw new Error("Acesso permitido somente ao SUPER_ADMIN");
@@ -1137,6 +1392,87 @@ export async function createCompany(currentUser, payload) {
   return company;
 }
 
+export async function deleteCompany(currentUser, companyId) {
+  if (normalizeRole(currentUser.role) !== ROLES.SUPER_ADMIN) {
+    throw new Error("Acesso permitido somente ao SUPER_ADMIN");
+  }
+
+  const existing = await prisma.company.findUnique({
+    where: {
+      id: Number(companyId)
+    },
+    select: {
+      id: true,
+      name: true,
+      departments: {
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: {
+              users: true
+            }
+          }
+        }
+      },
+      _count: {
+        select: {
+          users: true,
+          departments: true,
+          suppliers: true,
+          categories: true,
+          alerts: true
+        }
+      }
+    }
+  });
+
+  if (!existing) {
+    throw new Error("Empresa nao encontrada");
+  }
+
+  const blockingItems = [
+    existing._count?.users || 0,
+    existing._count?.suppliers || 0,
+    existing._count?.categories || 0,
+    existing._count?.alerts || 0
+  ].reduce((sum, value) => sum + value, 0);
+
+  if (blockingItems > 0) {
+    throw new Error("Nao e possivel excluir empresa com usuarios, fornecedores, categorias ou alertas vinculados");
+  }
+
+  const departmentsWithUsers = (existing.departments || []).filter(
+    (item) => (item._count?.users || 0) > 0
+  );
+
+  if (departmentsWithUsers.length > 0) {
+    throw new Error("Nao e possivel excluir empresa com departamentos que ainda possuem usuarios ou admins vinculados");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if ((existing.departments || []).length) {
+      await tx.department.deleteMany({
+        where: {
+          companyId: Number(companyId)
+        }
+      });
+    }
+
+    await tx.company.delete({
+      where: {
+        id: Number(companyId)
+      }
+    });
+  });
+
+  await writeAuditLog(currentUser.id, "delete", {
+    entity: "company",
+    entityId: Number(companyId),
+    details: `Empresa ${existing.name} excluida`
+  });
+}
+
 export async function getSettings(currentUser) {
   const currentRole = normalizeRole(currentUser.role);
   const actorAllowedKeys =
@@ -1155,7 +1491,9 @@ export async function getSettings(currentUser) {
         _count: {
           select: {
             users: true,
-            departments: true
+            departments: true,
+            suppliers: true,
+            categories: true
           }
         }
       },
@@ -1177,8 +1515,13 @@ export async function getSettings(currentUser) {
     })
   ]);
 
+  const visibleCompanies =
+    currentRole === ROLES.SUPER_ADMIN
+      ? companies.filter((item) => !isSystemCompany(item))
+      : companies;
+
   return {
-    companies,
+    companies: visibleCompanies,
     permissionCatalog: permissions.map((item) => ({
       ...item,
       enabledByDefaultFor: Object.entries(ROLE_PERMISSION_MAP)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { api } from "../services/api";
 import { getDefaultRouteForUser, hasPermission } from "../utils/access";
 import {
@@ -10,6 +10,7 @@ import {
 } from "../utils/authStorage";
 
 export default function ProtectedRoute({ children, permissions = [], roles = [] }) {
+  const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
   const [user, setUser] = useState(getStoredUser());
 
@@ -49,10 +50,17 @@ export default function ProtectedRoute({ children, permissions = [], roles = [] 
 
     validateSession();
 
+    function handleWindowFocus() {
+      validateSession();
+    }
+
+    window.addEventListener("focus", handleWindowFocus);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("focus", handleWindowFocus);
     };
-  }, []);
+  }, [location.pathname]);
 
   if (isChecking) {
     return null;

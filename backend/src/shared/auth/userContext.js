@@ -38,6 +38,7 @@ export function serializeUserContext(user) {
     : rolePermissionsFromDb.length
     ? rolePermissionsFromDb
     : ROLE_PERMISSION_MAP[normalizedRole] || [];
+  const isSuperAdmin = normalizedRole === ROLES.SUPER_ADMIN;
 
   return {
     id: user.id,
@@ -45,10 +46,10 @@ export function serializeUserContext(user) {
     email: user.email,
     role: normalizedRole,
     active: user.active,
-    companyId: user.companyId,
-    departmentId: user.departmentId || null,
-    company: serializeCompany(user.company),
-    department: serializeDepartment(user.department),
+    companyId: isSuperAdmin ? null : user.companyId,
+    departmentId: isSuperAdmin ? null : user.departmentId || null,
+    company: isSuperAdmin ? null : serializeCompany(user.company),
+    department: isSuperAdmin ? null : serializeDepartment(user.department),
     permissions,
     permissionsSource:
       normalizedRole === ROLES.SUPER_ADMIN ? "role" : userPermissionsFromDb.length ? "custom" : "role"

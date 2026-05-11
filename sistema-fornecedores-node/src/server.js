@@ -9,6 +9,7 @@ const bcrypt = require('bcrypt');
 const prisma = require('./lib/prisma');
 const app = express();
 const upload = multer({ dest: 'uploads/' });
+const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
 
 function parseConfiguredEmails(value) {
   return String(value || '')
@@ -32,10 +33,6 @@ function getBootstrapSuperAdminEmails() {
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
-
-app.get('/', (req, res) => {
-  res.send('API rodando');
-});
 
 app.get('/api', (req, res) => {
   res.send('API OK');
@@ -80,6 +77,18 @@ app.use('/api/auth', authRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/rnc', rncRoutes);
+
+if (require('fs').existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+
+  app.get(/^\/(?!api(?:\/|$)).*/, (req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('API rodando');
+  });
+}
 
 async function ensureDefaultCategory() {
   const total = await prisma.category.count();

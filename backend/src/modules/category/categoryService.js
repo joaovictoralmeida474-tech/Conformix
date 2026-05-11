@@ -1,4 +1,5 @@
 import { prisma } from "../../shared/database/prisma.js";
+import { buildCompanyWhere, resolveTargetCompanyId } from "../../shared/auth/dataScope.js";
 
 function slugify(value = "") {
   return String(value)
@@ -43,9 +44,9 @@ function serialize(item) {
   };
 }
 
-export async function list(companyId) {
+export async function list(scope) {
   const items = await prisma.category.findMany({
-    where: { companyId },
+    where: buildCompanyWhere(scope),
     include: {
       questions: true,
       documents: true
@@ -56,7 +57,8 @@ export async function list(companyId) {
   return items.map(serialize);
 }
 
-export async function create(companyId, data) {
+export async function create(scope, data) {
+  const companyId = resolveTargetCompanyId(scope, data.companyId);
   const slug = slugify(data.slug || data.name || "");
   const questions = normalizeList(data.questions);
   const documents = normalizeList(data.documents);
@@ -108,11 +110,12 @@ export async function create(companyId, data) {
   return serialize(item);
 }
 
-export async function update(companyId, id, data) {
+export async function update(scope, id, data) {
+  const companyId = resolveTargetCompanyId(scope, data.companyId);
   const existing = await prisma.category.findFirst({
     where: {
       id: Number(id),
-      companyId
+      ...buildCompanyWhere(scope)
     },
     include: {
       questions: true,
@@ -193,11 +196,11 @@ export async function update(companyId, id, data) {
   return serialize(updated);
 }
 
-export async function remove(companyId, id) {
+export async function remove(scope, id) {
   const existing = await prisma.category.findFirst({
     where: {
       id: Number(id),
-      companyId
+      ...buildCompanyWhere(scope)
     }
   });
 
@@ -207,7 +210,7 @@ export async function remove(companyId, id) {
 
   const linkedSuppliers = await prisma.supplier.count({
     where: {
-      companyId,
+      ...buildCompanyWhere(scope),
       categoryId: Number(id)
     }
   });

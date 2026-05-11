@@ -7,6 +7,10 @@ import { getUserContextById } from "../../shared/auth/userContext.js";
 import { log as writeAuditLog } from "../audit/auditService.js";
 import { assertStrongPassword } from "../../shared/utils/passwordPolicy.js";
 import { signInWithPassword as signInWithSupabase } from "./supabaseAuthService.js";
+import {
+  buildSupabaseProfile,
+  ensureSupabaseProvisioningScope
+} from "../../shared/auth/supabaseProvisioning.js";
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
@@ -38,6 +42,68 @@ function createAuthError(message = "Falha na autenticacao") {
   const error = new Error(message);
   error.code = "AUTH_INVALID_CREDENTIALS";
   return error;
+}
+
+function createInactiveUserError() {
+  const error = new Error("Usuario inativo");
+  error.code = "AUTH_USER_INACTIVE";
+  return error;
+}
+
+function buildProvisioningProfile(supabaseUser) {
+  return buildSupabaseProfile(supabaseUser);
+}
+
+async function syncSupabaseUserToLocal({ existingUser, supabaseUser, password }) {
+  if (existingUser && existingUser.active === false) {
+    throw createInactiveUserError();
+  }
+
+  const profile = buildProvisioningProfile(supabaseUser);
+  const targetRole = normalizeRole(existingUser?.role || profile.role || ROLES.USER);
+  const targetName =
+    String(existingUser?.name || profile.name || "").trim() ||
+    "Usuario";
+  const scope = await ensureSupabaseProvisioningScope({
+    ...profile,
+    role: targetRole,
+    companyId: existingUser?.companyId || profile.companyId,
+    departmentId:
+      targetRole === ROLES.SUPER_ADMIN
+        ? null
+        : existingUser?.departmentId || profile.departmentId
+  });
+
+  const data = {
+    name: targetName,
+    email: normalizeEmail(supabaseUser.email),
+    password: await bcrypt.hash(password, 10),
+    role: targetRole,
+    active: existingUser ? existingUser.active !== false : true,
+    companyId: scope.companyId,
+    departmentId: scope.departmentId,
+    authUserId: supabaseUser.id,
+    lastLoginAt: new Date()
+  };
+
+  if (!existingUser) {
+    return prisma.user.create({ data });
+  }
+
+  return prisma.user.update({
+    where: {
+      id: existingUser.id
+    },
+    data
+  });
+}
+
+async function provisionUserFromSupabase({ supabaseUser, password }) {
+  return syncSupabaseUserToLocal({
+    existingUser: null,
+    supabaseUser,
+    password
+  });
 }
 
 function isSupabaseUnavailableError(error) {
@@ -210,47 +276,19 @@ export async function login({ email, password }) {
         });
 
         if (!user) {
-          if (!getSuperAdminAliases().has(normalizedSupabaseEmail)) {
-            throw createAuthError();
-          }
-
-          let company = await prisma.company.findFirst({
-            where: {
-              name: String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim()
-            }
-          });
-
-          if (!company) {
-            company = await prisma.company.create({
-              data: {
-                name: String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim()
-              }
-            });
-          }
-
-          user = await prisma.user.create({
-            data: {
-              name: String(process.env.SUPER_ADMIN_NAME || "Super Admin").trim() || "Super Admin",
-              email: normalizedSupabaseEmail,
-              password: await bcrypt.hash(currentPassword, 10),
-              role: ROLES.SUPER_ADMIN,
-              active: true,
-              companyId: company.id,
-              departmentId: null,
-              authUserId: supabaseUser.id
-            }
+          user = await provisionUserFromSupabase({
+            supabaseUser,
+            password: currentPassword
           });
         } else {
-          user = await prisma.user.update({
-            where: {
-              id: user.id
-            },
-            data: {
-              email: normalizedSupabaseEmail,
-              active: true,
-              authUserId: supabaseUser.id,
-              lastLoginAt: new Date()
-            }
+          if (user.active === false) {
+            throw createInactiveUserError();
+          }
+
+          user = await syncSupabaseUserToLocal({
+            existingUser: user,
+            supabaseUser,
+            password: currentPassword
           });
         }
 
@@ -276,6 +314,10 @@ export async function login({ email, password }) {
           continue;
         }
 
+        if (error?.code === "AUTH_USER_INACTIVE") {
+          throw error;
+        }
+
         if (error?.code === "AUTH_INVALID_CREDENTIALS") {
           continue;
         }
@@ -296,8 +338,12 @@ export async function login({ email, password }) {
       }
     });
 
-    if (!user || !user.active) {
+    if (!user) {
       continue;
+    }
+
+    if (!user.active) {
+      throw createInactiveUserError();
     }
 
     for (const currentPassword of passwordCandidates) {

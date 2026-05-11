@@ -8,6 +8,8 @@ import {
   createDepartment,
   createUser,
   deleteAdmin,
+  deleteCompany,
+  deleteDepartment,
   deleteUser,
   getAdminOverview,
   getSettings,
@@ -55,7 +57,9 @@ router.post(
 router.get("/departments", requirePermission(PERMISSIONS.DEPARTMENTS_VIEW), listDepartments);
 router.post("/departments", requirePermission(PERMISSIONS.DEPARTMENTS_MANAGE), createDepartment);
 router.put("/departments/:id", requirePermission(PERMISSIONS.DEPARTMENTS_MANAGE), updateDepartment);
+router.delete("/departments/:id", requirePermission(PERMISSIONS.DEPARTMENTS_MANAGE), deleteDepartment);
 router.post("/companies", requirePermission(PERMISSIONS.SETTINGS_VIEW), createCompany);
+router.delete("/companies/:id", requirePermission(PERMISSIONS.SETTINGS_VIEW), deleteCompany);
 
 router.get("/settings", requirePermission(PERMISSIONS.ADMIN_ACCESS), getSettings);
 router.get("/logs", requirePermission(PERMISSIONS.SYSTEM_LOGS_VIEW), listSystemLogs);

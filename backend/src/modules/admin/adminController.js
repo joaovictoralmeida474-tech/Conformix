@@ -148,10 +148,28 @@ export async function updateDepartment(req, res) {
   }
 }
 
+export async function deleteDepartment(req, res) {
+  try {
+    await adminService.deleteDepartment(req.user, req.params.id);
+    res.sendStatus(204);
+  } catch (error) {
+    handleError(res, error);
+  }
+}
+
 export async function createCompany(req, res) {
   try {
     const data = await adminService.createCompany(req.user, req.body);
     res.status(201).json(data);
+  } catch (error) {
+    handleError(res, error);
+  }
+}
+
+export async function deleteCompany(req, res) {
+  try {
+    await adminService.deleteCompany(req.user, req.params.id);
+    res.sendStatus(204);
   } catch (error) {
     handleError(res, error);
   }

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
-import { PERMISSIONS, hasPermission } from "../utils/access";
-import { getStoredUser } from "../utils/authStorage";
+import { PERMISSIONS, ROLES, hasPermission, normalizeRole } from "../utils/access";
 
 const initialSupplierForm = {
   name: "",
@@ -12,6 +12,7 @@ const initialSupplierForm = {
   contact: "",
   email: "",
   phone: "",
+  companyId: "",
   categoryId: "",
   supplierType: "CRITICO",
   status: "ATIVO",
@@ -117,6 +118,7 @@ function mapSupplierToForm(supplier) {
     contact: supplier.contact || "",
     email: supplier.email || "",
     phone: supplier.phone || "",
+    companyId: supplier.companyId || "",
     categoryId: supplier.categoryId || "",
     supplierType: supplier.supplierType || "CRITICO",
     status: supplier.status || "ATIVO",
@@ -180,12 +182,14 @@ function escapeHtml(value) {
 }
 
 export default function Suppliers() {
-  const currentUser = getStoredUser();
+  const currentUser = useStoredUser();
+  const role = normalizeRole(currentUser?.role);
   const canManageSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_MANAGE);
   const canEvaluateSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_EVALUATE);
   const canExportSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_EXPORT);
   const [suppliers, setSuppliers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [supplierForm, setSupplierForm] = useState(initialSupplierForm);
   const [evaluationForm, setEvaluationForm] = useState(initialEvaluationForm);
   const [documentEntries, setDocumentEntries] = useState([]);
@@ -216,6 +220,19 @@ export default function Suppliers() {
     () => categories.find((category) => Number(category.id) === selectedCategoryId) || null,
     [categories, selectedCategoryId]
   );
+
+  const filteredCategories = useMemo(() => {
+    if (role !== ROLES.SUPER_ADMIN) {
+      return categories;
+    }
+
+    const selectedCompanyId = Number(supplierForm.companyId || 0);
+    if (!selectedCompanyId) {
+      return categories;
+    }
+
+    return categories.filter((category) => Number(category.companyId) === selectedCompanyId);
+  }, [categories, role, supplierForm.companyId]);
 
   const supplierDocuments = useMemo(() => {
     if (!selectedSupplier) return [];
@@ -283,13 +300,23 @@ export default function Suppliers() {
     setCategories(response.data);
   }
 
+  async function loadCompanies() {
+    if (role !== ROLES.SUPER_ADMIN) {
+      setCompanies([]);
+      return;
+    }
+
+    const response = await api.get("/admin/settings");
+    setCompanies(response.data?.companies || []);
+  }
+
   async function loadAll(activeFilters = filters) {
-    await Promise.all([loadSuppliers(activeFilters), loadCategories()]);
+    await Promise.all([loadSuppliers(activeFilters), loadCategories(), loadCompanies()]);
   }
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [role]);
 
   function resetSupplierEditor() {
     setEditingId(null);
@@ -311,6 +338,23 @@ export default function Suppliers() {
 
   function handleCategoryChange(value) {
     setSupplierForm((current) => ({ ...current, categoryId: Number(value) || "" }));
+  }
+
+  function handleCompanyChange(value) {
+    setSupplierForm((current) => {
+      const companyId = Number(value) || "";
+      const currentCategoryId = Number(current.categoryId || 0);
+      const categoryStillValid = categories.some(
+        (category) =>
+          Number(category.id) === currentCategoryId && Number(category.companyId) === Number(companyId || 0)
+      );
+
+      return {
+        ...current,
+        companyId,
+        categoryId: categoryStillValid ? current.categoryId : ""
+      };
+    });
   }
 
   async function buscarCNPJ() {
@@ -382,6 +426,7 @@ export default function Suppliers() {
 
       const payload = {
         ...supplierForm,
+        companyId: supplierForm.companyId ? Number(supplierForm.companyId) : null,
         cnpj: normalizeCnpj(supplierForm.cnpj)
       };
 
@@ -950,6 +995,24 @@ export default function Suppliers() {
 
           <div className="supplier-form-grid">
             <div className="supplier-form-cnpj-row">
+              {role === ROLES.SUPER_ADMIN ? (
+                <div className="supplier-form-field">
+                  <label>Empresa</label>
+                  <select
+                    className="supplier-form-input"
+                    value={supplierForm.companyId}
+                    onChange={(event) => handleCompanyChange(event.target.value)}
+                  >
+                    <option value="">Selecione uma empresa</option>
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
               <div className="supplier-form-field">
                 <label>CNPJ</label>
                 <input
@@ -972,7 +1035,7 @@ export default function Suppliers() {
                   onChange={(event) => handleCategoryChange(event.target.value)}
                 >
                   <option value="">Selecione uma categoria</option>
-                  {categories.map((category) => (
+                  {filteredCategories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -997,6 +1060,9 @@ export default function Suppliers() {
             </div>
 
             <p className="supplier-helper-text">
+              {role === ROLES.SUPER_ADMIN
+                ? "Selecione primeiro a empresa para filtrar as categorias corretas do fornecedor. "
+                : ""}
               Categoria do fornecedor ao lado do CNPJ. Cadastre ou edite categorias no menu `Categorias`. Fonte da
               consulta: BrasilAPI.
             </p>

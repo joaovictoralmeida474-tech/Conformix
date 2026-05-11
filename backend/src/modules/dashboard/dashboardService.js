@@ -1,4 +1,5 @@
 import { prisma } from "../../shared/database/prisma.js";
+import { buildCompanyWhere, buildSupplierCompanyWhere } from "../../shared/auth/dataScope.js";
 
 function isOverdue(value) {
   return value ? new Date(value).getTime() < Date.now() : false;
@@ -65,10 +66,10 @@ function buildAlerts(suppliers, rncs) {
   return alerts;
 }
 
-export async function getMetrics(companyId) {
+export async function getMetrics(scope) {
   const [suppliers, openRncs] = await Promise.all([
     prisma.supplier.findMany({
-      where: { companyId },
+      where: buildCompanyWhere(scope),
       include: {
         documents: true,
         evaluations: {
@@ -79,11 +80,7 @@ export async function getMetrics(companyId) {
       orderBy: { name: "asc" }
     }),
     prisma.rNC.findMany({
-      where: {
-        supplier: {
-          companyId
-        }
-      },
+      where: buildSupplierCompanyWhere(scope),
       include: {
         supplier: {
           select: {

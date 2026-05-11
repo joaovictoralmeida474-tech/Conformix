@@ -1,8 +1,22 @@
 import axios from "axios";
 import { clearSession } from "../utils/authStorage";
 
+function resolveApiBaseUrl() {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
+  if (configuredBaseUrl) {
+    return configuredBaseUrl;
+  }
+
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/api`;
+  }
+
+  return "http://localhost:3000/api";
+}
+
 export const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL: resolveApiBaseUrl(),
   withCredentials: true
 });
 

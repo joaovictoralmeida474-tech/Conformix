@@ -8,8 +8,14 @@ function applyNoStore(res) {
 }
 
 function sendSafeAuthError(res, error) {
+  console.error("Erro de autenticacao:", error);
+
   if (error?.code === "AUTH_INVALID_CREDENTIALS") {
     return res.status(401).json({ error: "Email ou senha invalidos" });
+  }
+
+  if (error?.code === "AUTH_USER_INACTIVE") {
+    return res.status(403).json({ error: "Usuario desativado. Entre em contato com o administrador." });
   }
 
   if (error?.code === "AUTH_RATE_LIMIT") {

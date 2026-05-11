@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node src/app.js",
     "start": "node src/app.js",
+    "auth:reset-superadmin": "node scripts/reset-auth-to-superadmin.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "test": "echo \"Error: no test specified\" && exit 1"
