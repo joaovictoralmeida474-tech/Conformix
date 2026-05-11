@@ -400,8 +400,12 @@ export async function seedPlatform() {
   }
 
   await ensureSuperAdmin();
-  await ensureSupabaseSuperAdmin();
-  await syncSupabaseUsersToLocal();
+  try {
+    await ensureSupabaseSuperAdmin();
+    await syncSupabaseUsersToLocal();
+  } catch (error) {
+    console.error("Aviso: falha ao sincronizar usuarios com Supabase durante bootstrap:", error?.message || error);
+  }
 
   if (isDemoDataEnabled()) {
     await ensureDemoCompany();
