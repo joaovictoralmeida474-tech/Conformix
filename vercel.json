@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "installCommand": "if [ -d frontend ] && [ -d backend ]; then npm install && npm --prefix frontend install && npm --prefix backend install; else npm install && npm --prefix ../backend install; fi",
+  "installCommand": "if [ -d frontend ] && [ -d backend ]; then npm install && npm --prefix frontend install && npm --prefix backend install && npm --prefix backend run prisma:generate; else npm install && npm --prefix ../backend install && npm --prefix ../backend run prisma:generate; fi",
   "buildCommand": "if [ -d frontend ]; then npm --prefix frontend run build; else npm run build; fi",
   "outputDirectory": "frontend/dist",
   "rewrites": [
