@@ -257,6 +257,52 @@ export async function login({ email, password }) {
   let supabaseUnavailable = false;
 
   for (const currentEmail of emailCandidates) {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: currentEmail
+      }
+    });
+
+    if (!user) {
+      continue;
+    }
+
+    if (!user.active) {
+      throw createInactiveUserError();
+    }
+
+    for (const currentPassword of passwordCandidates) {
+      const valid = await bcrypt.compare(currentPassword, user.password);
+
+      if (!valid) {
+        continue;
+      }
+
+      await prisma.user.update({
+        where: {
+          id: user.id
+        },
+        data: {
+          lastLoginAt: new Date()
+        }
+      });
+
+      const context = await getUserContextById(user.id);
+
+      await writeAuditLog(user.id, "login", {
+        entity: "auth",
+        entityId: user.id,
+        details: `Login realizado por ${context?.name || user.email}`
+      });
+
+      return {
+        user: context,
+        token: signAccessToken(context)
+      };
+    }
+  }
+
+  for (const currentEmail of emailCandidates) {
     for (const currentPassword of passwordCandidates) {
       try {
         const authResponse = await signInWithSupabase(currentEmail, currentPassword);
@@ -328,54 +374,8 @@ export async function login({ email, password }) {
     }
   }
 
-  if (!supabaseUnavailable) {
-    throw createAuthError();
-  }
-
-  for (const currentEmail of emailCandidates) {
-    const user = await prisma.user.findUnique({
-      where: {
-        email: currentEmail
-      }
-    });
-
-    if (!user) {
-      continue;
-    }
-
-    if (!user.active) {
-      throw createInactiveUserError();
-    }
-
-    for (const currentPassword of passwordCandidates) {
-      const valid = await bcrypt.compare(currentPassword, user.password);
-
-      if (!valid) {
-        continue;
-      }
-
-      await prisma.user.update({
-        where: {
-          id: user.id
-        },
-        data: {
-          lastLoginAt: new Date()
-        }
-      });
-
-      const context = await getUserContextById(user.id);
-
-      await writeAuditLog(user.id, "login", {
-        entity: "auth",
-        entityId: user.id,
-        details: `Login realizado por ${context?.name || user.email}`
-      });
-
-      return {
-        user: context,
-        token: signAccessToken(context)
-      };
-    }
+  if (supabaseUnavailable) {
+    throw createAuthError("Servico de autenticacao temporariamente indisponivel");
   }
 
   throw createAuthError();
