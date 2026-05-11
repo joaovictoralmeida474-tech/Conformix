@@ -108,6 +108,7 @@ async function provisionUserFromSupabase({ supabaseUser, password }) {
 
 function isSupabaseUnavailableError(error) {
   return (
+    Number(error?.response?.status) >= 500 ||
     error?.code === "ECONNREFUSED" ||
     error?.code === "ENOTFOUND" ||
     error?.code === "ETIMEDOUT" ||
