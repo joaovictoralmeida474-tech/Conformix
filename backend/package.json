@@ -8,6 +8,7 @@
     "start": "node src/app.js",
     "auth:reset-superadmin": "node scripts/reset-auth-to-superadmin.mjs",
     "prisma:generate": "prisma generate",
+    "prisma:deploy": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

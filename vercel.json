@@ -1,7 +1,7 @@
 {
   "framework": null,
   "installCommand": "if [ -d frontend ] && [ -d backend ]; then npm install && npm --prefix frontend install && npm --prefix backend install; else npm install && npm --prefix ../backend install; fi",
-  "buildCommand": "if [ -d frontend ] && [ -d backend ]; then npm --prefix backend run prisma:generate && npx --prefix backend prisma db push && npm --prefix frontend run build; else npm --prefix ../backend run prisma:generate && npx --prefix ../backend prisma db push && npm run build; fi",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
