@@ -50,9 +50,25 @@ export function getAllowedCorsOrigins() {
   return parseOrigins(process.env.CORS_ALLOWED_ORIGINS);
 }
 
-export function isAllowedCorsOrigin(origin, allowedOrigins = []) {
+function normalizeHost(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\.$/, "");
+}
+
+function extractOriginHost(origin) {
+  try {
+    return normalizeHost(new URL(origin).host);
+  } catch {
+    return "";
+  }
+}
+
+export function isAllowedCorsOrigin(origin, allowedOrigins = [], requestHost = "") {
   if (!origin) return true;
   if (allowedOrigins.includes(origin)) return true;
+  if (requestHost && extractOriginHost(origin) === normalizeHost(requestHost)) return true;
   return LOCALHOST_ORIGIN_PATTERN.test(origin);
 }
 

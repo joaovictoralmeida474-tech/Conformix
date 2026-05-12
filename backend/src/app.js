@@ -19,16 +19,18 @@ app.use(
   })
 );
 app.use(
-  cors({
-    credentials: true,
-    origin(origin, callback) {
-      if (isAllowedCorsOrigin(origin, [...allowedOrigins])) {
-        callback(null, true);
-        return;
-      }
+  cors((req, callback) => {
+    const requestHost = String(req.headers["x-forwarded-host"] || req.headers.host || "").trim();
 
-      callback(new Error("Origem nao permitida pelo CORS"));
+    if (isAllowedCorsOrigin(req.headers.origin, [...allowedOrigins], requestHost)) {
+      callback(null, {
+        credentials: true,
+        origin: true
+      });
+      return;
     }
+
+    callback(new Error("Origem nao permitida pelo CORS"));
   })
 );
 app.use(express.json({ limit: "1mb" }));
