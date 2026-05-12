@@ -1,32 +1,21 @@
-import fs from "fs";
-import path from "path";
 import { PrismaClient } from "@prisma/client";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 function ensureRuntimeDatabaseUrl() {
-  if (String(process.env.DATABASE_URL || "").trim()) {
+  const databaseUrl = String(process.env.DATABASE_URL || "").trim();
+
+  if (databaseUrl) {
     return;
   }
 
-  if (process.env.VERCEL !== "1") {
-    return;
+  if (process.env.VERCEL === "1") {
+    throw new Error(
+      "DATABASE_URL nao configurada na Vercel. Use um banco PostgreSQL persistente para evitar perda de categorias, fornecedores e demais cadastros."
+    );
   }
 
-  const runtimeDbPath = "/tmp/conformix-runtime.db";
-  const seedDbPath = path.resolve(__dirname, "../../../prisma/dev.db");
-
-  try {
-    if (!fs.existsSync(runtimeDbPath) && fs.existsSync(seedDbPath)) {
-      fs.copyFileSync(seedDbPath, runtimeDbPath);
-    }
-  } catch (error) {
-    console.error("Falha ao preparar banco SQLite temporario na Vercel:", error);
-  }
-
-  process.env.DATABASE_URL = `file:${runtimeDbPath}`;
+  throw new Error(
+    "DATABASE_URL nao configurada. Defina a conexao do banco antes de iniciar a API."
+  );
 }
 
 ensureRuntimeDatabaseUrl();
