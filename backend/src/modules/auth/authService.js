@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 import { prisma } from "../../shared/database/prisma.js";
 import { ROLES, normalizeRole } from "../../shared/auth/permissions.js";

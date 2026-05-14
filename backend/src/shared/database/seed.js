@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import axios from "axios";
 
 import { prisma } from "./prisma.js";

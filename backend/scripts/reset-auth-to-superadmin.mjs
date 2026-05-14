@@ -1,5 +1,5 @@
 import "dotenv/config";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 import { prisma } from "../src/shared/database/prisma.js";
 import { ROLES } from "../src/shared/auth/permissions.js";
