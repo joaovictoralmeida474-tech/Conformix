@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "vercel-build": "npm --prefix backend run prisma:generate && npm --prefix frontend run build"
+    "vercel-build": "node scripts/vercel-build.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3"

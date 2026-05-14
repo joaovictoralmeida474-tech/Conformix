@@ -50,6 +50,14 @@ function createInactiveUserError() {
   return error;
 }
 
+async function writeAuditLogSafely(userId, action, meta = {}) {
+  try {
+    await writeAuditLog(userId, action, meta);
+  } catch (error) {
+    console.error("Aviso: falha ao registrar auditoria de autenticacao:", error?.message || error);
+  }
+}
+
 function buildProvisioningProfile(supabaseUser) {
   return buildSupabaseProfile(supabaseUser);
 }
@@ -289,7 +297,7 @@ export async function login({ email, password }) {
 
       const context = await getUserContextById(user.id);
 
-      await writeAuditLog(user.id, "login", {
+      await writeAuditLogSafely(user.id, "login", {
         entity: "auth",
         entityId: user.id,
         details: `Login realizado por ${context?.name || user.email}`
@@ -341,7 +349,7 @@ export async function login({ email, password }) {
 
         const context = await getUserContextById(user.id);
 
-        await writeAuditLog(user.id, "login", {
+        await writeAuditLogSafely(user.id, "login", {
           entity: "auth",
           entityId: user.id,
           details: `Login realizado por ${context?.name || normalizedSupabaseEmail}`
