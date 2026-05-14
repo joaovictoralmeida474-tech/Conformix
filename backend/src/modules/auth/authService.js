@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import { prisma } from "../../shared/database/prisma.js";
-import { ROLES, normalizeRole } from "../../shared/auth/permissions.js";
+import { ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
 import { signAccessToken } from "../../shared/middlewares/auth.js";
 import { getUserContextById } from "../../shared/auth/userContext.js";
 import { log as writeAuditLog } from "../audit/auditService.js";
@@ -54,6 +54,29 @@ function createServiceUnavailableError(message = "Servico de autenticacao tempor
   const error = new Error(message);
   error.code = "AUTH_SERVICE_UNAVAILABLE";
   return error;
+}
+
+function buildFallbackSupabaseContext(supabaseUser, emailHint = "") {
+  const profile = buildProvisioningProfile(supabaseUser);
+  const normalizedEmail = normalizeEmail(supabaseUser?.email || emailHint);
+  const aliases = getSuperAdminAliases();
+  const isSuperAdminAlias = aliases.has(normalizedEmail);
+  const role = isSuperAdminAlias ? ROLES.SUPER_ADMIN : normalizeRole(profile.role || ROLES.USER);
+  const permissions = ROLE_PERMISSION_MAP[role] || [];
+
+  return {
+    id: String(supabaseUser?.id || normalizedEmail || "supabase-user"),
+    name: profile.name || "Usuario",
+    email: normalizedEmail,
+    role,
+    active: true,
+    companyId: role === ROLES.SUPER_ADMIN ? null : profile.companyId,
+    departmentId: role === ROLES.SUPER_ADMIN ? null : profile.departmentId,
+    company: null,
+    department: null,
+    permissions,
+    permissionsSource: "role"
+  };
 }
 
 async function writeAuditLogSafely(userId, action, meta = {}) {
@@ -286,50 +309,68 @@ export async function login({ email, password }) {
     const emailCandidates = getAuthEmailCandidates(email);
     const passwordCandidates = normalizePasswordCandidates(password);
     let supabaseUnavailable = false;
+    let databaseUnavailable = false;
 
-    for (const currentEmail of emailCandidates) {
-      const user = await prisma.user.findUnique({
-        where: {
-          email: currentEmail
+    if (!process.env.VERCEL && !String(process.env.DATABASE_URL || "").match(/^postgres(ql)?:\/\//i)) {
+      databaseUnavailable = true;
+    }
+
+    if (!databaseUnavailable) {
+      for (const currentEmail of emailCandidates) {
+        let user = null;
+
+        try {
+          user = await prisma.user.findUnique({
+            where: {
+              email: currentEmail
+            }
+          });
+        } catch (error) {
+          if (isDatabaseRuntimeError(error)) {
+            databaseUnavailable = true;
+            break;
+          }
+
+          throw error;
         }
-      });
 
-      if (!user) {
-        continue;
-      }
-
-      if (!user.active) {
-        throw createInactiveUserError();
-      }
-
-      for (const currentPassword of passwordCandidates) {
-        const valid = await bcrypt.compare(currentPassword, user.password);
-
-        if (!valid) {
+        if (!user) {
           continue;
         }
 
-        await prisma.user.update({
-          where: {
-            id: user.id
-          },
-          data: {
-            lastLoginAt: new Date()
+        if (!user.active) {
+          throw createInactiveUserError();
+        }
+
+        for (const currentPassword of passwordCandidates) {
+          const valid = await bcrypt.compare(currentPassword, user.password);
+
+          if (!valid) {
+            continue;
           }
-        });
 
-        const context = await getUserContextById(user.id);
+          await prisma.user.update({
+            where: {
+              id: user.id
+            },
+            data: {
+              lastLoginAt: new Date()
+            }
+          });
 
-        await writeAuditLogSafely(user.id, "login", {
-          entity: "auth",
-          entityId: user.id,
-          details: `Login realizado por ${context?.name || user.email}`
-        });
+          const context = await getUserContextById(user.id);
 
-        return {
-          user: context,
-          token: signAccessToken(context)
-        };
+          await writeAuditLogSafely(user.id, "login", {
+            entity: "auth",
+            entityId: user.id,
+            details: `Login realizado por ${context?.name || user.email}`
+          });
+
+          return {
+            user: context,
+            token: signAccessToken(context)
+          };
+        }
       }
     }
 
@@ -344,6 +385,15 @@ export async function login({ email, password }) {
           }
 
           const normalizedSupabaseEmail = normalizeEmail(supabaseUser.email);
+          if (databaseUnavailable) {
+            const fallbackContext = buildFallbackSupabaseContext(supabaseUser, currentEmail);
+
+            return {
+              user: fallbackContext,
+              token: signAccessToken(fallbackContext)
+            };
+          }
+
           let user = await prisma.user.findFirst({
             where: {
               OR: [

@@ -61,9 +61,16 @@ export async function initializeApp() {
   if (!startupPromise) {
     startupPromise = (async () => {
       getJwtSecret();
+      const databaseUrl = String(process.env.DATABASE_URL || "").trim();
+      const hasPostgresUrl = /^postgres(ql)?:\/\//i.test(databaseUrl);
 
       if (process.env.VERCEL === "1") {
         console.log("Inicializacao serverless detectada. Pulando seed automatico no boot da Vercel.");
+        return;
+      }
+
+      if (!hasPostgresUrl) {
+        console.warn("DATABASE_URL local sem PostgreSQL valido. Pulando seed automatico para permitir login via Supabase.");
         return;
       }
 

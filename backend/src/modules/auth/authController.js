@@ -58,8 +58,7 @@ export async function login(req, res) {
 export async function me(req, res) {
   try {
     applyNoStore(res);
-    const user = await authService.me(req.user.id);
-    res.json(user);
+    res.json(req.user);
   } catch (error) {
     applyNoStore(res);
     res.status(401).json({ error: "Nao autorizado" });

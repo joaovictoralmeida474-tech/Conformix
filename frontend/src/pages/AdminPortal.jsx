@@ -206,6 +206,7 @@ export default function AdminPortal() {
 
   const companies = useMemo(() => settings?.companies || [], [settings]);
   const permissionCatalog = useMemo(() => settings?.permissionCatalog || [], [settings]);
+  const localDbUnavailable = Boolean(settings?.featureFlags?.localDbUnavailable);
   const availableUserDepartments = useMemo(() => {
     if (role !== ROLES.SUPER_ADMIN) {
       return departments.filter((item) => Number(item.id) === Number(user?.departmentId));
@@ -298,6 +299,18 @@ export default function AdminPortal() {
     loadSectionData();
   }, [section]);
 
+  function requireLocalDatabase(actionLabel = "executar esta acao") {
+    if (!localDbUnavailable) {
+      return true;
+    }
+
+    setError("");
+    setMessage(
+      `Banco local indisponivel no momento. Configure uma DATABASE_URL PostgreSQL valida no backend para ${actionLabel}.`
+    );
+    return false;
+  }
+
   function openUserModal(record = null) {
     setUserModal(record ? { mode: "edit", id: record.id } : { mode: "create", id: null });
     setUserForm(
@@ -375,6 +388,8 @@ export default function AdminPortal() {
   }
 
   async function submitUser(recordId = null) {
+    if (!requireLocalDatabase(recordId ? "atualizar o usuario" : "criar o usuario")) return;
+
     try {
       const payload = {
         name: userForm.name,
@@ -412,6 +427,8 @@ export default function AdminPortal() {
   }
 
   async function toggleUserStatus(record) {
+    if (!requireLocalDatabase("alterar o status do usuario")) return;
+
     try {
       await api.patch(`/admin/users/${record.id}/status`, {
         active: !record.active
@@ -424,6 +441,8 @@ export default function AdminPortal() {
   }
 
   async function removeUser(recordId) {
+    if (!requireLocalDatabase("excluir o usuario")) return;
+
     if (!window.confirm("Deseja excluir este usuario?")) return;
 
     try {
@@ -437,6 +456,8 @@ export default function AdminPortal() {
   }
 
   async function submitAdmin(recordId = null) {
+    if (!requireLocalDatabase(recordId ? "atualizar o admin" : "criar o admin")) return;
+
     try {
       const payload = {
         name: adminForm.name,
@@ -468,6 +489,8 @@ export default function AdminPortal() {
   }
 
   async function submitCompany() {
+    if (!requireLocalDatabase("criar a empresa")) return;
+
     try {
       await api.post("/admin/companies", companyForm);
       setMessage("Empresa criada com sucesso.");
@@ -480,6 +503,8 @@ export default function AdminPortal() {
   }
 
   async function removeDepartment(recordId) {
+    if (!requireLocalDatabase("excluir o departamento")) return;
+
     if (!window.confirm("Deseja excluir este departamento?")) return;
 
     try {
@@ -496,6 +521,8 @@ export default function AdminPortal() {
   }
 
   async function removeCompany(recordId) {
+    if (!requireLocalDatabase("excluir a empresa")) return;
+
     if (!window.confirm("Deseja excluir esta empresa?")) return;
 
     try {
@@ -512,6 +539,8 @@ export default function AdminPortal() {
   }
 
   async function toggleAdminStatus(record) {
+    if (!requireLocalDatabase("alterar o status do admin")) return;
+
     try {
       await api.patch(`/admin/admins/${record.id}/status`, {
         active: !record.active
@@ -524,6 +553,8 @@ export default function AdminPortal() {
   }
 
   async function removeAdmin(recordId) {
+    if (!requireLocalDatabase("excluir o admin")) return;
+
     if (!window.confirm("Deseja excluir este admin?")) return;
 
     try {
@@ -536,6 +567,8 @@ export default function AdminPortal() {
   }
 
   async function submitDepartment(recordId = null) {
+    if (!requireLocalDatabase(recordId ? "atualizar o departamento" : "criar o departamento")) return;
+
     try {
       const payload = {
         name: departmentForm.name,
@@ -562,6 +595,7 @@ export default function AdminPortal() {
   }
 
   async function submitPasswordReset() {
+    if (!requireLocalDatabase("redefinir a senha")) return;
     if (!passwordModal?.id || !password) return;
 
     try {
@@ -616,6 +650,13 @@ export default function AdminPortal() {
 
       {error ? <p className="error-text">{error}</p> : null}
       {message ? <p className="success-text">{message}</p> : null}
+      {localDbUnavailable ? (
+        <p className="dashboard-empty-copy">
+          O painel administrativo esta em modo local reduzido. Para cadastrar empresas, departamentos,
+          usuarios e admins com persistencia real, configure uma `DATABASE_URL` PostgreSQL valida no
+          `backend/.env`.
+        </p>
+      ) : null}
       {loading ? <p className="dashboard-empty-copy">Carregando painel administrativo...</p> : null}
 
       {!hasActiveEditor && section === "overview" ? (

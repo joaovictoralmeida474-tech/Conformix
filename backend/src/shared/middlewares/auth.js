@@ -47,7 +47,8 @@ function signAccessToken(user) {
   return jwt.sign(
     {
       id: user.id,
-      role: normalizeRole(user.role)
+      role: normalizeRole(user.role),
+      userSnapshot: user
     },
     jwtSecret,
     {
@@ -102,7 +103,23 @@ export async function auth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, getJwtSecret());
-    const user = await getUserContextById(decoded.id);
+    const fallbackUser =
+      decoded?.userSnapshot && typeof decoded.userSnapshot === "object"
+        ? decoded.userSnapshot
+        : null;
+    let user = null;
+
+    try {
+      user = await getUserContextById(decoded.id);
+    } catch (error) {
+      if (!fallbackUser) {
+        throw error;
+      }
+    }
+
+    if (!user && fallbackUser) {
+      user = fallbackUser;
+    }
 
     if (!user) {
       return res.status(401).json({ error: "Nao autorizado" });
