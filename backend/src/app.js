@@ -61,6 +61,12 @@ export async function initializeApp() {
   if (!startupPromise) {
     startupPromise = (async () => {
       getJwtSecret();
+
+      if (process.env.VERCEL === "1") {
+        console.log("Inicializacao serverless detectada. Pulando seed automatico no boot da Vercel.");
+        return;
+      }
+
       await seedPlatform();
     })().catch((error) => {
       startupPromise = null;
