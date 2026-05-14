@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./shared/config/loadEnv.js";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";

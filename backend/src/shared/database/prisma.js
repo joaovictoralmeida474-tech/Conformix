@@ -1,3 +1,4 @@
+import "../config/loadEnv.js";
 import { PrismaClient } from "@prisma/client";
 
 function ensureRuntimeDatabaseUrl() {
