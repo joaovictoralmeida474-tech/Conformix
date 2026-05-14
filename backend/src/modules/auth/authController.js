@@ -22,6 +22,12 @@ function sendSafeAuthError(res, error) {
     return res.status(429).json({ error: "Muitas tentativas. Tente novamente em alguns minutos." });
   }
 
+  if (error?.code === "AUTH_SERVICE_UNAVAILABLE") {
+    return res.status(503).json({
+      error: "Servico de autenticacao temporariamente indisponivel"
+    });
+  }
+
   return res.status(400).json({ error: "Nao foi possivel concluir a autenticacao" });
 }
 
