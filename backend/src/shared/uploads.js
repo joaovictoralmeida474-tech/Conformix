@@ -1,4 +1,5 @@
 import path from "path";
+import os from "os";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -6,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 function getRuntimeUploadsBaseDir() {
   if (process.env.VERCEL === "1") {
-    return path.join("/tmp", "conformix-uploads");
+    return path.join(os.tmpdir(), "conformix-uploads");
   }
 
   return path.resolve(__dirname, "../uploads");

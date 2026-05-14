@@ -6,12 +6,16 @@ import { getEvaluationUploadsRoot, getSupplierUploadsRoot } from "../uploads.js"
 const supplierUploadRoot = getSupplierUploadsRoot();
 const evaluationUploadRoot = getEvaluationUploadsRoot();
 
-fs.mkdirSync(supplierUploadRoot, { recursive: true });
-fs.mkdirSync(evaluationUploadRoot, { recursive: true });
-
 function buildStorage(uploadRoot) {
   return multer.diskStorage({
     destination: (_, __, callback) => {
+      try {
+        fs.mkdirSync(uploadRoot, { recursive: true });
+      } catch (error) {
+        callback(error);
+        return;
+      }
+
       callback(null, uploadRoot);
     },
     filename: (_, file, callback) => {
