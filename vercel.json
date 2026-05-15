@@ -7,6 +7,9 @@
     "api/auth/login.mjs": {
       "maxDuration": 30
     },
+    "api/auth/session.mjs": {
+      "maxDuration": 30
+    },
     "api/index.mjs": {
       "maxDuration": 30,
       "includeFiles": "backend/node_modules/.prisma/**"

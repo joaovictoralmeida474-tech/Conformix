@@ -1,5 +1,5 @@
-import axios from "axios";
 import jwt from "jsonwebtoken";
+import { createClient } from "@supabase/supabase-js";
 
 import {
   ROLE_PERMISSION_MAP,
@@ -49,18 +49,17 @@ function normalizeEmail(email) {
 
 function getSuperAdminAliases() {
   const configured = normalizeEmail(process.env.SUPER_ADMIN_EMAIL);
-  return new Set(["superadmin@conformix.local", configured].filter(Boolean));
+  return new Set(
+    [
+      "superadmin@conformix.local",
+      "joaovictoralmeida474@gmail.com",
+      configured
+    ].filter(Boolean)
+  );
 }
 
 function getAuthEmailCandidates(email) {
-  const normalizedEmail = normalizeEmail(email);
-  const aliases = getSuperAdminAliases();
-
-  if (!aliases.has(normalizedEmail)) {
-    return [normalizedEmail];
-  }
-
-  return [...new Set([normalizedEmail, ...aliases])];
+  return [normalizeEmail(email)];
 }
 
 function normalizePasswordCandidates(password) {
@@ -145,7 +144,7 @@ function signAccessToken(user) {
   );
 }
 
-async function signInWithSupabase(email, password) {
+function getSupabaseClient() {
   ensureSupabaseEnv();
 
   const url = String(process.env.SUPABASE_URL || "").trim().replace(/\/$/, "");
@@ -157,28 +156,28 @@ async function signInWithSupabase(email, password) {
     throw error;
   }
 
-  const response = await axios.post(
-    `${url}/auth/v1/token?grant_type=password`,
-    { email, password },
-    {
-      proxy: false,
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-        "Content-Type": "application/json"
-      },
-      validateStatus: () => true
+  return createClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
-  );
+  });
+}
 
-  if (response.status >= 400) {
-    const error = new Error("Credenciais invalidas no Supabase");
-    error.code = "AUTH_INVALID_CREDENTIALS";
-    error.response = response;
-    throw error;
+async function signInWithSupabase(email, password) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error || !data?.user) {
+    const authError = new Error(error?.message || "Credenciais invalidas no Supabase");
+    authError.code = "AUTH_INVALID_CREDENTIALS";
+    throw authError;
   }
 
-  return response.data;
+  return {
+    user: data.user,
+    session: data.session
+  };
 }
 
 export async function performLogin({ email, password }) {
@@ -191,7 +190,7 @@ export async function performLogin({ email, password }) {
     for (const currentPassword of passwordCandidates) {
       try {
         const authResponse = await signInWithSupabase(currentEmail, currentPassword);
-        const supabaseUser = authResponse?.user;
+        const supabaseUser = authResponse?.user || authResponse?.session?.user;
 
         if (!supabaseUser?.email) {
           lastInvalidCredentials = true;

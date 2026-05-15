@@ -5,11 +5,6 @@ import { isSupabaseClientConfigured, supabase } from "../services/supabaseClient
 import { getDefaultRouteForUser } from "../utils/access";
 import { saveSession } from "../utils/authStorage";
 
-const SUPER_ADMIN_EMAIL_ALIASES = [
-  "superadmin@conformix.local",
-  "joaovictoralmeida474@gmail.com",
-];
-
 export default function Login() {
   const [form, setForm] = useState({
     email: "",
@@ -250,21 +245,29 @@ export default function Login() {
     }, 700);
   }
 
-  async function requestLogin(email, password) {
+  async function authenticateWithSupabase(email, password) {
+    if (!isSupabaseClientConfigured() || !supabase) {
+      return null;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error || !data?.session?.access_token) {
+      return null;
+    }
+
+    return api.post("/auth/session", {
+      accessToken: data.session.access_token,
+      rememberMe,
+    });
+  }
+
+  async function authenticateWithApi(email, password) {
     return api.post("/auth/login", {
       email,
       password,
       rememberMe,
     });
-  }
-
-  async function confirmSupabaseCredentials(email, password) {
-    if (!isSupabaseClientConfigured() || !supabase) {
-      return false;
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return !error;
   }
 
   async function login(event) {
@@ -274,53 +277,33 @@ export default function Login() {
 
     const normalizedEmail = form.email.trim().toLowerCase();
     const passwordCandidates = [...new Set([form.password, form.password.trim()].filter(Boolean))];
-    const emailCandidates = SUPER_ADMIN_EMAIL_ALIASES.includes(normalizedEmail)
-      ? SUPER_ADMIN_EMAIL_ALIASES
-      : [normalizedEmail];
 
     try {
       let successfulResponse = null;
       let lastError = null;
 
-      for (const email of emailCandidates) {
-        for (const password of passwordCandidates) {
-          try {
-            successfulResponse = await requestLogin(email, password);
-            break;
-          } catch (error) {
-            lastError = error;
-            const status = error?.response?.status;
+      for (const password of passwordCandidates) {
+        try {
+          successfulResponse = await authenticateWithSupabase(normalizedEmail, password);
 
-            if (status === 401) {
-              continue;
-            }
-
-            if (status >= 500 || !status) {
-              const supabaseValid = await confirmSupabaseCredentials(email, password);
-
-              if (supabaseValid) {
-                try {
-                  successfulResponse = await requestLogin(email, password);
-                  break;
-                } catch (retryError) {
-                  lastError = retryError;
-                }
-              }
-            }
-
-            if (!successfulResponse) {
-              throw lastError;
-            }
+          if (!successfulResponse) {
+            successfulResponse = await authenticateWithApi(normalizedEmail, password);
           }
-        }
 
-        if (successfulResponse) {
           break;
+        } catch (error) {
+          lastError = error;
+
+          if (error?.response?.status === 401) {
+            continue;
+          }
+
+          throw error;
         }
       }
 
       if (!successfulResponse) {
-        throw lastError;
+        throw lastError || new Error("invalid_credentials");
       }
 
       const { data } = successfulResponse;
@@ -333,7 +316,8 @@ export default function Login() {
       nav(getDefaultRouteForUser(data?.user), { replace: true });
     } catch (error) {
       const status = error?.response?.status;
-      const isInvalidCredentials = status === 401;
+      const isInvalidCredentials =
+        status === 401 || error?.message === "invalid_credentials";
       setError(
         isInvalidCredentials
           ? "Email ou senha invalidos"
