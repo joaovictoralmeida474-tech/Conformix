@@ -7,6 +7,21 @@ import { prisma } from "./prisma.js";
 
 let bootstrapPromise = null;
 
+function getBootstrapTimeoutMs() {
+  return process.env.VERCEL === "1" ? 8000 : 30000;
+}
+
+function withTimeout(promise, timeoutMs, label = "operacao") {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Timeout ao executar ${label} (${timeoutMs}ms)`));
+      }, timeoutMs);
+    })
+  ]);
+}
+
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
@@ -15,14 +30,14 @@ export function hasUsablePostgresDatabase() {
   return isDatabaseConfigured();
 }
 
-export async function testDatabaseConnection() {
+export async function testDatabaseConnection(timeoutMs = getBootstrapTimeoutMs()) {
   if (!isDatabaseConfigured()) {
     return false;
   }
 
   try {
     resolveDatabaseUrl();
-    await prisma.$queryRaw`SELECT 1`;
+    await withTimeout(prisma.$queryRaw`SELECT 1`, timeoutMs, "teste de conexao PostgreSQL");
     return true;
   } catch (error) {
     console.error("Teste de conexao PostgreSQL falhou:", error?.message || error);
@@ -115,32 +130,39 @@ export async function provisionUserFromSessionSnapshot(userSnapshot = {}) {
   });
 }
 
+async function runPlatformBootstrap(userSnapshot = null) {
+  if (!bootstrapPromise) {
+    bootstrapPromise = (async () => {
+      await seedPermissions();
+      await ensureDefaultCompany();
+
+      if (userSnapshot?.email) {
+        await provisionUserFromSessionSnapshot(userSnapshot);
+      }
+    })().catch((error) => {
+      bootstrapPromise = null;
+      throw error;
+    });
+  }
+
+  await bootstrapPromise;
+
+  if (userSnapshot?.email) {
+    await provisionUserFromSessionSnapshot(userSnapshot);
+  }
+}
+
 export async function ensurePlatformBootstrap(userSnapshot = null) {
   if (!hasUsablePostgresDatabase()) {
     return false;
   }
 
   try {
-    if (!bootstrapPromise) {
-      bootstrapPromise = (async () => {
-        await seedPermissions();
-        await ensureDefaultCompany();
-
-        if (userSnapshot?.email) {
-          await provisionUserFromSessionSnapshot(userSnapshot);
-        }
-      })().catch((error) => {
-        bootstrapPromise = null;
-        throw error;
-      });
-    }
-
-    await bootstrapPromise;
-
-    if (userSnapshot?.email) {
-      await provisionUserFromSessionSnapshot(userSnapshot);
-    }
-
+    await withTimeout(
+      runPlatformBootstrap(userSnapshot),
+      getBootstrapTimeoutMs(),
+      "bootstrap da plataforma"
+    );
     return true;
   } catch (error) {
     console.error("Bootstrap da plataforma falhou:", error?.message || error);

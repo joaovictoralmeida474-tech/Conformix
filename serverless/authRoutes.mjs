@@ -1,3 +1,5 @@
+import "../backend/src/shared/config/loadEnv.js";
+
 import { readJsonBody, sendJson, setAuthCookie } from "./lib/http.mjs";
 import { getTokenFromRequest, verifyAccessToken } from "./lib/authToken.mjs";
 import { performLogin } from "./lib/loginCore.mjs";

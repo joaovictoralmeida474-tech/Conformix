@@ -1,5 +1,3 @@
-import "../backend/src/shared/config/loadEnv.js";
-
 import { handleAdminStatus } from "./adminStatus.mjs";
 import { handleAuthRoute } from "./authRoutes.mjs";
 import { rebuildApiUrl, resolveApiPath } from "./lib/resolveApiPath.mjs";
@@ -88,6 +86,7 @@ export default async function handler(req, res) {
       return handleAdminStatus(req, res);
     }
 
+    await import("../backend/src/shared/config/loadEnv.js");
     const app = await loadApp();
     await runExpressApp(app, req, res);
   } catch (error) {

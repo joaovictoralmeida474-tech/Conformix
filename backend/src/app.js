@@ -5,7 +5,6 @@ import helmet from "helmet";
 
 import routes from "./modules/index.js";
 import { seedPlatform } from "./shared/database/seed.js";
-import { ensurePlatformBootstrap } from "./shared/database/platformBootstrap.js";
 import { resolveDatabaseUrl } from "./shared/config/databaseEnv.js";
 import { getAllowedCorsOrigins, getJwtSecret, isAllowedCorsOrigin } from "./shared/config/security.js";
 
@@ -76,15 +75,6 @@ export async function initializeApp() {
       }
 
       if (process.env.VERCEL === "1") {
-        console.log("Vercel: preparando permissoes e estrutura minima do banco.");
-        try {
-          await ensurePlatformBootstrap();
-        } catch (bootstrapError) {
-          console.error(
-            "Aviso: bootstrap do banco na Vercel falhou:",
-            bootstrapError?.message || bootstrapError
-          );
-        }
         return;
       }
 

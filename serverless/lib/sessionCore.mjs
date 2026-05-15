@@ -38,15 +38,6 @@ export async function createSessionFromAccessToken(accessToken, supabaseConfig =
 
   const user = buildUserFromSupabase(data.user);
 
-  try {
-    const { ensurePlatformBootstrap } = await import(
-      "../../backend/src/shared/database/platformBootstrap.js"
-    );
-    await ensurePlatformBootstrap(user);
-  } catch (bootstrapError) {
-    console.warn("Aviso: bootstrap do banco apos login:", bootstrapError?.message || bootstrapError);
-  }
-
   return {
     user,
     token: signAccessToken(user)
