@@ -4,11 +4,12 @@ import { sendJson } from "./lib/http.mjs";
 
 export async function handleAdminStatus(_req, res) {
   const configured = isSupabaseDataConfigured();
-  const connected = configured ? await testSupabaseConnection() : false;
+  const connection = configured ? await testSupabaseConnection() : { connected: false };
 
   return sendJson(res, 200, {
     supabaseConfigured: configured,
-    supabaseConnected: connected,
+    supabaseConnected: connection.connected,
+    needsRelogin: Boolean(connection.needsRelogin),
     vercel: process.env.VERCEL === "1"
   });
 }

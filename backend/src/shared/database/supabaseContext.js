@@ -4,12 +4,11 @@ const storage = new AsyncLocalStorage();
 
 export function runWithSupabaseAccessToken(accessToken, callback) {
   const token = String(accessToken || "").trim();
-
-  if (!token) {
-    return callback();
-  }
-
   return storage.run({ accessToken: token }, callback);
+}
+
+export async function runWithSupabaseAccessTokenAsync(accessToken, callback) {
+  return runWithSupabaseAccessToken(accessToken, callback);
 }
 
 export function getSupabaseAccessToken() {

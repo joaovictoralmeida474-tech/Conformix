@@ -40,14 +40,18 @@ function getClientCacheKey(accessToken = "") {
   return userToken ? `user:${userToken.slice(0, 24)}` : "anon";
 }
 
-export function getSupabaseAdmin() {
+function resolveAccessToken(explicitToken = "") {
+  return String(explicitToken || getSupabaseAccessToken() || "").trim();
+}
+
+export function getSupabaseAdmin(options = {}) {
   if (!isSupabaseDataConfigured()) {
     throw new Error(
-      "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY na Vercel."
+      "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY (ou VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) na Vercel em Production e Preview."
     );
   }
 
-  const accessToken = getSupabaseAccessToken();
+  const accessToken = resolveAccessToken(options.accessToken);
   const cacheKey = getClientCacheKey(accessToken);
 
   if (!globalStore.__conformixSupabaseClients) {
@@ -63,31 +67,66 @@ export function getSupabaseAdmin() {
 
 export { isSupabaseDataConfigured };
 
-export async function testSupabaseConnection(timeoutMs = 8000) {
-  if (!isSupabaseDataConfigured()) {
-    return false;
+function isRlsPolicyError(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  const code = String(error?.code || "");
+
+  return (
+    code === "42501" ||
+    message.includes("row-level security") ||
+    message.includes("violates row-level security")
+  );
+}
+
+async function probeSupabaseClient(client, timeoutMs) {
+  const probe = client.from("Company").select("id").limit(1);
+
+  const result = await Promise.race([
+    probe,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Timeout ao conectar ao Supabase")), timeoutMs);
+    })
+  ]);
+
+  if (result?.error) {
+    if (isRlsPolicyError(result.error)) {
+      return { ok: true, rlsBlocked: true };
+    }
+
+    throw result.error;
   }
+
+  return { ok: true, rlsBlocked: false };
+}
+
+export async function testSupabaseConnection(timeoutMs = 8000, explicitAccessToken = "") {
+  if (!isSupabaseDataConfigured()) {
+    return { configured: false, connected: false, needsRelogin: false };
+  }
+
+  const accessToken = resolveAccessToken(explicitAccessToken);
 
   if (getSupabaseServiceRoleKey()) {
     try {
-      const client = getSupabaseAdmin();
-      const probe = client.from("Company").select("id").limit(1);
-
-      await Promise.race([
-        probe,
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Timeout ao conectar ao Supabase")), timeoutMs);
-        })
-      ]);
-
-      return true;
+      await probeSupabaseClient(getSupabaseAdmin({ accessToken }), timeoutMs);
+      return { configured: true, connected: true, needsRelogin: false };
     } catch (error) {
       console.error("Teste de conexao Supabase falhou:", error?.message || error);
-      return false;
+      return { configured: true, connected: false, needsRelogin: false };
     }
   }
 
-  return Boolean(getSupabaseAccessToken());
+  if (!accessToken) {
+    return { configured: true, connected: false, needsRelogin: true };
+  }
+
+  try {
+    await probeSupabaseClient(getSupabaseAdmin({ accessToken }), timeoutMs);
+    return { configured: true, connected: true, needsRelogin: false };
+  } catch (error) {
+    console.error("Teste de conexao Supabase falhou:", error?.message || error);
+    return { configured: true, connected: false, needsRelogin: false };
+  }
 }
 
 export function throwIfSupabaseError(result, label = "operacao") {

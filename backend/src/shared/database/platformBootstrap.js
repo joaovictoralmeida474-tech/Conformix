@@ -14,9 +14,15 @@ export function hasUsablePostgresDatabase() {
   return isSupabaseDataConfigured();
 }
 
-export async function testDatabaseConnection(timeoutMs = 8000) {
+export async function testDatabaseConnection(timeoutMs = 8000, accessToken = "") {
   const { testSupabaseConnection } = await import("./supabaseStore.js");
-  return testSupabaseConnection(timeoutMs);
+  const result = await testSupabaseConnection(timeoutMs, accessToken);
+  return result.connected;
+}
+
+export async function describeDatabaseConnection(timeoutMs = 8000, accessToken = "") {
+  const { testSupabaseConnection } = await import("./supabaseStore.js");
+  return testSupabaseConnection(timeoutMs, accessToken);
 }
 
 async function ensureDefaultCompany() {

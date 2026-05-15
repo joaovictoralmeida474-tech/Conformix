@@ -2,9 +2,9 @@ import * as adminService from "./adminService.js";
 import { PERMISSION_DEFINITIONS, ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
 import { isSupabaseDataConfigured } from "../../shared/config/supabaseEnv.js";
 import {
+  describeDatabaseConnection,
   ensurePlatformBootstrap,
-  hasUsablePostgresDatabase,
-  testDatabaseConnection
+  hasUsablePostgresDatabase
 } from "../../shared/database/platformBootstrap.js";
 
 function isDatabaseUnavailableError(error) {
@@ -305,19 +305,29 @@ export async function getSettings(req, res) {
       buildSettingsFallback({
         localDbUnavailable: true,
         databaseError:
-          "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY na Vercel."
+          "Supabase nao configurado. Na Vercel, adicione VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ou SUPABASE_URL e SUPABASE_ANON_KEY) em Production e Preview — nao apenas em Development."
       })
     );
   }
 
-  const canConnect = await testDatabaseConnection();
+  const connection = await describeDatabaseConnection(8000, req.supabaseAccessToken);
 
-  if (!canConnect) {
+  if (connection.needsRelogin) {
     return res.json(
       buildSettingsFallback({
         localDbUnavailable: true,
         databaseError:
-          "Nao foi possivel acessar o Supabase. Verifique SUPABASE_URL e SUPABASE_ANON_KEY e faca um novo deploy."
+          "Sessao sem token do Supabase. Faca logout e login novamente para habilitar o painel administrativo."
+      })
+    );
+  }
+
+  if (!connection.connected) {
+    return res.json(
+      buildSettingsFallback({
+        localDbUnavailable: true,
+        databaseError:
+          "Nao foi possivel acessar o Supabase. Confira VITE_SUPABASE_URL (sem /rest/v1 no final), VITE_SUPABASE_ANON_KEY em Production/Preview e faca um novo deploy."
       })
     );
   }

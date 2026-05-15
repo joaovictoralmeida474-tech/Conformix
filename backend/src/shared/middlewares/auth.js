@@ -2,7 +2,10 @@ import jwt from "jsonwebtoken";
 
 import { hasPermission, isAdminRole, normalizeRole } from "../auth/permissions.js";
 import { getUserContextById } from "../auth/userContext.js";
-import { runWithSupabaseAccessToken } from "../database/supabaseContext.js";
+import {
+  runWithSupabaseAccessToken,
+  runWithSupabaseAccessTokenAsync
+} from "../database/supabaseContext.js";
 import {
   getAuthCookieName,
   getJwtSecret,
@@ -112,30 +115,31 @@ export async function auth(req, res, next) {
         ? decoded.userSnapshot
         : null;
 
-    return runWithSupabaseAccessToken(supabaseAccessToken, async () => {
-      let user = null;
+    let user = null;
 
-      try {
-        user = await getUserContextById(decoded.id);
-      } catch (error) {
-        if (!fallbackUser) {
-          throw error;
-        }
+    try {
+      user = await runWithSupabaseAccessTokenAsync(supabaseAccessToken, async () =>
+        getUserContextById(decoded.id)
+      );
+    } catch (error) {
+      if (!fallbackUser) {
+        throw error;
       }
+    }
 
-      if (!user && fallbackUser) {
-        user = fallbackUser;
-      }
+    if (!user && fallbackUser) {
+      user = fallbackUser;
+    }
 
-      if (!user) {
-        return res.status(401).json({ error: "Nao autorizado" });
-      }
+    if (!user) {
+      return res.status(401).json({ error: "Nao autorizado" });
+    }
 
-      req.user = user;
-      req.token = token;
-      req.supabaseAccessToken = supabaseAccessToken;
-      return next();
-    });
+    req.user = user;
+    req.token = token;
+    req.supabaseAccessToken = supabaseAccessToken;
+
+    return runWithSupabaseAccessToken(supabaseAccessToken, () => next());
   } catch {
     return res.status(401).json({ error: "Nao autorizado" });
   }

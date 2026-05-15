@@ -3,9 +3,9 @@ import "./loadEnv.js";
 export function getSupabaseUrl() {
   return String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "")
     .trim()
-    .replace(/\/+$/, "")
-    .replace(/\/rest\/v1$/i, "")
-    .replace(/\/auth\/v1$/i, "");
+    .replace(/\/rest\/v1\/?$/i, "")
+    .replace(/\/auth\/v1\/?$/i, "")
+    .replace(/\/+$/, "");
 }
 
 export function getSupabaseAnonKey() {
