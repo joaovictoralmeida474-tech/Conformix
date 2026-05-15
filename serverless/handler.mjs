@@ -1,6 +1,8 @@
 import "../backend/src/shared/config/loadEnv.js";
 
-import { rebuildApiUrl } from "./lib/resolveApiPath.mjs";
+import { handleAdminStatus } from "./adminStatus.mjs";
+import { handleAuthRoute } from "./authRoutes.mjs";
+import { rebuildApiUrl, resolveApiPath } from "./lib/resolveApiPath.mjs";
 
 let cachedApp = null;
 let cachedInitializeApp = null;
@@ -73,8 +75,20 @@ async function loadApp() {
 
 export default async function handler(req, res) {
   try {
-    const app = await loadApp();
     prepareRequest(req);
+
+    const path = resolveApiPath(req);
+    const method = String(req.method || "GET").toUpperCase();
+
+    if (await handleAuthRoute(path, method, req, res)) {
+      return;
+    }
+
+    if (path === "admin/status" && method === "GET") {
+      return handleAdminStatus(req, res);
+    }
+
+    const app = await loadApp();
     await runExpressApp(app, req, res);
   } catch (error) {
     console.error("Erro ao executar API no Vercel:", error);

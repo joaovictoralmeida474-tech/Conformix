@@ -4,62 +4,6 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "frontend/dist",
   "functions": {
-    "api/auth/login.mjs": {
-      "maxDuration": 30
-    },
-    "api/auth/session.mjs": {
-      "maxDuration": 30
-    },
-    "api/auth/me.mjs": {
-      "maxDuration": 15
-    },
-    "api/auth/logout.mjs": {
-      "maxDuration": 15
-    },
-    "api/admin/settings.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/admin/departments.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/admin/overview.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/admin/users.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/admin/admins.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/admin/companies.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/admin/status.mjs": {
-      "maxDuration": 15,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/admin/[...path].mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/suppliers.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/categories.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
-    "api/index.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
-    },
     "api/[...path].mjs": {
       "maxDuration": 30,
       "includeFiles": "backend/node_modules/.prisma/**"

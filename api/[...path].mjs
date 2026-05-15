@@ -1,1 +1,1 @@
-export { default } from "./handler.mjs";
+export { default } from "../serverless/handler.mjs";
