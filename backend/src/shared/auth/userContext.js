@@ -59,9 +59,15 @@ export function serializeUserContext(user) {
 export async function getUserContextById(userId) {
   if (!userId) return null;
 
+  const numericId = Number(userId);
+
+  if (!Number.isInteger(numericId) || numericId <= 0) {
+    return null;
+  }
+
   const user = await prisma.user.findUnique({
     where: {
-      id: Number(userId)
+      id: numericId
     },
     include: {
       company: {

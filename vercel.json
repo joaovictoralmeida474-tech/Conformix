@@ -16,6 +16,30 @@
     "api/auth/logout.mjs": {
       "maxDuration": 15
     },
+    "api/admin/settings.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/admin/departments.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/admin/overview.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/admin/users.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/admin/admins.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/admin/companies.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
     "api/index.mjs": {
       "maxDuration": 30,
       "includeFiles": "backend/node_modules/.prisma/**"

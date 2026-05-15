@@ -76,7 +76,14 @@ export async function initializeApp() {
 
       if (process.env.VERCEL === "1") {
         console.log("Vercel: preparando permissoes e estrutura minima do banco.");
-        await ensurePlatformBootstrap();
+        try {
+          await ensurePlatformBootstrap();
+        } catch (bootstrapError) {
+          console.error(
+            "Aviso: bootstrap do banco na Vercel falhou:",
+            bootstrapError?.message || bootstrapError
+          );
+        }
         return;
       }
 

@@ -104,25 +104,31 @@ export async function ensurePlatformBootstrap(userSnapshot = null) {
     return false;
   }
 
-  if (!bootstrapPromise) {
-    bootstrapPromise = (async () => {
-      await seedPermissions();
-      await ensureDefaultCompany();
+  try {
+    if (!bootstrapPromise) {
+      bootstrapPromise = (async () => {
+        await seedPermissions();
+        await ensureDefaultCompany();
 
-      if (userSnapshot?.email) {
-        await provisionUserFromSessionSnapshot(userSnapshot);
-      }
-    })().catch((error) => {
-      bootstrapPromise = null;
-      throw error;
-    });
+        if (userSnapshot?.email) {
+          await provisionUserFromSessionSnapshot(userSnapshot);
+        }
+      })().catch((error) => {
+        bootstrapPromise = null;
+        throw error;
+      });
+    }
+
+    await bootstrapPromise;
+
+    if (userSnapshot?.email) {
+      await provisionUserFromSessionSnapshot(userSnapshot);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Bootstrap da plataforma falhou:", error?.message || error);
+    bootstrapPromise = null;
+    return false;
   }
-
-  await bootstrapPromise;
-
-  if (userSnapshot?.email) {
-    await provisionUserFromSessionSnapshot(userSnapshot);
-  }
-
-  return true;
 }

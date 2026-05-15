@@ -81,7 +81,12 @@ async function loadApp() {
     cachedInitializeApp = module.initializeApp;
   }
 
-  await cachedInitializeApp();
+  try {
+    await cachedInitializeApp();
+  } catch (error) {
+    console.error("Aviso: inicializacao parcial da API:", error?.message || error);
+  }
+
   return cachedApp;
 }
 

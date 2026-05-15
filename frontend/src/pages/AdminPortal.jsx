@@ -289,7 +289,11 @@ export default function AdminPortal() {
         await Promise.all([loadSettings(), loadDepartments()]);
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Nao foi possivel carregar o painel administrativo.");
+      const apiError = err?.response?.data?.error;
+      const apiDetails = err?.response?.data?.details;
+      setError(
+        apiDetails ? `${apiError}: ${apiDetails}` : apiError || "Nao foi possivel carregar o painel administrativo."
+      );
     } finally {
       setLoading(false);
     }

@@ -96,7 +96,12 @@ export async function getAdminOverview(req, res) {
   }
 
   try {
-    await ensurePlatformBootstrap(req.user);
+    const bootstrapped = await ensurePlatformBootstrap(req.user);
+
+    if (!bootstrapped) {
+      return res.json(buildOverviewFallback(req.user));
+    }
+
     const data = await adminService.getOverview(req.user);
     res.json(data);
   } catch (error) {
@@ -300,7 +305,12 @@ export async function getSettings(req, res) {
   }
 
   try {
-    await ensurePlatformBootstrap(req.user);
+    const bootstrapped = await ensurePlatformBootstrap(req.user);
+
+    if (!bootstrapped) {
+      return res.json(buildSettingsFallback());
+    }
+
     const data = await adminService.getSettings(req.user);
     res.json(data);
   } catch (error) {
