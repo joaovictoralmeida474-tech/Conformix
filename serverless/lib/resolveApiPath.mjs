@@ -6,13 +6,17 @@ export function resolveApiPath(req) {
   }
 
   if (raw) {
-    return String(raw).replace(/^\/+/, "");
+    return String(raw).replace(/^\/+/, "").replace(/\/+$/g, "");
   }
 
   const url = String(req.url || "").split("?")[0];
-  const match = url.match(/\/api\/(.+)$/i);
+  const apiMatch = url.match(/\/api\/(.+)$/i);
 
-  return match ? match[1] : "";
+  if (apiMatch?.[1]) {
+    return apiMatch[1];
+  }
+
+  return "";
 }
 
 export function rebuildApiUrl(req) {
