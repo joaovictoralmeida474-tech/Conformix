@@ -2,8 +2,10 @@ import * as adminService from "./adminService.js";
 import { PERMISSION_DEFINITIONS, ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
 import {
   ensurePlatformBootstrap,
-  hasUsablePostgresDatabase
+  hasUsablePostgresDatabase,
+  testDatabaseConnection
 } from "../../shared/database/platformBootstrap.js";
+import { resolveDatabaseUrl } from "../../shared/config/databaseEnv.js";
 
 function isDatabaseUnavailableError(error) {
   const message = String(error?.message || "");
@@ -49,7 +51,9 @@ function buildOverviewFallback(user) {
   };
 }
 
-function buildSettingsFallback() {
+function buildSettingsFallback(options = {}) {
+  const { localDbUnavailable = true, databaseError = "" } = options;
+
   return {
     companies: [],
     permissionCatalog: PERMISSION_DEFINITIONS.map((item) => ({
@@ -74,7 +78,8 @@ function buildSettingsFallback() {
       departmentScoping: true,
       rbacEnabled: true,
       customUserPermissions: true,
-      localDbUnavailable: true
+      localDbUnavailable,
+      databaseError
     }
   };
 }
@@ -91,17 +96,14 @@ function handleError(res, error) {
 }
 
 export async function getAdminOverview(req, res) {
+  resolveDatabaseUrl();
+
   if (!hasUsablePostgresDatabase()) {
     return res.json(buildOverviewFallback(req.user));
   }
 
   try {
-    const bootstrapped = await ensurePlatformBootstrap(req.user);
-
-    if (!bootstrapped) {
-      return res.json(buildOverviewFallback(req.user));
-    }
-
+    await ensurePlatformBootstrap(req.user);
     const data = await adminService.getOverview(req.user);
     res.json(data);
   } catch (error) {
@@ -238,11 +240,14 @@ export async function resetAdminPassword(req, res) {
 }
 
 export async function listDepartments(req, res) {
+  resolveDatabaseUrl();
+
   if (!hasUsablePostgresDatabase()) {
     return res.json([]);
   }
 
   try {
+    await ensurePlatformBootstrap(req.user);
     const data = await adminService.listDepartments(req.user);
     res.json(data);
   } catch (error) {
@@ -300,22 +305,49 @@ export async function deleteCompany(req, res) {
 }
 
 export async function getSettings(req, res) {
+  resolveDatabaseUrl();
+
   if (!hasUsablePostgresDatabase()) {
-    return res.json(buildSettingsFallback());
+    return res.json(
+      buildSettingsFallback({
+        localDbUnavailable: true,
+        databaseError: "DATABASE_URL nao encontrada nas variaveis de ambiente."
+      })
+    );
+  }
+
+  const canConnect = await testDatabaseConnection();
+
+  if (!canConnect) {
+    return res.json(
+      buildSettingsFallback({
+        localDbUnavailable: true,
+        databaseError:
+          "Nao foi possivel conectar ao PostgreSQL. Verifique a senha na connection string (caracteres especiais devem estar codificados) e faca um novo deploy."
+      })
+    );
   }
 
   try {
-    const bootstrapped = await ensurePlatformBootstrap(req.user);
-
-    if (!bootstrapped) {
-      return res.json(buildSettingsFallback());
-    }
-
+    await ensurePlatformBootstrap(req.user);
     const data = await adminService.getSettings(req.user);
-    res.json(data);
+
+    res.json({
+      ...data,
+      featureFlags: {
+        ...(data.featureFlags || {}),
+        localDbUnavailable: false,
+        databaseError: ""
+      }
+    });
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
-      return res.json(buildSettingsFallback());
+      return res.json(
+        buildSettingsFallback({
+          localDbUnavailable: true,
+          databaseError: error?.message || "Erro ao acessar o banco de dados."
+        })
+      );
     }
 
     handleError(res, error);

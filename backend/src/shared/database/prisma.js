@@ -1,11 +1,7 @@
-import "../config/loadEnv.js";
+import { isDatabaseConfigured, resolveDatabaseUrl } from "../config/databaseEnv.js";
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis;
-
-function hasDatabaseUrl() {
-  return /^postgres(ql)?:\/\//i.test(String(process.env.DATABASE_URL || "").trim());
-}
 
 function createDatabaseUrlError() {
   if (process.env.VERCEL === "1") {
@@ -20,12 +16,14 @@ function createDatabaseUrlError() {
 }
 
 function createPrismaClient() {
-  if (!hasDatabaseUrl()) {
+  const databaseUrl = resolveDatabaseUrl();
+
+  if (!databaseUrl) {
     throw createDatabaseUrlError();
   }
 
   return new PrismaClient({
-    log: ["error", "warn"]
+    log: process.env.VERCEL === "1" ? ["error"] : ["error", "warn"]
   });
 }
 
@@ -35,17 +33,12 @@ function getPrismaClient() {
   }
 
   const client = createPrismaClient();
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
+  globalForPrisma.prisma = client;
 
   return client;
 }
 
-export function isDatabaseConfigured() {
-  return hasDatabaseUrl();
-}
+export { isDatabaseConfigured };
 
 export const prisma = new Proxy(
   {},

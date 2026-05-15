@@ -22,7 +22,14 @@ function run(command, args, options = {}) {
 }
 
 function hasDatabaseUrl() {
-  return Boolean(String(process.env.DATABASE_URL || "").trim());
+  const keys = [
+    "DATABASE_URL",
+    "POSTGRES_PRISMA_URL",
+    "POSTGRES_URL",
+    "POSTGRES_URL_NON_POOLING"
+  ];
+
+  return keys.some((key) => /^postgres(ql)?:\/\//i.test(String(process.env[key] || "").trim()));
 }
 
 await run("npm", ["--prefix", "backend", "run", "prisma:generate"]);

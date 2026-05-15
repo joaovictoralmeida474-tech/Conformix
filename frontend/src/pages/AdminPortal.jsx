@@ -656,9 +656,8 @@ export default function AdminPortal() {
       {message ? <p className="success-text">{message}</p> : null}
       {localDbUnavailable ? (
         <p className="dashboard-empty-copy">
-          O painel administrativo esta em modo reduzido porque o banco PostgreSQL nao esta conectado.
-          Na Vercel, abra Settings → Environment Variables e adicione `DATABASE_URL` com a connection string
-          do Supabase (Project Settings → Database → URI, modo pooler). Depois faca um novo deploy.
+          {settings?.featureFlags?.databaseError ||
+            "O painel administrativo esta em modo reduzido porque o banco PostgreSQL nao esta conectado. Na Vercel, confira `DATABASE_URL` (copie a URI do Supabase em Database → Connection string) e faca um novo deploy."}
         </p>
       ) : null}
       {loading ? <p className="dashboard-empty-copy">Carregando painel administrativo...</p> : null}

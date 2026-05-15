@@ -6,6 +6,7 @@ import helmet from "helmet";
 import routes from "./modules/index.js";
 import { seedPlatform } from "./shared/database/seed.js";
 import { ensurePlatformBootstrap } from "./shared/database/platformBootstrap.js";
+import { resolveDatabaseUrl } from "./shared/config/databaseEnv.js";
 import { getAllowedCorsOrigins, getJwtSecret, isAllowedCorsOrigin } from "./shared/config/security.js";
 
 const app = express();
@@ -66,8 +67,8 @@ export async function initializeApp() {
   if (!startupPromise) {
     startupPromise = (async () => {
       getJwtSecret();
-      const databaseUrl = String(process.env.DATABASE_URL || "").trim();
-      const hasPostgresUrl = /^postgres(ql)?:\/\//i.test(databaseUrl);
+      const databaseUrl = resolveDatabaseUrl();
+      const hasPostgresUrl = Boolean(databaseUrl);
 
       if (!hasPostgresUrl) {
         console.warn("DATABASE_URL ausente. Login via Supabase permanece disponivel, mas cadastros exigem PostgreSQL.");

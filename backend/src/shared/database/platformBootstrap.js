@@ -2,7 +2,8 @@ import bcrypt from "bcryptjs";
 
 import { ROLES, normalizeRole } from "../auth/permissions.js";
 import { seedPermissions } from "./seed.js";
-import { prisma, isDatabaseConfigured } from "./prisma.js";
+import { isDatabaseConfigured, resolveDatabaseUrl } from "../config/databaseEnv.js";
+import { prisma } from "./prisma.js";
 
 let bootstrapPromise = null;
 
@@ -12,6 +13,21 @@ function normalizeEmail(email) {
 
 export function hasUsablePostgresDatabase() {
   return isDatabaseConfigured();
+}
+
+export async function testDatabaseConnection() {
+  if (!isDatabaseConfigured()) {
+    return false;
+  }
+
+  try {
+    resolveDatabaseUrl();
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch (error) {
+    console.error("Teste de conexao PostgreSQL falhou:", error?.message || error);
+    return false;
+  }
 }
 
 async function ensureDefaultCompany() {

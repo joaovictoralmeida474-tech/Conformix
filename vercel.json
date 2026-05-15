@@ -40,16 +40,32 @@
       "maxDuration": 30,
       "includeFiles": "backend/node_modules/.prisma/**"
     },
+    "api/admin/status.mjs": {
+      "maxDuration": 15,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/admin/[...path].mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/suppliers.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/categories.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
     "api/index.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    },
+    "api/[...path].mjs": {
       "maxDuration": 30,
       "includeFiles": "backend/node_modules/.prisma/**"
     }
   },
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index.mjs?path=:path*"
-    },
     {
       "source": "/:path*",
       "destination": "/index.html"
