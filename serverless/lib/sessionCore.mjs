@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 
+import { resolveAppUserFromSupabase } from "../../backend/src/shared/auth/resolveAppUser.js";
 import { getJwtSecret } from "./authToken.mjs";
 import { createSupabaseClient } from "./supabaseConfig.mjs";
 import { buildUserFromSupabase } from "./userFromSupabase.mjs";
@@ -39,7 +40,8 @@ export async function createSessionFromAccessToken(accessToken, supabaseConfig =
     throw authError;
   }
 
-  const user = buildUserFromSupabase(data.user);
+  const profile = buildUserFromSupabase(data.user);
+  const user = await resolveAppUserFromSupabase(data.user, profile, token);
 
   return {
     user,

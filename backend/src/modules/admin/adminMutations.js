@@ -272,7 +272,7 @@ export async function createUser(currentUser, payload) {
     permissionKeys: payload.permissionKeys || []
   });
 
-  await writeAuditLog(currentUser.id, "create", {
+  await writeAuditLog(Number(currentUser.id), "create", {
     entity: "user",
     entityId: createdUser.id,
     details: `Usuario ${createdUser.name} criado`
@@ -323,7 +323,7 @@ export async function updateUser(currentUser, userId, payload) {
     await repo.updateRow("User", userId, { authUserId: supabaseUser.id });
   }
 
-  await writeAuditLog(currentUser.id, "update", {
+  await writeAuditLog(Number(currentUser.id), "update", {
     entity: "user",
     entityId: Number(userId),
     details: `Usuario ${updatedUser.name} atualizado`
@@ -350,7 +350,7 @@ export async function setUserStatus(currentUser, userId, active) {
     await repo.updateRow("User", userId, { authUserId: supabaseUser.id });
   }
 
-  await writeAuditLog(currentUser.id, "update", {
+  await writeAuditLog(Number(currentUser.id), "update", {
     entity: "user",
     entityId: Number(userId),
     details: `Usuario ${user.name} ${active ? "ativado" : "desativado"}`
@@ -367,7 +367,7 @@ export async function deleteUser(currentUser, userId) {
   await repo.deleteWhere("UserPermission", { userId: Number(userId) });
   await repo.deleteRow("User", userId);
 
-  await writeAuditLog(currentUser.id, "delete", {
+  await writeAuditLog(Number(currentUser.id), "delete", {
     entity: "user",
     entityId: Number(userId),
     details: `Usuario ${user.name} excluido`
@@ -399,7 +399,7 @@ export async function resetUserPassword(currentUser, userId, password) {
     }
   }
 
-  await writeAuditLog(currentUser.id, "update", {
+  await writeAuditLog(Number(currentUser.id), "update", {
     entity: "user",
     entityId: Number(userId),
     details: `Senha do usuario ${user.name} redefinida`
@@ -423,7 +423,7 @@ export async function createAdmin(currentUser, payload) {
     permissionKeys: payload.permissionKeys || []
   });
 
-  await writeAuditLog(currentUser.id, "create", {
+  await writeAuditLog(Number(currentUser.id), "create", {
     entity: "admin",
     entityId: createdAdmin.id,
     details: `Admin ${createdAdmin.name} criado`
@@ -475,7 +475,7 @@ export async function updateAdmin(currentUser, adminId, payload) {
     await repo.updateRow("User", adminId, { authUserId: supabaseAdmin.id });
   }
 
-  await writeAuditLog(currentUser.id, "update", {
+  await writeAuditLog(Number(currentUser.id), "update", {
     entity: "admin",
     entityId: Number(adminId),
     details: `Admin ${updatedAdmin.name} atualizado`
@@ -506,7 +506,7 @@ export async function setAdminStatus(currentUser, adminId, active) {
     await repo.updateRow("User", adminId, { authUserId: supabaseAdmin.id });
   }
 
-  await writeAuditLog(currentUser.id, "update", {
+  await writeAuditLog(Number(currentUser.id), "update", {
     entity: "admin",
     entityId: Number(adminId),
     details: `Admin ${admin.name} ${active ? "ativado" : "desativado"}`
@@ -527,7 +527,7 @@ export async function deleteAdmin(currentUser, adminId) {
   await repo.deleteWhere("UserPermission", { userId: Number(adminId) });
   await repo.deleteRow("User", adminId);
 
-  await writeAuditLog(currentUser.id, "delete", {
+  await writeAuditLog(Number(currentUser.id), "delete", {
     entity: "admin",
     entityId: Number(adminId),
     details: `Admin ${admin.name} excluido`
@@ -563,7 +563,7 @@ export async function resetAdminPassword(currentUser, adminId, password) {
     }
   }
 
-  await writeAuditLog(currentUser.id, "update", {
+  await writeAuditLog(Number(currentUser.id), "update", {
     entity: "admin",
     entityId: Number(adminId),
     details: `Senha do admin ${admin.name} redefinida`
@@ -589,7 +589,7 @@ export async function createDepartment(currentUser, payload) {
 
   const withCompany = await attachDepartmentCompany(department);
 
-  await writeAuditLog(currentUser.id, "create", {
+  await writeAuditLog(Number(currentUser.id), "create", {
     entity: "department",
     entityId: department.id,
     details: `Departamento ${department.name} criado`
@@ -625,7 +625,7 @@ export async function updateDepartment(currentUser, departmentId, payload) {
   const withCompany = await attachDepartmentCompany(updated);
   const counts = await countDepartmentUsers(departmentId);
 
-  await writeAuditLog(currentUser.id, "update", {
+  await writeAuditLog(Number(currentUser.id), "update", {
     entity: "department",
     entityId: Number(departmentId),
     details: `Departamento ${updated.name} atualizado`
@@ -649,7 +649,7 @@ export async function deleteDepartment(currentUser, departmentId) {
 
   await repo.deleteRow("Department", departmentId);
 
-  await writeAuditLog(currentUser.id, "delete", {
+  await writeAuditLog(Number(currentUser.id), "delete", {
     entity: "department",
     entityId: Number(departmentId),
     details: `Departamento ${existing.name} excluido`
@@ -670,7 +670,7 @@ export async function createCompany(currentUser, payload) {
 
   const company = await repo.insertRow("Company", { name }, { select: "id,name" });
 
-  await writeAuditLog(currentUser.id, "create", {
+  await writeAuditLog(Number(currentUser.id), "create", {
     entity: "company",
     entityId: company.id,
     details: description ? `Empresa ${name} criada: ${description}` : `Empresa ${name} criada`
@@ -717,7 +717,7 @@ export async function deleteCompany(currentUser, companyId) {
 
   await repo.deleteRow("Company", companyId);
 
-  await writeAuditLog(currentUser.id, "delete", {
+  await writeAuditLog(Number(currentUser.id), "delete", {
     entity: "company",
     entityId: Number(companyId),
     details: `Empresa ${existing.name} excluida`

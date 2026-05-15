@@ -3,10 +3,15 @@ import { buildSupplierCompanyWhere } from "../../shared/auth/dataScope.js";
 
 export async function log(userId, action, meta = {}) {
   const client = getSupabaseAdmin();
+  const normalizedUserId = Number(userId);
+
+  if (!Number.isInteger(normalizedUserId) || normalizedUserId <= 0) {
+    return;
+  }
 
   throwIfSupabaseError(
     await client.from("AuditLog").insert({
-      userId,
+      userId: normalizedUserId,
       action,
       entity: meta.entity || "sistema",
       entityId: meta.entityId ? Number(meta.entityId) : null,

@@ -4,6 +4,7 @@ import { isSupabaseDataConfigured } from "../../shared/config/supabaseEnv.js";
 import * as repo from "../../shared/database/supabaseRepo.js";
 import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 import { ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
+import { resolveAppUserFromSupabase } from "../../shared/auth/resolveAppUser.js";
 import { signAccessToken } from "../../shared/middlewares/auth.js";
 import { runWithSupabaseAccessToken } from "../../shared/database/supabaseContext.js";
 import { getUserContextById } from "../../shared/auth/userContext.js";
@@ -100,18 +101,19 @@ async function findUserByEmail(email) {
 
 async function findUserBySupabaseIdentity(supabaseUser) {
   const normalizedEmail = normalizeEmail(supabaseUser.email);
-  const client = getSupabaseAdmin();
+  const byEmail = await findUserByEmail(normalizedEmail);
 
-  const byAuth = throwIfSupabaseError(
-    await client.from("User").select("*").eq("authUserId", supabaseUser.id).maybeSingle(),
-    "buscar usuario por authUserId"
-  );
-
-  if (byAuth) {
-    return byAuth;
+  if (byEmail) {
+    return byEmail;
   }
 
-  return findUserByEmail(normalizedEmail);
+  const authUserId = String(supabaseUser?.id || "").trim();
+
+  if (!authUserId) {
+    return null;
+  }
+
+  return repo.findOne("User", { authUserId });
 }
 
 async function syncSupabaseUserToLocal({ existingUser, supabaseUser, password }) {
@@ -413,11 +415,18 @@ export async function login({ email, password }) {
               });
             }
 
-            const context = await getUserContextById(user.id);
+            const profile = await getUserContextById(user.id, { email: normalizedSupabaseEmail });
+            const context =
+              profile ||
+              (await resolveAppUserFromSupabase(
+                supabaseUser,
+                buildFallbackSupabaseContext(supabaseUser, currentEmail),
+                supabaseAccessToken
+              ));
 
-            await writeAuditLogSafely(user.id, "login", {
+            await writeAuditLogSafely(Number(context.id) || user.id, "login", {
               entity: "auth",
-              entityId: user.id,
+              entityId: Number(context.id) || user.id,
               details: `Login realizado por ${context?.name || normalizedSupabaseEmail}`
             });
 

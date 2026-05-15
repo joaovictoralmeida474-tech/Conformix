@@ -86,9 +86,11 @@ export async function provisionUserFromSessionSnapshot(userSnapshot = {}) {
     "buscar usuario por email"
   );
 
-  if (!existing && userSnapshot.id) {
+  const authUserId = String(userSnapshot.id || "").trim();
+
+  if (!existing && authUserId) {
     existing = throwIfSupabaseError(
-      await client.from("User").select("*").eq("authUserId", String(userSnapshot.id)).maybeSingle(),
+      await client.from("User").select("*").eq("authUserId", authUserId).maybeSingle(),
       "buscar usuario por authUserId"
     );
   }
@@ -112,7 +114,7 @@ export async function provisionUserFromSessionSnapshot(userSnapshot = {}) {
         active: userSnapshot.active !== false,
         companyId: company.id,
         departmentId: role === ROLES.SUPER_ADMIN ? null : department?.id || null,
-        authUserId: String(userSnapshot.id || "") || null
+        authUserId: authUserId || null
       })
       .select("*")
       .single(),

@@ -56,15 +56,35 @@ export function serializeUserContext(user) {
   };
 }
 
-export async function getUserContextById(userId) {
-  if (!userId) return null;
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+export async function getUserContextById(userId, options = {}) {
+  if (!userId && !options.email) return null;
 
   const numericId = Number(userId);
+  const client = getSupabaseAdmin();
+
   if (!Number.isInteger(numericId) || numericId <= 0) {
-    return null;
+    const email = normalizeEmail(options.email);
+
+    if (!email) {
+      return null;
+    }
+
+    const userByEmail = throwIfSupabaseError(
+      await client.from("User").select("*").eq("email", email).maybeSingle(),
+      "buscar usuario por email"
+    );
+
+    if (!userByEmail || !userByEmail.active) {
+      return null;
+    }
+
+    return getUserContextById(userByEmail.id);
   }
 
-  const client = getSupabaseAdmin();
   const user = throwIfSupabaseError(
     await client.from("User").select("*").eq("id", numericId).maybeSingle(),
     "buscar usuario"

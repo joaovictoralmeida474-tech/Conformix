@@ -117,11 +117,13 @@ export async function auth(req, res, next) {
 
     let user = null;
 
-    try {
-      user = await runWithSupabaseAccessTokenAsync(supabaseAccessToken, async () =>
-        getUserContextById(decoded.id)
-      );
-    } catch (error) {
+      try {
+        user = await runWithSupabaseAccessTokenAsync(supabaseAccessToken, async () =>
+          getUserContextById(decoded.id, {
+            email: fallbackUser?.email || decoded?.userSnapshot?.email
+          })
+        );
+      } catch (error) {
       if (!fallbackUser) {
         throw error;
       }

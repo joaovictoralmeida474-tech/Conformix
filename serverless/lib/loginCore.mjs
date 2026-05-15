@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 
+import { resolveAppUserFromSupabase } from "../../backend/src/shared/auth/resolveAppUser.js";
 import { getJwtSecret } from "./authToken.mjs";
 import { createSupabaseClient } from "./supabaseConfig.mjs";
 import { buildUserFromSupabase } from "./userFromSupabase.mjs";
@@ -52,11 +53,13 @@ export async function performLogin({ email, password, supabaseConfig = {} }) {
   for (const currentPassword of passwordCandidates) {
     try {
       const authData = await signInWithSupabase(normalizedEmail, currentPassword, supabaseConfig);
-      const user = buildUserFromSupabase(authData.user);
+      const profile = buildUserFromSupabase(authData.user);
+      const accessToken = String(authData?.session?.access_token || authData?.access_token || "").trim();
+      const user = await resolveAppUserFromSupabase(authData.user, profile, accessToken);
 
       return {
         user,
-        token: signAccessToken(user, authData?.session?.access_token || authData?.access_token)
+        token: signAccessToken(user, accessToken)
       };
     } catch (error) {
       if (error?.code === "AUTH_INVALID_CREDENTIALS") {
