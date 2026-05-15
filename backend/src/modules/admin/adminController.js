@@ -322,6 +322,16 @@ export async function getSettings(req, res) {
     );
   }
 
+  if (connection.schemaError) {
+    return res.json(
+      buildSettingsFallback({
+        localDbUnavailable: true,
+        databaseError:
+          "Erro RLS/schema no Supabase (text = uuid). No SQL Editor execute backend/supabase/reset_all_rls.sql OU adicione SUPABASE_SERVICE_ROLE_KEY na Vercel (Settings > API do Supabase, apenas servidor)."
+      })
+    );
+  }
+
   if (!connection.connected) {
     return res.json(
       buildSettingsFallback({
@@ -345,6 +355,16 @@ export async function getSettings(req, res) {
       }
     });
   } catch (error) {
+    if (error?.code === "SUPABASE_SCHEMA_RLS" || String(error?.message || "").includes("text = uuid")) {
+      return res.json(
+        buildSettingsFallback({
+          localDbUnavailable: true,
+          databaseError:
+            "Erro RLS/schema no Supabase (text = uuid). Execute backend/supabase/reset_all_rls.sql no Supabase ou adicione SUPABASE_SERVICE_ROLE_KEY na Vercel."
+        })
+      );
+    }
+
     if (isDatabaseUnavailableError(error)) {
       return res.json(
         buildSettingsFallback({

@@ -94,15 +94,24 @@ async function enrichCompanies(companies) {
   const client = getSupabaseAdmin();
 
   return Promise.all(
-    companies.map(async (company) => ({
-      ...company,
-      _count: {
-        users: await countByCompany(client, "User", company.id),
-        departments: await countByCompany(client, "Department", company.id),
-        suppliers: await countByCompany(client, "Supplier", company.id),
-        categories: await countByCompany(client, "Category", company.id)
-      }
-    }))
+    companies.map(async (company) => {
+      const [users, departments, suppliers, categories] = await Promise.all([
+        countByCompany(client, "User", company.id),
+        countByCompany(client, "Department", company.id),
+        countByCompany(client, "Supplier", company.id),
+        countByCompany(client, "Category", company.id)
+      ]);
+
+      return {
+        ...company,
+        _count: {
+          users: users || 0,
+          departments: departments || 0,
+          suppliers: suppliers || 0,
+          categories: categories || 0
+        }
+      };
+    })
   );
 }
 
@@ -291,8 +300,8 @@ export async function getOverview(currentUser) {
       stats: {
         companies: visibleCompanies.length,
         departments: visibleDepartments.length,
-        users: users.count || 0,
-        admins: admins.count || 0
+        users: users?.count ?? 0,
+        admins: admins?.count ?? 0
       },
       departments: visibleDepartments,
       recentLogs: logs.map((item) => serializeLog({ ...item, user: userMap.get(item.userId) || null }))

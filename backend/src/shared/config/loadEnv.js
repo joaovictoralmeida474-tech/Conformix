@@ -37,3 +37,4 @@ function fillEnvAlias(targetKey, aliases) {
 
 fillEnvAlias("SUPABASE_URL", ["VITE_SUPABASE_URL"]);
 fillEnvAlias("SUPABASE_ANON_KEY", ["VITE_SUPABASE_ANON_KEY"]);
+fillEnvAlias("SUPABASE_SERVICE_ROLE_KEY", ["SUPABASE_SERVICE_KEY", "SERVICE_ROLE_KEY"]);

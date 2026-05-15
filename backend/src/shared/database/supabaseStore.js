@@ -10,33 +10,48 @@ import { getSupabaseAccessToken } from "./supabaseContext.js";
 
 const globalStore = globalThis;
 
-function createDataClient(accessToken = "") {
-  const userToken = String(accessToken || "").trim();
+function createServiceRoleClient() {
   const serviceRoleKey = getSupabaseServiceRoleKey();
-  const apiKey = serviceRoleKey || getSupabaseAnonKey();
-  const authorization = userToken || serviceRoleKey || apiKey;
 
-  return createClient(getSupabaseUrl(), apiKey, {
+  return createClient(getSupabaseUrl(), serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+}
+
+function createUserClient(accessToken = "") {
+  const userToken = String(accessToken || "").trim();
+  const anonKey = getSupabaseAnonKey();
+
+  return createClient(getSupabaseUrl(), anonKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     },
     global: {
       headers: {
-        Authorization: `Bearer ${authorization}`
+        Authorization: `Bearer ${userToken || anonKey}`
       }
     }
   });
 }
 
-function getClientCacheKey(accessToken = "") {
-  const userToken = String(accessToken || "").trim();
-  const serviceRoleKey = getSupabaseServiceRoleKey();
+function createDataClient(accessToken = "") {
+  if (getSupabaseServiceRoleKey()) {
+    return createServiceRoleClient();
+  }
 
-  if (serviceRoleKey) {
+  return createUserClient(accessToken);
+}
+
+function getClientCacheKey(accessToken = "") {
+  if (getSupabaseServiceRoleKey()) {
     return "service-role";
   }
 
+  const userToken = String(accessToken || "").trim();
   return userToken ? `user:${userToken.slice(0, 24)}` : "anon";
 }
 
@@ -78,6 +93,10 @@ function isRlsPolicyError(error) {
   );
 }
 
+function isTextUuidOperatorError(error) {
+  return String(error?.message || error || "").includes("operator does not exist: text = uuid");
+}
+
 async function probeSupabaseClient(client, timeoutMs) {
   const probe = client.from("Company").select("id").limit(1);
 
@@ -89,6 +108,14 @@ async function probeSupabaseClient(client, timeoutMs) {
   ]);
 
   if (result?.error) {
+    if (isTextUuidOperatorError(result.error)) {
+      const schemaError = new Error(
+        "Erro de schema/RLS no Supabase (text = uuid). Execute backend/supabase/reset_all_rls.sql no SQL Editor ou adicione SUPABASE_SERVICE_ROLE_KEY na Vercel (somente servidor)."
+      );
+      schemaError.code = "SUPABASE_SCHEMA_RLS";
+      throw schemaError;
+    }
+
     if (isRlsPolicyError(result.error)) {
       return { ok: true, rlsBlocked: true };
     }
@@ -101,7 +128,7 @@ async function probeSupabaseClient(client, timeoutMs) {
 
 export async function testSupabaseConnection(timeoutMs = 8000, explicitAccessToken = "") {
   if (!isSupabaseDataConfigured()) {
-    return { configured: false, connected: false, needsRelogin: false };
+    return { configured: false, connected: false, needsRelogin: false, schemaError: false };
   }
 
   const accessToken = resolveAccessToken(explicitAccessToken);
@@ -109,28 +136,46 @@ export async function testSupabaseConnection(timeoutMs = 8000, explicitAccessTok
   if (getSupabaseServiceRoleKey()) {
     try {
       await probeSupabaseClient(getSupabaseAdmin({ accessToken }), timeoutMs);
-      return { configured: true, connected: true, needsRelogin: false };
+      return { configured: true, connected: true, needsRelogin: false, schemaError: false };
     } catch (error) {
       console.error("Teste de conexao Supabase falhou:", error?.message || error);
-      return { configured: true, connected: false, needsRelogin: false };
+      return {
+        configured: true,
+        connected: false,
+        needsRelogin: false,
+        schemaError: error?.code === "SUPABASE_SCHEMA_RLS"
+      };
     }
   }
 
   if (!accessToken) {
-    return { configured: true, connected: false, needsRelogin: true };
+    return { configured: true, connected: false, needsRelogin: true, schemaError: false };
   }
 
   try {
     await probeSupabaseClient(getSupabaseAdmin({ accessToken }), timeoutMs);
-    return { configured: true, connected: true, needsRelogin: false };
+    return { configured: true, connected: true, needsRelogin: false, schemaError: false };
   } catch (error) {
     console.error("Teste de conexao Supabase falhou:", error?.message || error);
-    return { configured: true, connected: false, needsRelogin: false };
+
+    if (error?.code === "SUPABASE_SCHEMA_RLS" || isTextUuidOperatorError(error)) {
+      return { configured: true, connected: false, needsRelogin: false, schemaError: true };
+    }
+
+    return { configured: true, connected: false, needsRelogin: false, schemaError: false };
   }
 }
 
 export function throwIfSupabaseError(result, label = "operacao") {
   if (result?.error) {
+    if (isTextUuidOperatorError(result.error)) {
+      const schemaError = new Error(
+        "Erro de schema/RLS no Supabase (text = uuid). Execute backend/supabase/reset_all_rls.sql no SQL Editor ou configure SUPABASE_SERVICE_ROLE_KEY na Vercel."
+      );
+      schemaError.code = "SUPABASE_SCHEMA_RLS";
+      throw schemaError;
+    }
+
     const error = new Error(result.error.message || `Falha na ${label}`);
     error.code = result.error.code;
     throw error;

@@ -226,7 +226,7 @@ async function createUserWithRole({
     });
 
     if (supabaseUser?.id) {
-      await repo.updateRow("User", user.id, { authUserId: supabaseUser.id });
+      await repo.updateRow("User", user.id, { authUserId: String(supabaseUser.id || "") });
     }
   } catch (error) {
     await repo.deleteWhere("UserPermission", { userId: user.id });
@@ -320,7 +320,7 @@ export async function updateUser(currentUser, userId, payload) {
   });
 
   if (supabaseUser?.id && supabaseUser.id !== updatedUser.authUserId) {
-    await repo.updateRow("User", userId, { authUserId: supabaseUser.id });
+    await repo.updateRow("User", userId, { authUserId: String(supabaseUser.id || "") });
   }
 
   await writeAuditLog(Number(currentUser.id), "update", {
@@ -347,7 +347,7 @@ export async function setUserStatus(currentUser, userId, active) {
   });
 
   if (supabaseUser?.id && supabaseUser.id !== updatedUser.authUserId) {
-    await repo.updateRow("User", userId, { authUserId: supabaseUser.id });
+    await repo.updateRow("User", userId, { authUserId: String(supabaseUser.id || "") });
   }
 
   await writeAuditLog(Number(currentUser.id), "update", {
@@ -395,7 +395,7 @@ export async function resetUserPassword(currentUser, userId, password) {
       active: updatedUser.active
     });
     if (supabaseUser?.id) {
-      await repo.updateRow("User", userId, { authUserId: supabaseUser.id });
+      await repo.updateRow("User", userId, { authUserId: String(supabaseUser.id || "") });
     }
   }
 
@@ -472,7 +472,7 @@ export async function updateAdmin(currentUser, adminId, payload) {
   });
 
   if (supabaseAdmin?.id && supabaseAdmin.id !== updatedAdmin.authUserId) {
-    await repo.updateRow("User", adminId, { authUserId: supabaseAdmin.id });
+    await repo.updateRow("User", adminId, { authUserId: String(supabaseAdmin.id || "") });
   }
 
   await writeAuditLog(Number(currentUser.id), "update", {
@@ -503,7 +503,7 @@ export async function setAdminStatus(currentUser, adminId, active) {
   });
 
   if (supabaseAdmin?.id && supabaseAdmin.id !== updatedAdmin.authUserId) {
-    await repo.updateRow("User", adminId, { authUserId: supabaseAdmin.id });
+    await repo.updateRow("User", adminId, { authUserId: String(supabaseAdmin.id || "") });
   }
 
   await writeAuditLog(Number(currentUser.id), "update", {
@@ -559,7 +559,7 @@ export async function resetAdminPassword(currentUser, adminId, password) {
       active: updatedAdmin.active
     });
     if (supabaseAdmin?.id) {
-      await repo.updateRow("User", adminId, { authUserId: supabaseAdmin.id });
+      await repo.updateRow("User", adminId, { authUserId: String(supabaseAdmin.id || "") });
     }
   }
 

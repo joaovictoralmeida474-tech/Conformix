@@ -107,13 +107,7 @@ async function findUserBySupabaseIdentity(supabaseUser) {
     return byEmail;
   }
 
-  const authUserId = String(supabaseUser?.id || "").trim();
-
-  if (!authUserId) {
-    return null;
-  }
-
-  return repo.findOne("User", { authUserId });
+  return null;
 }
 
 async function syncSupabaseUserToLocal({ existingUser, supabaseUser, password }) {
@@ -144,7 +138,7 @@ async function syncSupabaseUserToLocal({ existingUser, supabaseUser, password })
     active: existingUser ? existingUser.active !== false : true,
     companyId: scope.companyId,
     departmentId: scope.departmentId,
-    authUserId: supabaseUser.id,
+    authUserId: String(supabaseUser.id || ""),
     lastLoginAt: new Date()
   };
 

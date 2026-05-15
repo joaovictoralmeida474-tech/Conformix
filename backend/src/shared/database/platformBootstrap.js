@@ -88,13 +88,6 @@ export async function provisionUserFromSessionSnapshot(userSnapshot = {}) {
 
   const authUserId = String(userSnapshot.id || "").trim();
 
-  if (!existing && authUserId) {
-    existing = throwIfSupabaseError(
-      await client.from("User").select("*").eq("authUserId", authUserId).maybeSingle(),
-      "buscar usuario por authUserId"
-    );
-  }
-
   if (existing) {
     return existing;
   }
