@@ -13,7 +13,7 @@ function createPrismaClient() {
 
   if (!databaseUrl) {
     throw new Error(
-      "Prisma local indisponivel. O runtime em producao usa Supabase (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)."
+      "Prisma local indisponivel. O runtime em producao usa Supabase (SUPABASE_URL + SUPABASE_ANON_KEY)."
     );
   }
 

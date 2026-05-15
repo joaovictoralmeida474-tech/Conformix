@@ -87,7 +87,7 @@ function handleError(res, error) {
   if (isDatabaseUnavailableError(error)) {
     return res.status(503).json({
       error:
-        "Banco de dados indisponivel. Na Vercel, configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY do projeto Supabase."
+        "Banco de dados indisponivel. Na Vercel, configure SUPABASE_URL e SUPABASE_ANON_KEY do projeto Supabase."
     });
   }
 
@@ -305,7 +305,7 @@ export async function getSettings(req, res) {
       buildSettingsFallback({
         localDbUnavailable: true,
         databaseError:
-          "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY na Vercel."
+          "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY na Vercel."
       })
     );
   }
@@ -317,7 +317,7 @@ export async function getSettings(req, res) {
       buildSettingsFallback({
         localDbUnavailable: true,
         databaseError:
-          "Nao foi possivel acessar o Supabase. Verifique SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY e faca um novo deploy."
+          "Nao foi possivel acessar o Supabase. Verifique SUPABASE_URL e SUPABASE_ANON_KEY e faca um novo deploy."
       })
     );
   }

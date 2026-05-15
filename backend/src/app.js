@@ -68,7 +68,7 @@ export async function initializeApp() {
       getJwtSecret();
       if (!isSupabaseDataConfigured()) {
         console.warn(
-          "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para habilitar o painel admin."
+          "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY para habilitar o painel admin."
         );
         return;
       }

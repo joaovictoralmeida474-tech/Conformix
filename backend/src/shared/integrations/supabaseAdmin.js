@@ -1,24 +1,29 @@
 import axios from "axios";
 
 import { normalizeRole, ROLES } from "../auth/permissions.js";
+import {
+  getSupabaseAnonKey,
+  getSupabaseServiceRoleKey,
+  getSupabaseUrl
+} from "../config/supabaseEnv.js";
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
 function getSupabaseAdminConfig() {
-  const url = String(process.env.SUPABASE_URL || "").trim().replace(/\/$/, "");
-  const serviceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const url = getSupabaseUrl();
+  const apiKey = getSupabaseServiceRoleKey() || getSupabaseAnonKey();
 
-  if (!url || !serviceRoleKey) {
-    throw new Error("SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY nao configurados");
+  if (!url || !apiKey) {
+    throw new Error("SUPABASE_URL ou SUPABASE_ANON_KEY nao configurados");
   }
 
   return {
     url,
     headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: apiKey,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json"
     }
   };

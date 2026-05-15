@@ -1,11 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 
-import { getSupabaseServiceRoleKey, getSupabaseUrl, isSupabaseDataConfigured } from "../config/supabaseEnv.js";
+import {
+  getSupabaseAnonKey,
+  getSupabaseUrl,
+  isSupabaseDataConfigured
+} from "../config/supabaseEnv.js";
 
 const globalStore = globalThis;
 
-function createAdminClient() {
-  return createClient(getSupabaseUrl(), getSupabaseServiceRoleKey(), {
+function createDataClient() {
+  return createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
     auth: {
       autoRefreshToken: false,
       persistSession: false
@@ -16,12 +20,12 @@ function createAdminClient() {
 export function getSupabaseAdmin() {
   if (!isSupabaseDataConfigured()) {
     throw new Error(
-      "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY na Vercel."
+      "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY na Vercel."
     );
   }
 
   if (!globalStore.__conformixSupabaseAdmin) {
-    globalStore.__conformixSupabaseAdmin = createAdminClient();
+    globalStore.__conformixSupabaseAdmin = createDataClient();
   }
 
   return globalStore.__conformixSupabaseAdmin;
