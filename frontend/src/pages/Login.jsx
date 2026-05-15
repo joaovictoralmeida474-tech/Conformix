@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
+import { isSupabaseClientConfigured, supabase } from "../services/supabaseClient";
 import { getDefaultRouteForUser } from "../utils/access";
 import { saveSession } from "../utils/authStorage";
 
@@ -249,6 +250,23 @@ export default function Login() {
     }, 700);
   }
 
+  async function requestLogin(email, password) {
+    return api.post("/auth/login", {
+      email,
+      password,
+      rememberMe,
+    });
+  }
+
+  async function confirmSupabaseCredentials(email, password) {
+    if (!isSupabaseClientConfigured() || !supabase) {
+      return false;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return !error;
+  }
+
   async function login(event) {
     event.preventDefault();
     setIsLoading(true);
@@ -267,17 +285,31 @@ export default function Login() {
       for (const email of emailCandidates) {
         for (const password of passwordCandidates) {
           try {
-            successfulResponse = await api.post("/auth/login", {
-              email,
-              password,
-              rememberMe,
-            });
+            successfulResponse = await requestLogin(email, password);
             break;
           } catch (error) {
             lastError = error;
+            const status = error?.response?.status;
 
-            if (error?.response?.status !== 401) {
-              throw error;
+            if (status === 401) {
+              continue;
+            }
+
+            if (status >= 500 || !status) {
+              const supabaseValid = await confirmSupabaseCredentials(email, password);
+
+              if (supabaseValid) {
+                try {
+                  successfulResponse = await requestLogin(email, password);
+                  break;
+                } catch (retryError) {
+                  lastError = retryError;
+                }
+              }
+            }
+
+            if (!successfulResponse) {
+              throw lastError;
             }
           }
         }
