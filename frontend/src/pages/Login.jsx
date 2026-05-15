@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
-import { isSupabaseClientConfigured, supabase } from "../services/supabaseClient";
+import {
+  getSupabasePublicConfig,
+  isSupabaseClientConfigured,
+  supabase
+} from "../services/supabaseClient";
 import { getDefaultRouteForUser } from "../utils/access";
 import { saveSession } from "../utils/authStorage";
 
@@ -245,6 +249,15 @@ export default function Login() {
     }, 700);
   }
 
+  function getSupabasePayload() {
+    const { supabaseUrl, supabaseAnonKey } = getSupabasePublicConfig();
+
+    return {
+      supabaseUrl,
+      supabaseAnonKey
+    };
+  }
+
   async function authenticateWithSupabase(email, password) {
     if (!isSupabaseClientConfigured() || !supabase) {
       return null;
@@ -252,13 +265,28 @@ export default function Login() {
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error || !data?.session?.access_token) {
-      return null;
+    if (error) {
+      const message = String(error.message || "").toLowerCase();
+
+      if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
+        const invalidError = new Error("invalid_credentials");
+        invalidError.response = { status: 401 };
+        throw invalidError;
+      }
+
+      throw error;
+    }
+
+    if (!data?.session?.access_token) {
+      const invalidError = new Error("invalid_credentials");
+      invalidError.response = { status: 401 };
+      throw invalidError;
     }
 
     return api.post("/auth/session", {
       accessToken: data.session.access_token,
       rememberMe,
+      ...getSupabasePayload()
     });
   }
 
@@ -267,6 +295,7 @@ export default function Login() {
       email,
       password,
       rememberMe,
+      ...getSupabasePayload()
     });
   }
 

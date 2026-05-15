@@ -1,6 +1,13 @@
 import { readJsonBody, sendJson, setAuthCookie } from "../lib/http.mjs";
 import { createSessionFromAccessToken } from "../lib/sessionCore.mjs";
 
+function readSupabaseConfig(body = {}) {
+  return {
+    url: body.supabaseUrl || body.supabase_url,
+    anonKey: body.supabaseAnonKey || body.supabase_anon_key
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return sendJson(res, 405, { error: "Metodo nao permitido" });
@@ -10,8 +17,9 @@ export default async function handler(req, res) {
     const body = await readJsonBody(req);
     const accessToken = body?.accessToken || body?.access_token;
     const rememberMe = Boolean(body?.rememberMe);
+    const supabaseConfig = readSupabaseConfig(body);
 
-    const result = await createSessionFromAccessToken(accessToken);
+    const result = await createSessionFromAccessToken(accessToken, supabaseConfig);
     setAuthCookie(res, result.token, rememberMe);
     return sendJson(res, 200, { user: result.user });
   } catch (error) {

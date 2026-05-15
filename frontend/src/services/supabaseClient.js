@@ -7,7 +7,13 @@ export function isSupabaseClientConfigured() {
   return Boolean(supabaseUrl && supabaseAnonKey);
 }
 
-export const supabase =
-  isSupabaseClientConfigured()
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null;
+export function getSupabasePublicConfig() {
+  return {
+    supabaseUrl,
+    supabaseAnonKey
+  };
+}
+
+export const supabase = isSupabaseClientConfigured()
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;

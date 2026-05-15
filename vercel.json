@@ -10,6 +10,12 @@
     "api/auth/session.mjs": {
       "maxDuration": 30
     },
+    "api/auth/me.mjs": {
+      "maxDuration": 15
+    },
+    "api/auth/logout.mjs": {
+      "maxDuration": 15
+    },
     "api/index.mjs": {
       "maxDuration": 30,
       "includeFiles": "backend/node_modules/.prisma/**"
