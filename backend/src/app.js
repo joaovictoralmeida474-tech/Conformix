@@ -5,6 +5,7 @@ import helmet from "helmet";
 
 import routes from "./modules/index.js";
 import { seedPlatform } from "./shared/database/seed.js";
+import { ensurePlatformBootstrap } from "./shared/database/platformBootstrap.js";
 import { getAllowedCorsOrigins, getJwtSecret, isAllowedCorsOrigin } from "./shared/config/security.js";
 
 const app = express();
@@ -68,13 +69,14 @@ export async function initializeApp() {
       const databaseUrl = String(process.env.DATABASE_URL || "").trim();
       const hasPostgresUrl = /^postgres(ql)?:\/\//i.test(databaseUrl);
 
-      if (process.env.VERCEL === "1") {
-        console.log("Inicializacao serverless detectada. Pulando seed automatico no boot da Vercel.");
+      if (!hasPostgresUrl) {
+        console.warn("DATABASE_URL ausente. Login via Supabase permanece disponivel, mas cadastros exigem PostgreSQL.");
         return;
       }
 
-      if (!hasPostgresUrl) {
-        console.warn("DATABASE_URL local sem PostgreSQL valido. Pulando seed automatico para permitir login via Supabase.");
+      if (process.env.VERCEL === "1") {
+        console.log("Vercel: preparando permissoes e estrutura minima do banco.");
+        await ensurePlatformBootstrap();
         return;
       }
 

@@ -1,5 +1,9 @@
 import * as adminService from "./adminService.js";
 import { PERMISSION_DEFINITIONS, ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
+import {
+  ensurePlatformBootstrap,
+  hasUsablePostgresDatabase
+} from "../../shared/database/platformBootstrap.js";
 
 function isDatabaseUnavailableError(error) {
   const message = String(error?.message || "");
@@ -13,11 +17,6 @@ function isDatabaseUnavailableError(error) {
     /can't reach database server/i.test(message) ||
     /authentication failed against database server/i.test(message)
   );
-}
-
-function hasUsablePostgresDatabase() {
-  const databaseUrl = String(process.env.DATABASE_URL || "").trim();
-  return /^postgres(ql)?:\/\//i.test(databaseUrl);
 }
 
 function buildOverviewFallback(user) {
@@ -83,7 +82,8 @@ function buildSettingsFallback() {
 function handleError(res, error) {
   if (isDatabaseUnavailableError(error)) {
     return res.status(503).json({
-      error: "Banco local indisponivel. Configure uma DATABASE_URL PostgreSQL valida para usar os dados administrativos."
+      error:
+        "Banco PostgreSQL indisponivel. Na Vercel, configure DATABASE_URL (ou POSTGRES_URL) com a connection string do Supabase."
     });
   }
 
@@ -96,6 +96,7 @@ export async function getAdminOverview(req, res) {
   }
 
   try {
+    await ensurePlatformBootstrap(req.user);
     const data = await adminService.getOverview(req.user);
     res.json(data);
   } catch (error) {
@@ -299,6 +300,7 @@ export async function getSettings(req, res) {
   }
 
   try {
+    await ensurePlatformBootstrap(req.user);
     const data = await adminService.getSettings(req.user);
     res.json(data);
   } catch (error) {

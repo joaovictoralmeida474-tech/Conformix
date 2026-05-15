@@ -1,9 +1,29 @@
 import * as categoryService from "./categoryService.js";
 import { log } from "../audit/auditService.js";
 
+function isDatabaseUnavailableError(error) {
+  const message = String(error?.message || "");
+  const code = String(error?.code || "");
+
+  return (
+    code.startsWith("P") ||
+    /prisma/i.test(error?.name || "") ||
+    /DATABASE_URL nao configurada/i.test(message) ||
+    /can't reach database server/i.test(message)
+  );
+}
+
 export async function listCategories(req, res) {
-  const items = await categoryService.list(req.user);
-  res.json(items);
+  try {
+    const items = await categoryService.list(req.user);
+    res.json(items);
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return res.json([]);
+    }
+
+    res.status(500).json({ error: error.message || "Erro ao listar categorias" });
+  }
 }
 
 export async function createCategory(req, res) {

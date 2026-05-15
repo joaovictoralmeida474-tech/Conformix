@@ -306,7 +306,7 @@ export default function AdminPortal() {
 
     setError("");
     setMessage(
-      `Banco local indisponivel no momento. Configure uma DATABASE_URL PostgreSQL valida no backend para ${actionLabel}.`
+      `Banco PostgreSQL indisponivel. Configure DATABASE_URL na Vercel (connection string do Supabase) para ${actionLabel}.`
     );
     return false;
   }
@@ -652,9 +652,9 @@ export default function AdminPortal() {
       {message ? <p className="success-text">{message}</p> : null}
       {localDbUnavailable ? (
         <p className="dashboard-empty-copy">
-          O painel administrativo esta em modo local reduzido. Para cadastrar empresas, departamentos,
-          usuarios e admins com persistencia real, configure uma `DATABASE_URL` PostgreSQL valida no
-          `backend/.env`.
+          O painel administrativo esta em modo reduzido porque o banco PostgreSQL nao esta conectado.
+          Na Vercel, abra Settings → Environment Variables e adicione `DATABASE_URL` com a connection string
+          do Supabase (Project Settings → Database → URI, modo pooler). Depois faca um novo deploy.
         </p>
       ) : null}
       {loading ? <p className="dashboard-empty-copy">Carregando painel administrativo...</p> : null}

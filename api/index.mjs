@@ -1,3 +1,5 @@
+import "../backend/src/shared/config/loadEnv.js";
+
 let cachedApp = null;
 let cachedInitializeApp = null;
 

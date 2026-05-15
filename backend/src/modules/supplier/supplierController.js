@@ -1,9 +1,29 @@
 import * as supplierService from "./supplierService.js";
 import { log } from "../audit/auditService.js";
 
+function isDatabaseUnavailableError(error) {
+  const message = String(error?.message || "");
+  const code = String(error?.code || "");
+
+  return (
+    code.startsWith("P") ||
+    /prisma/i.test(error?.name || "") ||
+    /DATABASE_URL nao configurada/i.test(message) ||
+    /can't reach database server/i.test(message)
+  );
+}
+
 export async function listSuppliers(req, res) {
-  const data = await supplierService.list(req.user, req.query);
-  res.json(data);
+  try {
+    const data = await supplierService.list(req.user, req.query);
+    res.json(data);
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return res.json([]);
+    }
+
+    res.status(500).json({ error: error.message || "Erro ao listar fornecedores" });
+  }
 }
 
 export async function createSupplier(req, res) {

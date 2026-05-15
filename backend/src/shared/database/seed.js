@@ -25,7 +25,7 @@ function slugify(value) {
     .slice(0, 60) || "departamento";
 }
 
-async function seedPermissions() {
+export async function seedPermissions() {
   for (const item of PERMISSION_DEFINITIONS) {
     await prisma.permission.upsert({
       where: {
