@@ -1,14 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
+import { normalizeSupabaseUrl } from "./normalizeSupabaseUrl.mjs";
+
 export function createSupabaseClient(config = {}) {
-  const url = String(
-    config.url ||
-      process.env.SUPABASE_URL ||
-      process.env.VITE_SUPABASE_URL ||
-      ""
-  )
-    .trim()
-    .replace(/\/$/, "");
+  const url = normalizeSupabaseUrl(
+    config.url || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || ""
+  );
 
   const anonKey = String(
     config.anonKey ||

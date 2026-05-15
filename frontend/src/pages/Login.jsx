@@ -267,6 +267,13 @@ export default function Login() {
 
     if (error) {
       const message = String(error.message || "").toLowerCase();
+      const errorCode = String(error?.code || error?.name || "");
+
+      if (message.includes("invalid path") || errorCode === "PGRST105") {
+        const configError = new Error("supabase_url_invalid");
+        configError.response = { status: 503 };
+        throw configError;
+      }
 
       if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
         const invalidError = new Error("invalid_credentials");
@@ -347,9 +354,13 @@ export default function Login() {
       const status = error?.response?.status;
       const isInvalidCredentials =
         status === 401 || error?.message === "invalid_credentials";
+      const isSupabaseConfigError = error?.message === "supabase_url_invalid";
+
       setError(
         isInvalidCredentials
           ? "Email ou senha invalidos"
+          : isSupabaseConfigError
+          ? "Configuracao do Supabase incorreta na Vercel. Use a URL base sem /rest/v1."
           : "Nao foi possivel entrar agora. Tente novamente em instantes."
       );
     } finally {
