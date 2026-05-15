@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 
-import { prisma } from "../../shared/database/prisma.js";
+import { isDatabaseConfigured, prisma } from "../../shared/database/prisma.js";
 import { ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
 import { signAccessToken } from "../../shared/middlewares/auth.js";
 import { getUserContextById } from "../../shared/auth/userContext.js";
@@ -161,6 +161,9 @@ function isDatabaseRuntimeError(error) {
   return (
     code.startsWith("P") ||
     /prisma/i.test(error?.name || "") ||
+    /prisma client/i.test(message) ||
+    /query engine/i.test(message) ||
+    /DATABASE_URL nao configurada/i.test(message) ||
     /authentication failed against database server/i.test(message) ||
     /can't reach database server/i.test(message) ||
     /database credentials/i.test(message) ||
@@ -311,7 +314,7 @@ export async function login({ email, password }) {
     let supabaseUnavailable = false;
     let databaseUnavailable = false;
 
-    if (!process.env.VERCEL && !String(process.env.DATABASE_URL || "").match(/^postgres(ql)?:\/\//i)) {
+    if (!isDatabaseConfigured()) {
       databaseUnavailable = true;
     }
 

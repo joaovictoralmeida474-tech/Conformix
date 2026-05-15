@@ -12,6 +12,10 @@ const port = Number(process.env.PORT || 3000);
 const allowedOrigins = new Set(getAllowedCorsOrigins());
 let startupPromise = null;
 
+if (process.env.VERCEL === "1") {
+  app.set("trust proxy", 1);
+}
+
 app.disable("x-powered-by");
 app.use(
   helmet({

@@ -1,34 +1,60 @@
 import "../config/loadEnv.js";
 import { PrismaClient } from "@prisma/client";
 
-function ensureRuntimeDatabaseUrl() {
-  const databaseUrl = String(process.env.DATABASE_URL || "").trim();
+const globalForPrisma = globalThis;
 
-  if (databaseUrl) {
-    return;
-  }
+function hasDatabaseUrl() {
+  return /^postgres(ql)?:\/\//i.test(String(process.env.DATABASE_URL || "").trim());
+}
 
+function createDatabaseUrlError() {
   if (process.env.VERCEL === "1") {
-    throw new Error(
-      "DATABASE_URL nao configurada na Vercel. Use um banco PostgreSQL persistente para evitar perda de categorias, fornecedores e demais cadastros."
+    return new Error(
+      "DATABASE_URL nao configurada na Vercel. Configure PostgreSQL nas variaveis de ambiente do projeto."
     );
   }
 
-  throw new Error(
+  return new Error(
     "DATABASE_URL nao configurada. Defina a conexao do banco antes de iniciar a API."
   );
 }
 
-ensureRuntimeDatabaseUrl();
+function createPrismaClient() {
+  if (!hasDatabaseUrl()) {
+    throw createDatabaseUrlError();
+  }
 
-const globalForPrisma = globalThis;
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
+  return new PrismaClient({
     log: ["error", "warn"]
   });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
 }
+
+function getPrismaClient() {
+  if (globalForPrisma.prisma) {
+    return globalForPrisma.prisma;
+  }
+
+  const client = createPrismaClient();
+
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+  }
+
+  return client;
+}
+
+export function isDatabaseConfigured() {
+  return hasDatabaseUrl();
+}
+
+export const prisma = new Proxy(
+  {},
+  {
+    get(_target, property) {
+      const client = getPrismaClient();
+      const value = client[property];
+
+      return typeof value === "function" ? value.bind(client) : value;
+    }
+  }
+);

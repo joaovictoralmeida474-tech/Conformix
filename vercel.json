@@ -3,6 +3,12 @@
   "installCommand": "if [ -d frontend ] && [ -d backend ]; then npm install && npm --prefix frontend install && npm --prefix backend install; else npm install && npm --prefix ../backend install; fi",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/index.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "backend/node_modules/.prisma/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/:path*",

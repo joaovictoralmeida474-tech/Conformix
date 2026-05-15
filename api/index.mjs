@@ -1,3 +1,6 @@
+let cachedApp = null;
+let cachedInitializeApp = null;
+
 function rebuildApiUrl(req) {
   const originalPath = String(req.query?.path || "").replace(/^\/+/, "");
   const searchParams = new URLSearchParams();
@@ -17,6 +20,19 @@ function rebuildApiUrl(req) {
 
   const queryString = searchParams.toString();
   return `/api/${originalPath}${queryString ? `?${queryString}` : ""}`;
+}
+
+function prepareRequest(req) {
+  const nextUrl = rebuildApiUrl(req);
+  const method = String(req.method || "GET").toUpperCase();
+
+  req.url = nextUrl;
+  req.originalUrl = nextUrl;
+  req.method = method;
+
+  if (!req.headers.host && req.headers["x-forwarded-host"]) {
+    req.headers.host = String(req.headers["x-forwarded-host"]);
+  }
 }
 
 function runExpressApp(app, req, res) {
@@ -56,15 +72,24 @@ function runExpressApp(app, req, res) {
   });
 }
 
+async function loadApp() {
+  if (!cachedApp) {
+    const module = await import("../backend/src/app.js");
+    cachedApp = module.default;
+    cachedInitializeApp = module.initializeApp;
+  }
+
+  await cachedInitializeApp();
+  return cachedApp;
+}
+
 export default async function handler(req, res) {
   try {
-    const { default: app, initializeApp } = await import("../backend/src/app.js");
-    await initializeApp();
-    req.url = rebuildApiUrl(req);
+    const app = await loadApp();
+    prepareRequest(req);
     await runExpressApp(app, req, res);
-    return;
   } catch (error) {
-    console.error("Erro ao inicializar API no Vercel:", error);
+    console.error("Erro ao executar API no Vercel:", error);
 
     if (res.headersSent) {
       res.end();

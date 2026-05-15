@@ -101,5 +101,9 @@ export function getRememberMeDurationMs() {
 }
 
 export function shouldUseSecureCookies() {
+  if (process.env.VERCEL === "1") {
+    return true;
+  }
+
   return normalizeBoolean(process.env.COOKIE_SECURE, false);
 }
