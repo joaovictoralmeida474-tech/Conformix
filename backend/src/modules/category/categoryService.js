@@ -1,5 +1,8 @@
-import { prisma } from "../../shared/database/prisma.js";
 import { buildCompanyWhere, resolveTargetCompanyId } from "../../shared/auth/dataScope.js";
+import * as repo from "../../shared/database/supabaseRepo.js";
+import { applyCompanyScope, getScopedCompanyId } from "../../shared/database/supabaseScope.js";
+import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
+import { loadCategoryBundle } from "../../shared/database/supabaseRelations.js";
 
 function slugify(value = "") {
   return String(value)
@@ -44,17 +47,83 @@ function serialize(item) {
   };
 }
 
-export async function list(scope) {
-  const items = await prisma.category.findMany({
-    where: buildCompanyWhere(scope),
-    include: {
-      questions: true,
-      documents: true
-    },
-    orderBy: { name: "asc" }
-  });
+async function listCategoriesForScope(scope) {
+  const client = getSupabaseAdmin();
+  let query = client.from("Category").select("*").order("name", { ascending: true });
+  query = applyCompanyScope(query, scope);
 
-  return items.map(serialize);
+  const categories = throwIfSupabaseError(await query, "listar categorias");
+  const bundles = await Promise.all(categories.map((item) => loadCategoryBundle(item.id)));
+  return bundles.filter(Boolean).map(serialize);
+}
+
+async function findCategoryInScope(scope, id) {
+  const category = await repo.findById("Category", id);
+
+  if (!category) {
+    return null;
+  }
+
+  const companyId = getScopedCompanyId(scope);
+
+  if (companyId && Number(category.companyId) !== companyId) {
+    return null;
+  }
+
+  return loadCategoryBundle(category.id);
+}
+
+async function findDuplicateCategory(companyId, slug, name, excludeId = null) {
+  const client = getSupabaseAdmin();
+  const categories = throwIfSupabaseError(
+    await client.from("Category").select("id,slug,name").eq("companyId", companyId),
+    "buscar categorias da empresa"
+  );
+
+  return (
+    categories.find((item) => {
+      if (excludeId && Number(item.id) === Number(excludeId)) {
+        return false;
+      }
+
+      return item.slug === slug || item.name === String(name || "").trim();
+    }) || null
+  );
+}
+
+async function replaceCategoryChildren(categoryId, questions, documents) {
+  await repo.deleteWhere("CategoryQuestion", { categoryId: Number(categoryId) });
+  await repo.deleteWhere("CategoryRequiredDocument", { categoryId: Number(categoryId) });
+
+  for (const [index, prompt] of questions.entries()) {
+    await repo.insertRow(
+      "CategoryQuestion",
+      {
+        categoryId: Number(categoryId),
+        prompt,
+        sortOrder: index + 1,
+        active: true
+      },
+      { single: false }
+    );
+  }
+
+  for (const [index, name] of documents.entries()) {
+    await repo.insertRow(
+      "CategoryRequiredDocument",
+      {
+        categoryId: Number(categoryId),
+        name,
+        sortOrder: index + 1,
+        active: true
+      },
+      { single: false }
+    );
+  }
+}
+
+export async function list(scope) {
+  return listCategoriesForScope(scope);
 }
 
 export async function create(scope, data) {
@@ -67,159 +136,66 @@ export async function create(scope, data) {
     throw new Error("Slug da categoria invalido");
   }
 
-  const duplicate = await prisma.category.findFirst({
-    where: {
-      companyId,
-      OR: [{ slug }, { name: String(data.name || "").trim() }]
-    }
-  });
-
-  if (duplicate) {
+  if (await findDuplicateCategory(companyId, slug, data.name)) {
     throw new Error("Ja existe uma categoria com esse nome ou slug");
   }
 
-  const item = await prisma.category.create({
-    data: {
-      slug,
-      name: String(data.name || "").trim(),
-      description: String(data.description || "").trim() || null,
-      active: data.active !== false,
-      companyId
-      ,
-      questions: {
-        create: questions.map((prompt, index) => ({
-          prompt,
-          sortOrder: index + 1,
-          active: true
-        }))
-      },
-      documents: {
-        create: documents.map((name, index) => ({
-          name,
-          sortOrder: index + 1,
-          active: true
-        }))
-      }
-    },
-    include: {
-      questions: true,
-      documents: true
-    }
+  const category = await repo.insertRow("Category", {
+    slug,
+    name: String(data.name || "").trim(),
+    description: String(data.description || "").trim() || null,
+    active: data.active !== false,
+    companyId
   });
 
-  return serialize(item);
+  await replaceCategoryChildren(category.id, questions, documents);
+  return serialize(await loadCategoryBundle(category.id));
 }
 
 export async function update(scope, id, data) {
-  const companyId = resolveTargetCompanyId(scope, data.companyId);
-  const existing = await prisma.category.findFirst({
-    where: {
-      id: Number(id),
-      ...buildCompanyWhere(scope)
-    },
-    include: {
-      questions: true,
-      documents: true
-    }
-  });
+  const existing = await findCategoryInScope(scope, id);
 
   if (!existing) {
     throw new Error("Categoria nao encontrada");
   }
 
+  const companyId = resolveTargetCompanyId(scope, data.companyId || existing.companyId);
   const slug = slugify(data.slug || data.name || "");
   const questions = normalizeList(data.questions);
   const documents = normalizeList(data.documents);
 
-  const duplicate = await prisma.category.findFirst({
-    where: {
-      companyId,
-      id: { not: Number(id) },
-      OR: [{ slug }, { name: String(data.name || "").trim() }]
-    }
-  });
-
-  if (duplicate) {
+  if (await findDuplicateCategory(companyId, slug, data.name, id)) {
     throw new Error("Ja existe uma categoria com esse nome ou slug");
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.category.update({
-      where: { id: Number(id) },
-      data: {
-        slug,
-        name: String(data.name || "").trim(),
-        description: String(data.description || "").trim() || null,
-        active: data.active !== false
-      }
-    });
-
-    await tx.categoryQuestion.deleteMany({
-      where: { categoryId: Number(id) }
-    });
-
-    await tx.categoryRequiredDocument.deleteMany({
-      where: { categoryId: Number(id) }
-    });
-
-    if (questions.length) {
-      await tx.categoryQuestion.createMany({
-        data: questions.map((prompt, index) => ({
-          categoryId: Number(id),
-          prompt,
-          sortOrder: index + 1,
-          active: true
-        }))
-      });
-    }
-
-    if (documents.length) {
-      await tx.categoryRequiredDocument.createMany({
-        data: documents.map((name, index) => ({
-          categoryId: Number(id),
-          name,
-          sortOrder: index + 1,
-          active: true
-        }))
-      });
-    }
+  await repo.updateRow("Category", id, {
+    slug,
+    name: String(data.name || "").trim(),
+    description: String(data.description || "").trim() || null,
+    active: data.active !== false
   });
 
-  const updated = await prisma.category.findUnique({
-    where: { id: Number(id) },
-    include: {
-      questions: true,
-      documents: true
-    }
-  });
-
-  return serialize(updated);
+  await replaceCategoryChildren(id, questions, documents);
+  return serialize(await loadCategoryBundle(id));
 }
 
 export async function remove(scope, id) {
-  const existing = await prisma.category.findFirst({
-    where: {
-      id: Number(id),
-      ...buildCompanyWhere(scope)
-    }
-  });
+  const existing = await findCategoryInScope(scope, id);
 
   if (!existing) {
     throw new Error("Categoria nao encontrada");
   }
 
-  const linkedSuppliers = await prisma.supplier.count({
-    where: {
-      ...buildCompanyWhere(scope),
-      categoryId: Number(id)
-    }
+  const linkedSuppliers = await repo.countRows("Supplier", {
+    ...(buildCompanyWhere(scope) || {}),
+    categoryId: Number(id)
   });
 
   if (linkedSuppliers) {
     throw new Error("Nao e possivel excluir categoria vinculada a fornecedores");
   }
 
-  await prisma.category.delete({
-    where: { id: Number(id) }
-  });
+  await repo.deleteWhere("CategoryQuestion", { categoryId: Number(id) });
+  await repo.deleteWhere("CategoryRequiredDocument", { categoryId: Number(id) });
+  await repo.deleteRow("Category", id);
 }

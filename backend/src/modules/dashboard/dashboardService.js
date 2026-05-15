@@ -1,5 +1,6 @@
-import { prisma } from "../../shared/database/prisma.js";
-import { buildCompanyWhere, buildSupplierCompanyWhere } from "../../shared/auth/dataScope.js";
+import { applyCompanyScope, getSupplierIdsForScope } from "../../shared/database/supabaseScope.js";
+import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
+import { isSuperAdminScope } from "../../shared/auth/dataScope.js";
 
 function isOverdue(value) {
   return value ? new Date(value).getTime() < Date.now() : false;
@@ -66,31 +67,96 @@ function buildAlerts(suppliers, rncs) {
   return alerts;
 }
 
+async function loadDashboardSuppliers(scope) {
+  const client = getSupabaseAdmin();
+  let query = client.from("Supplier").select("*").order("name", { ascending: true });
+  query = applyCompanyScope(query, scope);
+
+  const suppliers = throwIfSupabaseError(await query, "listar fornecedores do dashboard");
+
+  if (!suppliers.length) {
+    return [];
+  }
+
+  const supplierIds = suppliers.map((item) => item.id);
+  const [documents, evaluations] = await Promise.all([
+    throwIfSupabaseError(
+      await client.from("SupplierDocument").select("*").in("supplierId", supplierIds),
+      "listar documentos do dashboard"
+    ),
+    throwIfSupabaseError(
+      await client
+        .from("Evaluation")
+        .select("*")
+        .in("supplierId", supplierIds)
+        .order("evaluationDate", { ascending: false })
+        .order("id", { ascending: false }),
+      "listar avaliacoes do dashboard"
+    )
+  ]);
+
+  const documentsBySupplier = new Map();
+  const latestEvaluationBySupplier = new Map();
+
+  for (const document of documents) {
+    if (!documentsBySupplier.has(document.supplierId)) {
+      documentsBySupplier.set(document.supplierId, []);
+    }
+    documentsBySupplier.get(document.supplierId).push(document);
+  }
+
+  for (const evaluation of evaluations) {
+    if (!latestEvaluationBySupplier.has(evaluation.supplierId)) {
+      latestEvaluationBySupplier.set(evaluation.supplierId, evaluation);
+    }
+  }
+
+  return suppliers.map((supplier) => ({
+    ...supplier,
+    documents: documentsBySupplier.get(supplier.id) || [],
+    evaluations: latestEvaluationBySupplier.has(supplier.id)
+      ? [latestEvaluationBySupplier.get(supplier.id)]
+      : []
+  }));
+}
+
+async function loadDashboardRncs(scope) {
+  const client = getSupabaseAdmin();
+  let query = client.from("RNC").select("*").order("createdAt", { ascending: false });
+
+  if (!isSuperAdminScope(scope)) {
+    const supplierIds = await getSupplierIdsForScope(scope);
+
+    if (!supplierIds.length) {
+      return [];
+    }
+
+    query = query.in("supplierId", supplierIds);
+  }
+
+  const rncs = throwIfSupabaseError(await query, "listar rnc do dashboard");
+
+  if (!rncs.length) {
+    return [];
+  }
+
+  const supplierIds = [...new Set(rncs.map((item) => item.supplierId))];
+  const suppliers = throwIfSupabaseError(
+    await client.from("Supplier").select("id,name").in("id", supplierIds),
+    "listar fornecedores das rnc"
+  );
+  const supplierMap = new Map(suppliers.map((item) => [item.id, item]));
+
+  return rncs.map((item) => ({
+    ...item,
+    supplier: supplierMap.get(item.supplierId) || null
+  }));
+}
+
 export async function getMetrics(scope) {
   const [suppliers, openRncs] = await Promise.all([
-    prisma.supplier.findMany({
-      where: buildCompanyWhere(scope),
-      include: {
-        documents: true,
-        evaluations: {
-          orderBy: [{ evaluationDate: "desc" }, { id: "desc" }],
-          take: 1
-        }
-      },
-      orderBy: { name: "asc" }
-    }),
-    prisma.rNC.findMany({
-      where: buildSupplierCompanyWhere(scope),
-      include: {
-        supplier: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      },
-      orderBy: { createdAt: "desc" }
-    })
+    loadDashboardSuppliers(scope),
+    loadDashboardRncs(scope)
   ]);
 
   const total = suppliers.length;

@@ -5,7 +5,7 @@ import helmet from "helmet";
 
 import routes from "./modules/index.js";
 import { seedPlatform } from "./shared/database/seed.js";
-import { resolveDatabaseUrl } from "./shared/config/databaseEnv.js";
+import { isSupabaseDataConfigured } from "./shared/config/supabaseEnv.js";
 import { getAllowedCorsOrigins, getJwtSecret, isAllowedCorsOrigin } from "./shared/config/security.js";
 
 const app = express();
@@ -66,11 +66,10 @@ export async function initializeApp() {
   if (!startupPromise) {
     startupPromise = (async () => {
       getJwtSecret();
-      const databaseUrl = resolveDatabaseUrl();
-      const hasPostgresUrl = Boolean(databaseUrl);
-
-      if (!hasPostgresUrl) {
-        console.warn("DATABASE_URL ausente. Login via Supabase permanece disponivel, mas cadastros exigem PostgreSQL.");
+      if (!isSupabaseDataConfigured()) {
+        console.warn(
+          "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para habilitar o painel admin."
+        );
         return;
       }
 

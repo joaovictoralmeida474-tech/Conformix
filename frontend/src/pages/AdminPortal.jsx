@@ -310,7 +310,7 @@ export default function AdminPortal() {
 
     setError("");
     setMessage(
-      `Banco PostgreSQL indisponivel. Configure DATABASE_URL na Vercel (connection string do Supabase) para ${actionLabel}.`
+      `Banco Supabase indisponivel. Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY na Vercel para ${actionLabel}.`
     );
     return false;
   }
@@ -657,7 +657,7 @@ export default function AdminPortal() {
       {localDbUnavailable ? (
         <p className="dashboard-empty-copy">
           {settings?.featureFlags?.databaseError ||
-            "O painel administrativo esta em modo reduzido porque o banco PostgreSQL nao esta conectado. Na Vercel, confira `DATABASE_URL` (copie a URI do Supabase em Database → Connection string) e faca um novo deploy."}
+            "O painel administrativo esta em modo reduzido porque o Supabase nao esta conectado. Na Vercel, confira SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (Settings → API no painel do Supabase) e faca um novo deploy."}
         </p>
       ) : null}
       {loading ? <p className="dashboard-empty-copy">Carregando painel administrativo...</p> : null}

@@ -1,5 +1,5 @@
-import { prisma } from "../database/prisma.js";
 import { ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "./permissions.js";
+import { getSupabaseAdmin, throwIfSupabaseError } from "../database/supabaseStore.js";
 
 function serializeDepartment(department) {
   if (!department) return null;
@@ -34,10 +34,10 @@ export function serializeUserContext(user) {
     normalizedRole === ROLES.SUPER_ADMIN
       ? ROLE_PERMISSION_MAP[ROLES.SUPER_ADMIN] || []
       : userPermissionsFromDb.length
-    ? userPermissionsFromDb
-    : rolePermissionsFromDb.length
-    ? rolePermissionsFromDb
-    : ROLE_PERMISSION_MAP[normalizedRole] || [];
+      ? userPermissionsFromDb
+      : rolePermissionsFromDb.length
+      ? rolePermissionsFromDb
+      : ROLE_PERMISSION_MAP[normalizedRole] || [];
   const isSuperAdmin = normalizedRole === ROLES.SUPER_ADMIN;
 
   return {
@@ -60,62 +60,76 @@ export async function getUserContextById(userId) {
   if (!userId) return null;
 
   const numericId = Number(userId);
-
   if (!Number.isInteger(numericId) || numericId <= 0) {
     return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: {
-      id: numericId
-    },
-    include: {
-      company: {
-        select: {
-          id: true,
-          name: true
-        }
-      },
-      department: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          active: true,
-          companyId: true
-        }
-      },
-      userPermissions: {
-        include: {
-          permission: {
-            select: {
-              key: true
-            }
-          }
-        }
-      }
-    }
-  });
+  const client = getSupabaseAdmin();
+  const user = throwIfSupabaseError(
+    await client.from("User").select("*").eq("id", numericId).maybeSingle(),
+    "buscar usuario"
+  );
 
   if (!user || !user.active) {
     return null;
   }
 
-  const rolePermissions = await prisma.rolePermission.findMany({
-    where: {
-      role: normalizeRole(user.role)
-    },
-    include: {
-      permission: {
-        select: {
-          key: true
-        }
-      }
-    }
-  });
+  const [company, department, userPermissionLinks, rolePermissionLinks] = await Promise.all([
+    user.companyId
+      ? throwIfSupabaseError(
+          await client.from("Company").select("id,name").eq("id", user.companyId).maybeSingle(),
+          "buscar empresa"
+        )
+      : null,
+    user.departmentId
+      ? throwIfSupabaseError(
+          await client
+            .from("Department")
+            .select("id,name,slug,active,companyId")
+            .eq("id", user.departmentId)
+            .maybeSingle(),
+          "buscar departamento"
+        )
+      : null,
+    throwIfSupabaseError(
+      await client.from("UserPermission").select("permissionId").eq("userId", numericId),
+      "buscar permissoes do usuario"
+    ),
+    throwIfSupabaseError(
+      await client.from("RolePermission").select("permissionId").eq("role", normalizeRole(user.role)),
+      "buscar permissoes da role"
+    )
+  ]);
+
+  const permissionIds = [
+    ...new Set([
+      ...userPermissionLinks.map((item) => item.permissionId),
+      ...rolePermissionLinks.map((item) => item.permissionId)
+    ])
+  ];
+
+  let permissions = [];
+
+  if (permissionIds.length) {
+    permissions = throwIfSupabaseError(
+      await client.from("Permission").select("id,key").in("id", permissionIds),
+      "buscar permissoes"
+    );
+  }
+
+  const permissionKeyMap = new Map(permissions.map((item) => [item.id, item.key]));
+  const userPermissions = userPermissionLinks
+    .map((item) => ({ permission: { key: permissionKeyMap.get(item.permissionId) } }))
+    .filter((item) => item.permission.key);
+  const rolePermissions = rolePermissionLinks
+    .map((item) => ({ permission: { key: permissionKeyMap.get(item.permissionId) } }))
+    .filter((item) => item.permission.key);
 
   return serializeUserContext({
     ...user,
+    company,
+    department,
+    userPermissions,
     rolePermissions
   });
 }

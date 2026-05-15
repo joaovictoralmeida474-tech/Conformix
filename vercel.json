@@ -5,8 +5,7 @@
   "outputDirectory": "frontend/dist",
   "functions": {
     "api/index.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "backend/node_modules/.prisma/**"
+      "maxDuration": 30
     }
   },
   "rewrites": [

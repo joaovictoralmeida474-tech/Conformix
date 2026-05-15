@@ -2,11 +2,13 @@ import ExcelJS from "exceljs";
 import axios from "axios";
 import path from "path";
 
-import { prisma } from "../../shared/database/prisma.js";
+import * as repo from "../../shared/database/supabaseRepo.js";
+import { applyCompanyScope } from "../../shared/database/supabaseScope.js";
+import { loadSupplierGraph } from "../../shared/database/supabaseRelations.js";
+import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 import { checkExpiry } from "../../shared/utils/checkExpiry.js";
 import { getEvaluationUploadsRoot, getSupplierUploadsRoot } from "../../shared/uploads.js";
 import {
-  buildCompanyWhere,
   isSuperAdminScope,
   resolveTargetCompanyId
 } from "../../shared/auth/dataScope.js";
@@ -265,50 +267,17 @@ function serializeSupplier(supplier) {
 }
 
 async function findSupplier(scope, id) {
-  return prisma.supplier.findFirst({
-    where: {
-      id: Number(id),
-      ...buildCompanyWhere(scope)
-    },
-    include: {
-      category: {
-        include: {
-          questions: true,
-          documents: true
-        }
-      },
-      documents: true,
-      rncs: {
-        orderBy: {
-          createdAt: "desc"
-        }
-      },
-      evaluations: {
-        include: {
-          evaluator: {
-            select: {
-              id: true,
-              email: true,
-              name: true
-            }
-          },
-          answerItems: {
-            orderBy: {
-              sortOrder: "asc"
-            }
-          }
-        },
-        orderBy: [
-          {
-            evaluationDate: "desc"
-          },
-          {
-            id: "desc"
-          }
-        ]
-      }
-    }
-  });
+  const client = getSupabaseAdmin();
+  let query = client.from("Supplier").select("*").eq("id", Number(id));
+  query = applyCompanyScope(query, scope);
+
+  const supplier = throwIfSupabaseError(await query.maybeSingle(), "buscar fornecedor");
+
+  if (!supplier) {
+    return null;
+  }
+
+  return loadSupplierGraph(supplier);
 }
 
 async function resolveCategoryForSupplier(scope, categoryId) {
@@ -318,16 +287,7 @@ async function resolveCategoryForSupplier(scope, categoryId) {
     return null;
   }
 
-  const category = await prisma.category.findUnique({
-    where: {
-      id: normalizedCategoryId
-    },
-    select: {
-      id: true,
-      companyId: true,
-      name: true
-    }
-  });
+  const category = await repo.findById("Category", normalizedCategoryId);
 
   if (!category) {
     throw new Error("Categoria nao encontrada");
@@ -374,57 +334,22 @@ async function resolveSupplierCompanyAndCategory(
 }
 
 export async function list(scope, filters = {}) {
-  const where = buildCompanyWhere(scope);
+  const client = getSupabaseAdmin();
+  let query = client.from("Supplier").select("*").order("name", { ascending: true });
+  query = applyCompanyScope(query, scope);
 
   if (filters.search) {
-    where.name = {
-      contains: String(filters.search).trim(),
-      mode: "insensitive"
-    };
+    query = query.ilike("name", `%${String(filters.search).trim()}%`);
   }
 
   if (filters.status) {
-    where.status = normalizeStatus(filters.status);
+    query = query.eq("status", normalizeStatus(filters.status));
   }
 
-  const suppliers = await prisma.supplier.findMany({
-    where,
-    include: {
-      category: {
-        include: {
-          questions: true,
-          documents: true
-        }
-      },
-      documents: true,
-      rncs: true,
-      evaluations: {
-        include: {
-          evaluator: {
-            select: {
-              id: true,
-              email: true,
-              name: true
-            }
-          },
-          answerItems: true
-        },
-        orderBy: [
-          {
-            evaluationDate: "desc"
-          },
-          {
-            id: "desc"
-          }
-        ]
-      }
-    },
-    orderBy: {
-      name: "asc"
-    }
-  });
+  const suppliers = throwIfSupabaseError(await query, "listar fornecedores");
+  const hydrated = await Promise.all(suppliers.map((item) => loadSupplierGraph(item)));
 
-  return suppliers.map(serializeSupplier);
+  return hydrated.map(serializeSupplier);
 }
 
 export async function getById(scope, id) {
@@ -444,46 +369,39 @@ export async function create(scope, data) {
     throw new Error("CNPJ obrigatorio");
   }
 
-  const supplier = await prisma.supplier.create({
-    data: {
-      name: String(data.name || "").trim(),
-      tradeName: String(data.tradeName || "").trim() || null,
-      cnpj: normalizedCnpj,
-      contact: String(data.contact || "").trim() || null,
-      email: String(data.email || "").trim() || null,
-      phone: String(data.phone || "").trim() || null,
-      addressLine: String(data.addressLine || "").trim() || null,
-      addressNumber: String(data.addressNumber || "").trim() || null,
-      addressComplement: String(data.addressComplement || "").trim() || null,
-      district: String(data.district || "").trim() || null,
-      city: String(data.city || "").trim() || null,
-      state: String(data.state || "").trim() || null,
-      postalCode: String(data.postalCode || "").trim() || null,
-      primaryActivity: String(data.primaryActivity || "").trim() || null,
-      registrationStatus: String(data.registrationStatus || "").trim() || null,
-      status: normalizeStatus(data.status),
-      supplierType: normalizeSupplierType(data.supplierType),
-      score: Number(data.score || 0),
-      riskIndex: Number(data.riskIndex || 0),
-      trend: String(data.trend || "ESTAVEL").trim().toUpperCase(),
-      reactivationJustification: String(data.reactivationJustification || "").trim() || null,
-      companyId,
-      categoryId,
-      lastEvaluationDate: data.lastEvaluationDate ? new Date(data.lastEvaluationDate) : null,
-      nextReview: data.nextReview ? new Date(data.nextReview) : null
-    }
+  const supplier = await repo.insertRow("Supplier", {
+    name: String(data.name || "").trim(),
+    tradeName: String(data.tradeName || "").trim() || null,
+    cnpj: normalizedCnpj,
+    contact: String(data.contact || "").trim() || null,
+    email: String(data.email || "").trim() || null,
+    phone: String(data.phone || "").trim() || null,
+    addressLine: String(data.addressLine || "").trim() || null,
+    addressNumber: String(data.addressNumber || "").trim() || null,
+    addressComplement: String(data.addressComplement || "").trim() || null,
+    district: String(data.district || "").trim() || null,
+    city: String(data.city || "").trim() || null,
+    state: String(data.state || "").trim() || null,
+    postalCode: String(data.postalCode || "").trim() || null,
+    primaryActivity: String(data.primaryActivity || "").trim() || null,
+    registrationStatus: String(data.registrationStatus || "").trim() || null,
+    status: normalizeStatus(data.status),
+    supplierType: normalizeSupplierType(data.supplierType),
+    score: Number(data.score || 0),
+    riskIndex: Number(data.riskIndex || 0),
+    trend: String(data.trend || "ESTAVEL").trim().toUpperCase(),
+    reactivationJustification: String(data.reactivationJustification || "").trim() || null,
+    companyId,
+    categoryId,
+    lastEvaluationDate: data.lastEvaluationDate ? new Date(data.lastEvaluationDate) : null,
+    nextReview: data.nextReview ? new Date(data.nextReview) : null
   });
 
-  return getById(companyId, supplier.id);
+  return getById(scope, supplier.id);
 }
 
 export async function update(scope, id, data) {
-  const existing = await prisma.supplier.findFirst({
-    where: {
-      id: Number(id),
-      ...buildCompanyWhere(scope)
-    }
-  });
+  const existing = await findSupplier(scope, id);
 
   if (!existing) {
     throw new Error("Fornecedor nao encontrado");
@@ -496,52 +414,42 @@ export async function update(scope, id, data) {
     existing.companyId
   );
 
-  await prisma.supplier.update({
-    where: { id: Number(id) },
-    data: {
-      name: String(data.name || existing.name).trim(),
-      tradeName: String(data.tradeName || "").trim() || null,
-      cnpj: normalizeCNPJ(data.cnpj || existing.cnpj),
-      contact: String(data.contact || "").trim() || null,
-      email: String(data.email || "").trim() || null,
-      phone: String(data.phone || "").trim() || null,
-      addressLine: String(data.addressLine || "").trim() || null,
-      addressNumber: String(data.addressNumber || "").trim() || null,
-      addressComplement: String(data.addressComplement || "").trim() || null,
-      district: String(data.district || "").trim() || null,
-      city: String(data.city || "").trim() || null,
-      state: String(data.state || "").trim() || null,
-      postalCode: String(data.postalCode || "").trim() || null,
-      primaryActivity: String(data.primaryActivity || "").trim() || null,
-      registrationStatus: String(data.registrationStatus || "").trim() || null,
-      status: data.status ? normalizeStatus(data.status) : existing.status,
-      supplierType: data.supplierType ? normalizeSupplierType(data.supplierType) : existing.supplierType,
-      companyId,
-      categoryId,
-      reactivationJustification: String(data.reactivationJustification || "").trim() || null,
-      lastEvaluationDate: data.lastEvaluationDate ? new Date(data.lastEvaluationDate) : existing.lastEvaluationDate,
-      nextReview: data.nextReview ? new Date(data.nextReview) : existing.nextReview
-    }
+  await repo.updateRow("Supplier", id, {
+    name: String(data.name || existing.name).trim(),
+    tradeName: String(data.tradeName || "").trim() || null,
+    cnpj: normalizeCNPJ(data.cnpj || existing.cnpj),
+    contact: String(data.contact || "").trim() || null,
+    email: String(data.email || "").trim() || null,
+    phone: String(data.phone || "").trim() || null,
+    addressLine: String(data.addressLine || "").trim() || null,
+    addressNumber: String(data.addressNumber || "").trim() || null,
+    addressComplement: String(data.addressComplement || "").trim() || null,
+    district: String(data.district || "").trim() || null,
+    city: String(data.city || "").trim() || null,
+    state: String(data.state || "").trim() || null,
+    postalCode: String(data.postalCode || "").trim() || null,
+    primaryActivity: String(data.primaryActivity || "").trim() || null,
+    registrationStatus: String(data.registrationStatus || "").trim() || null,
+    status: data.status ? normalizeStatus(data.status) : existing.status,
+    supplierType: data.supplierType ? normalizeSupplierType(data.supplierType) : existing.supplierType,
+    companyId,
+    categoryId,
+    reactivationJustification: String(data.reactivationJustification || "").trim() || null,
+    lastEvaluationDate: data.lastEvaluationDate ? new Date(data.lastEvaluationDate) : existing.lastEvaluationDate,
+    nextReview: data.nextReview ? new Date(data.nextReview) : existing.nextReview
   });
 
   return getById(scope, id);
 }
 
 export async function remove(scope, id) {
-  const supplier = await prisma.supplier.findFirst({
-    where: {
-      id: Number(id),
-      ...buildCompanyWhere(scope)
-    }
-  });
+  const supplier = await findSupplier(scope, id);
 
   if (!supplier) {
     throw new Error("Fornecedor nao encontrado");
   }
 
-  return prisma.supplier.delete({
-    where: { id: Number(id) }
-  });
+  return repo.deleteRow("Supplier", id);
 }
 
 export async function fetchCNPJ(cnpj) {
@@ -603,19 +511,14 @@ export async function syncDocuments(scope, supplierId, documents = [], files = [
     }
 
     if (existing) {
-      await prisma.supplierDocument.update({
-        where: { id: existing.id },
-        data: payload
-      });
+      await repo.updateRow("SupplierDocument", existing.id, payload);
       continue;
     }
 
-    await prisma.supplierDocument.create({
-      data: {
-        supplierId: supplier.id,
-        requiredDocumentId,
-        ...payload
-      }
+    await repo.insertRow("SupplierDocument", {
+      supplierId: supplier.id,
+      requiredDocumentId,
+      ...payload
     });
   }
 
@@ -681,88 +584,78 @@ export async function createEvaluation(scope, supplierId, evaluatorId, payload =
   const shouldBlock = score < 60;
   let evaluationId = null;
 
-  await prisma.$transaction(async (tx) => {
-    const evaluation = await tx.evaluation.create({
-      data: {
-        supplierId: supplier.id,
-        evaluatorId,
-        evaluationDate,
-        invoiceNumber: String(payload.invoiceNumber || "").trim() || null,
-        observations: String(payload.observations || "").trim() || null,
-        answers: JSON.stringify(answers),
-        attachmentFilename: attachment?.filename || null,
-        attachmentOriginalName: attachment?.originalname || null,
-        score,
-        classification: classifyScore(score),
-        answerItems: {
-          create: answers.map((answer) => ({
-            categoryQuestionId: answer.questionId,
-            questionText: answer.questionText,
-            score: answer.score,
-            sortOrder: answer.sortOrder
-          }))
-        }
-      }
-    });
-    evaluationId = evaluation.id;
+  const evaluation = await repo.insertRow("Evaluation", {
+    supplierId: supplier.id,
+    evaluatorId,
+    evaluationDate,
+    invoiceNumber: String(payload.invoiceNumber || "").trim() || null,
+    observations: String(payload.observations || "").trim() || null,
+    answers: JSON.stringify(answers),
+    attachmentFilename: attachment?.filename || null,
+    attachmentOriginalName: attachment?.originalname || null,
+    score,
+    classification: classifyScore(score)
+  });
+  evaluationId = evaluation.id;
 
-    const previousEvaluations = await tx.evaluation.findMany({
-      where: { supplierId: supplier.id },
-      orderBy: [{ evaluationDate: "desc" }, { id: "desc" }],
-      take: 6
-    });
+  for (const answer of answers) {
+    await repo.insertRow(
+      "EvaluationAnswer",
+      {
+        evaluationId: evaluation.id,
+        categoryQuestionId: answer.questionId,
+        questionText: answer.questionText,
+        score: answer.score,
+        sortOrder: answer.sortOrder
+      },
+      { single: false }
+    );
+  }
 
-    const trend = trendFromEvaluations(previousEvaluations);
-
-    await tx.supplier.update({
-      where: { id: supplier.id },
-      data: {
-        score,
-        status: shouldBlock ? "BLOQUEADO" : supplier.status,
-        trend,
-        lastEvaluationDate: evaluationDate,
-        nextReview
-      }
-    });
-
-    if (shouldBlock) {
-      await tx.rNC.create({
-        data: {
-          supplierId: supplier.id,
-          evaluationId: evaluation.id,
-          status: "ABERTA",
-          description: "Fornecedor abaixo da nota minima",
-          deadline: defaultRncDeadline
-        }
-      });
+  const previousEvaluations = await repo.findMany(
+    "Evaluation",
+    { supplierId: supplier.id },
+    {
+      orderBy: { evaluationDate: false, id: false },
+      limit: 6
     }
+  );
+
+  const trend = trendFromEvaluations(previousEvaluations);
+
+  await repo.updateRow("Supplier", supplier.id, {
+    score,
+    status: shouldBlock ? "BLOQUEADO" : supplier.status,
+    trend,
+    lastEvaluationDate: evaluationDate,
+    nextReview
   });
 
-  // Safety net to guarantee the expected business rule even if the UI
-  // reads immediately after the transaction or a prior inconsistent
-  // state exists in the database.
-  if (shouldBlock && evaluationId) {
-    await prisma.supplier.update({
-      where: { id: supplier.id },
-      data: { status: "BLOQUEADO" }
+  if (shouldBlock) {
+    await repo.insertRow("RNC", {
+      supplierId: supplier.id,
+      evaluationId: evaluation.id,
+      status: "ABERTA",
+      description: "Fornecedor abaixo da nota minima",
+      deadline: defaultRncDeadline
     });
+  }
 
-    const linkedRnc = await prisma.rNC.findFirst({
-      where: {
-        supplierId: supplier.id,
-        evaluationId
-      }
+  if (shouldBlock && evaluationId) {
+    await repo.updateRow("Supplier", supplier.id, { status: "BLOQUEADO" });
+
+    const linkedRnc = await repo.findOne("RNC", {
+      supplierId: supplier.id,
+      evaluationId
     });
 
     if (!linkedRnc) {
-      await prisma.rNC.create({
-        data: {
-          supplierId: supplier.id,
-          evaluationId,
-          status: "ABERTA",
-          description: "Fornecedor abaixo da nota minima",
-          deadline: defaultRncDeadline
-        }
+      await repo.insertRow("RNC", {
+        supplierId: supplier.id,
+        evaluationId,
+        status: "ABERTA",
+        description: "Fornecedor abaixo da nota minima",
+        deadline: defaultRncDeadline
       });
     }
   }
@@ -770,10 +663,7 @@ export async function createEvaluation(scope, supplierId, evaluatorId, payload =
   const refreshed = await findSupplier(scope, supplier.id);
   const riskIndex = riskIndexForSupplier(refreshed);
 
-  await prisma.supplier.update({
-    where: { id: supplier.id },
-    data: { riskIndex }
-  });
+  await repo.updateRow("Supplier", supplier.id, { riskIndex });
 
   return getById(scope, supplier.id);
 }
@@ -794,19 +684,27 @@ export async function exportSuppliers(scope, res) {
     { header: "Proxima revisao", key: "nextReview", width: 18 }
   ];
 
-  const data = await prisma.supplier.findMany({
-    where: buildCompanyWhere(scope),
-    include: {
-      category: true
-    },
-    orderBy: { name: "asc" }
-  });
+  const client = getSupabaseAdmin();
+  let query = client.from("Supplier").select("*").order("name", { ascending: true });
+  query = applyCompanyScope(query, scope);
+  const data = throwIfSupabaseError(await query, "exportar fornecedores");
+
+  const categoryIds = [...new Set(data.map((item) => item.categoryId).filter(Boolean))];
+  let categoryMap = new Map();
+
+  if (categoryIds.length) {
+    const categories = throwIfSupabaseError(
+      await client.from("Category").select("id,name").in("id", categoryIds),
+      "listar categorias da exportacao"
+    );
+    categoryMap = new Map(categories.map((item) => [item.id, item]));
+  }
 
   sheet.addRows(
     data.map((item) => ({
       name: item.name,
       cnpj: item.cnpj,
-      category: item.category?.name || "-",
+      category: categoryMap.get(item.categoryId)?.name || "-",
       supplierType: item.supplierType,
       status: item.status,
       score: item.score,

@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 
-import { isDatabaseConfigured, prisma } from "../../shared/database/prisma.js";
+import { isSupabaseDataConfigured } from "../../shared/config/supabaseEnv.js";
+import * as repo from "../../shared/database/supabaseRepo.js";
+import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 import { ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
 import { signAccessToken } from "../../shared/middlewares/auth.js";
 import { getUserContextById } from "../../shared/auth/userContext.js";
@@ -91,6 +93,26 @@ function buildProvisioningProfile(supabaseUser) {
   return buildSupabaseProfile(supabaseUser);
 }
 
+async function findUserByEmail(email) {
+  return repo.findOne("User", { email: normalizeEmail(email) });
+}
+
+async function findUserBySupabaseIdentity(supabaseUser) {
+  const normalizedEmail = normalizeEmail(supabaseUser.email);
+  const client = getSupabaseAdmin();
+
+  const byAuth = throwIfSupabaseError(
+    await client.from("User").select("*").eq("authUserId", supabaseUser.id).maybeSingle(),
+    "buscar usuario por authUserId"
+  );
+
+  if (byAuth) {
+    return byAuth;
+  }
+
+  return findUserByEmail(normalizedEmail);
+}
+
 async function syncSupabaseUserToLocal({ existingUser, supabaseUser, password }) {
   if (existingUser && existingUser.active === false) {
     throw createInactiveUserError();
@@ -124,15 +146,10 @@ async function syncSupabaseUserToLocal({ existingUser, supabaseUser, password })
   };
 
   if (!existingUser) {
-    return prisma.user.create({ data });
+    return repo.insertRow("User", data);
   }
 
-  return prisma.user.update({
-    where: {
-      id: existingUser.id
-    },
-    data
-  });
+  return repo.updateRow("User", existingUser.id, data);
 }
 
 async function provisionUserFromSupabase({ supabaseUser, password }) {
@@ -156,20 +173,12 @@ function isSupabaseUnavailableError(error) {
 
 function isDatabaseRuntimeError(error) {
   const message = String(error?.message || "");
-  const code = String(error?.code || "");
 
   return (
-    code.startsWith("P") ||
-    /prisma/i.test(error?.name || "") ||
-    /prisma client/i.test(message) ||
-    /query engine/i.test(message) ||
-    /DATABASE_URL nao configurada/i.test(message) ||
-    /authentication failed against database server/i.test(message) ||
-    /can't reach database server/i.test(message) ||
-    /database credentials/i.test(message) ||
-    /prepared statement/i.test(message) ||
+    /Supabase nao configurado/i.test(message) ||
     /column .* does not exist/i.test(message) ||
-    /relation .* does not exist/i.test(message)
+    /relation .* does not exist/i.test(message) ||
+    /Could not find the table/i.test(message)
   );
 }
 
@@ -184,12 +193,10 @@ async function ensureDepartmentForRole({ companyId, departmentId, role }) {
     throw new Error("Departamento obrigatorio para ADMIN e USER");
   }
 
-  const department = await prisma.department.findFirst({
-    where: {
-      id: Number(departmentId),
-      companyId: Number(companyId),
-      active: true
-    }
+  const department = await repo.findOne("Department", {
+    id: Number(departmentId),
+    companyId: Number(companyId),
+    active: true
   });
 
   if (!department) {
@@ -208,9 +215,7 @@ async function createUserRecord({ email, password, role, companyId, departmentId
 
   assertStrongPassword(password);
 
-  const existing = await prisma.user.findUnique({
-    where: { email: normalizedEmail }
-  });
+  const existing = await findUserByEmail(normalizedEmail);
 
   if (existing) {
     throw new Error("Email ja cadastrado");
@@ -225,16 +230,14 @@ async function createUserRecord({ email, password, role, companyId, departmentId
     role: normalizedRole
   });
 
-  const user = await prisma.user.create({
-    data: {
-      name: normalizedName,
-      email: normalizedEmail,
-      password: hash,
-      role: normalizedRole,
-      active: Boolean(active),
-      companyId: Number(companyId),
-      departmentId: resolvedDepartmentId
-    }
+  const user = await repo.insertRow("User", {
+    name: normalizedName,
+    email: normalizedEmail,
+    password: hash,
+    role: normalizedRole,
+    active: Boolean(active),
+    companyId: Number(companyId),
+    departmentId: resolvedDepartmentId
   });
 
   return getUserContextById(user.id);
@@ -261,42 +264,42 @@ export async function register({ email, password, role, companyName, companyId, 
 
   assertStrongPassword(password);
 
-  const existing = await prisma.user.findUnique({
-    where: { email: normalizedEmail }
-  });
+  const existing = await findUserByEmail(normalizedEmail);
 
   if (existing) {
     throw new Error("Email ja cadastrado");
   }
 
   const hash = await bcrypt.hash(password, 10);
+  const client = getSupabaseAdmin();
 
-  const company = await prisma.company.create({
-    data: {
-      name: normalizedCompanyName,
-      departments: {
-        create: {
-          name: "Operacoes",
-          slug: "operacoes",
-          description: "Departamento inicial da empresa"
-        }
-      }
-    },
-    include: {
-      departments: true
-    }
-  });
+  const company = throwIfSupabaseError(
+    await client.from("Company").insert({ name: normalizedCompanyName }).select("*").single(),
+    "criar empresa no cadastro"
+  );
 
-  const department = company.departments[0];
-  const user = await prisma.user.create({
-    data: {
-      name: normalizedName,
-      email: normalizedEmail,
-      password: hash,
-      role: requestedRole,
-      companyId: company.id,
-      departmentId: department?.id || null
-    }
+  const department = throwIfSupabaseError(
+    await client
+      .from("Department")
+      .insert({
+        companyId: company.id,
+        name: "Operacoes",
+        slug: "operacoes",
+        description: "Departamento inicial da empresa",
+        active: true
+      })
+      .select("*")
+      .single(),
+    "criar departamento no cadastro"
+  );
+
+  const user = await repo.insertRow("User", {
+    name: normalizedName,
+    email: normalizedEmail,
+    password: hash,
+    role: requestedRole,
+    companyId: company.id,
+    departmentId: department?.id || null
   });
 
   const context = await getUserContextById(user.id);
@@ -314,28 +317,13 @@ export async function login({ email, password }) {
     let supabaseUnavailable = false;
     let databaseUnavailable = false;
 
-    if (!isDatabaseConfigured()) {
+    if (!isSupabaseDataConfigured()) {
       databaseUnavailable = true;
     }
 
     if (!databaseUnavailable) {
       for (const currentEmail of emailCandidates) {
-        let user = null;
-
-        try {
-          user = await prisma.user.findUnique({
-            where: {
-              email: currentEmail
-            }
-          });
-        } catch (error) {
-          if (isDatabaseRuntimeError(error)) {
-            databaseUnavailable = true;
-            break;
-          }
-
-          throw error;
-        }
+        const user = await findUserByEmail(currentEmail);
 
         if (!user) {
           continue;
@@ -352,13 +340,8 @@ export async function login({ email, password }) {
             continue;
           }
 
-          await prisma.user.update({
-            where: {
-              id: user.id
-            },
-            data: {
-              lastLoginAt: new Date()
-            }
+          await repo.updateRow("User", user.id, {
+            lastLoginAt: new Date()
           });
 
           const context = await getUserContextById(user.id);
@@ -397,14 +380,7 @@ export async function login({ email, password }) {
             };
           }
 
-          let user = await prisma.user.findFirst({
-            where: {
-              OR: [
-                { authUserId: supabaseUser.id },
-                { email: normalizedSupabaseEmail }
-              ]
-            }
-          });
+          let user = await findUserBySupabaseIdentity(supabaseUser);
 
           if (!user) {
             user = await provisionUserFromSupabase({
@@ -495,12 +471,7 @@ export async function updatePassword(userId, password) {
 
   const hash = await bcrypt.hash(password, 10);
 
-  await prisma.user.update({
-    where: {
-      id: Number(userId)
-    },
-    data: {
-      password: hash
-    }
+  await repo.updateRow("User", userId, {
+    password: hash
   });
 }

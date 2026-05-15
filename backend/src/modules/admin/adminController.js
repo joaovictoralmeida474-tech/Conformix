@@ -1,11 +1,11 @@
 import * as adminService from "./adminService.js";
 import { PERMISSION_DEFINITIONS, ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
+import { isSupabaseDataConfigured } from "../../shared/config/supabaseEnv.js";
 import {
   ensurePlatformBootstrap,
   hasUsablePostgresDatabase,
   testDatabaseConnection
 } from "../../shared/database/platformBootstrap.js";
-import { resolveDatabaseUrl } from "../../shared/config/databaseEnv.js";
 
 function isDatabaseUnavailableError(error) {
   const message = String(error?.message || "");
@@ -14,10 +14,9 @@ function isDatabaseUnavailableError(error) {
   return (
     code.startsWith("P") ||
     /prisma/i.test(error?.name || "") ||
-    /Error validating datasource `db`/i.test(message) ||
-    /the URL must start with the protocol `postgresql:\/\/` or `postgres:\/\/`/i.test(message) ||
+    /supabase/i.test(message) ||
     /can't reach database server/i.test(message) ||
-    /authentication failed against database server/i.test(message)
+    /authentication failed/i.test(message)
   );
 }
 
@@ -44,7 +43,7 @@ function buildOverviewFallback(user) {
       users: 0,
       activeUsers: 0,
       inactiveUsers: 0,
-      departmentName: "Sem banco local"
+      departmentName: "Sem departamento"
     },
     department: null,
     recentLogs: []
@@ -88,7 +87,7 @@ function handleError(res, error) {
   if (isDatabaseUnavailableError(error)) {
     return res.status(503).json({
       error:
-        "Banco PostgreSQL indisponivel. Na Vercel, configure DATABASE_URL (ou POSTGRES_URL) com a connection string do Supabase."
+        "Banco de dados indisponivel. Na Vercel, configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY do projeto Supabase."
     });
   }
 
@@ -96,8 +95,6 @@ function handleError(res, error) {
 }
 
 export async function getAdminOverview(req, res) {
-  resolveDatabaseUrl();
-
   if (!hasUsablePostgresDatabase()) {
     return res.json(buildOverviewFallback(req.user));
   }
@@ -240,8 +237,6 @@ export async function resetAdminPassword(req, res) {
 }
 
 export async function listDepartments(req, res) {
-  resolveDatabaseUrl();
-
   if (!hasUsablePostgresDatabase()) {
     return res.json([]);
   }
@@ -305,13 +300,12 @@ export async function deleteCompany(req, res) {
 }
 
 export async function getSettings(req, res) {
-  resolveDatabaseUrl();
-
-  if (!hasUsablePostgresDatabase()) {
+  if (!isSupabaseDataConfigured()) {
     return res.json(
       buildSettingsFallback({
         localDbUnavailable: true,
-        databaseError: "DATABASE_URL nao encontrada nas variaveis de ambiente."
+        databaseError:
+          "Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY na Vercel."
       })
     );
   }
@@ -323,7 +317,7 @@ export async function getSettings(req, res) {
       buildSettingsFallback({
         localDbUnavailable: true,
         databaseError:
-          "Nao foi possivel conectar ao PostgreSQL. Verifique a senha na connection string (caracteres especiais devem estar codificados) e faca um novo deploy."
+          "Nao foi possivel acessar o Supabase. Verifique SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY e faca um novo deploy."
       })
     );
   }

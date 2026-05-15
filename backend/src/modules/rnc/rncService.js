@@ -1,5 +1,7 @@
-import { prisma } from "../../shared/database/prisma.js";
-import { buildSupplierCompanyWhere } from "../../shared/auth/dataScope.js";
+import { isSuperAdminScope } from "../../shared/auth/dataScope.js";
+import * as repo from "../../shared/database/supabaseRepo.js";
+import { getSupplierIdsForScope } from "../../shared/database/supabaseScope.js";
+import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 
 function addThirtyDays(baseDate) {
   const deadline = new Date(baseDate);
@@ -7,118 +9,130 @@ function addThirtyDays(baseDate) {
   return deadline;
 }
 
-export async function list(scope) {
-  const items = await prisma.rNC.findMany({
-    where: buildSupplierCompanyWhere(scope),
-    include: {
-      supplier: {
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          supplierType: true,
-          riskIndex: true
-        }
-      },
-      evaluation: {
-        select: {
-          id: true,
-          score: true,
-          classification: true,
-          evaluationDate: true
-        }
-      }
-    },
-    orderBy: [{ createdAt: "desc" }]
-  });
+async function loadRncGraph(rncRow) {
+  if (!rncRow) {
+    return null;
+  }
 
-  const missingDeadline = items.filter(
+  const client = getSupabaseAdmin();
+  const [supplier, evaluation] = await Promise.all([
+    throwIfSupabaseError(
+      await client
+        .from("Supplier")
+        .select("id,name,status,supplierType,riskIndex")
+        .eq("id", rncRow.supplierId)
+        .maybeSingle(),
+      "buscar fornecedor da rnc"
+    ),
+    rncRow.evaluationId
+      ? throwIfSupabaseError(
+          await client
+            .from("Evaluation")
+            .select("id,score,classification,evaluationDate")
+            .eq("id", rncRow.evaluationId)
+            .maybeSingle(),
+          "buscar avaliacao da rnc"
+        )
+      : null
+  ]);
+
+  return {
+    ...rncRow,
+    supplier,
+    evaluation
+  };
+}
+
+async function listRncRowsForScope(scope) {
+  const client = getSupabaseAdmin();
+  let query = client.from("RNC").select("*").order("createdAt", { ascending: false });
+
+  if (!isSuperAdminScope(scope)) {
+    const supplierIds = await getSupplierIdsForScope(scope);
+
+    if (!supplierIds.length) {
+      return [];
+    }
+
+    query = query.in("supplierId", supplierIds);
+  }
+
+  return throwIfSupabaseError(await query, "listar rnc");
+}
+
+async function findRncInScope(scope, id) {
+  const rnc = await repo.findById("RNC", id);
+
+  if (!rnc) {
+    return null;
+  }
+
+  if (!isSuperAdminScope(scope)) {
+    const supplier = await repo.findById("Supplier", rnc.supplierId);
+    const companyId = Number(scope?.companyId);
+
+    if (!supplier || Number(supplier.companyId) !== companyId) {
+      return null;
+    }
+  }
+
+  return rnc;
+}
+
+export async function list(scope) {
+  const items = await listRncRowsForScope(scope);
+  const hydrated = await Promise.all(items.map((item) => loadRncGraph(item)));
+
+  const missingDeadline = hydrated.filter(
     (item) => !item.deadline && item.evaluation?.evaluationDate
   );
 
   if (missingDeadline.length) {
-    await prisma.$transaction(
+    await Promise.all(
       missingDeadline.map((item) =>
-        prisma.rNC.update({
-          where: { id: item.id },
-          data: {
-            deadline: addThirtyDays(item.evaluation.evaluationDate)
-          }
+        repo.updateRow("RNC", item.id, {
+          deadline: addThirtyDays(item.evaluation.evaluationDate)
         })
       )
     );
 
-    return items.map((item) =>
+    return hydrated.map((item) =>
       !item.deadline && item.evaluation?.evaluationDate
         ? { ...item, deadline: addThirtyDays(item.evaluation.evaluationDate) }
         : item
     );
   }
 
-  return items;
+  return hydrated;
 }
 
 export async function update(scope, id, data) {
-  const existing = await prisma.rNC.findFirst({
-    where: {
-      id: Number(id),
-      ...buildSupplierCompanyWhere(scope)
-    }
-  });
+  const existing = await findRncInScope(scope, id);
 
   if (!existing) {
     throw new Error("RNC nao encontrada");
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.rNC.update({
-      where: { id: Number(id) },
-      data: {
-        status: data.status || existing.status,
-        actionPlan: data.actionPlan ?? existing.actionPlan,
-        description: data.description ?? existing.description,
-        cause: data.cause ?? existing.cause,
-        correctiveAction: data.correctiveAction ?? existing.correctiveAction,
-        responsible: data.responsible ?? existing.responsible,
-        deadline: data.deadline ? new Date(data.deadline) : existing.deadline,
-        treatedAt: data.treatedAt ? new Date(data.treatedAt) : existing.treatedAt
-      }
+  await repo.updateRow("RNC", id, {
+    status: data.status || existing.status,
+    actionPlan: data.actionPlan ?? existing.actionPlan,
+    description: data.description ?? existing.description,
+    cause: data.cause ?? existing.cause,
+    correctiveAction: data.correctiveAction ?? existing.correctiveAction,
+    responsible: data.responsible ?? existing.responsible,
+    deadline: data.deadline ? new Date(data.deadline) : existing.deadline,
+    treatedAt: data.treatedAt ? new Date(data.treatedAt) : existing.treatedAt
+  });
+
+  if (data.supplierStatusAction) {
+    await repo.updateRow("Supplier", existing.supplierId, {
+      status:
+        String(data.supplierStatusAction).toUpperCase() === "ATIVO" ||
+        String(data.supplierStatusAction).toUpperCase() === "ACTIVE"
+          ? "ATIVO"
+          : "BLOQUEADO"
     });
+  }
 
-    if (data.supplierStatusAction) {
-      await tx.supplier.update({
-        where: { id: existing.supplierId },
-        data: {
-          status:
-            String(data.supplierStatusAction).toUpperCase() === "ATIVO" ||
-            String(data.supplierStatusAction).toUpperCase() === "ACTIVE"
-              ? "ATIVO"
-              : "BLOQUEADO"
-        }
-      });
-    }
-  });
-
-  return prisma.rNC.findUnique({
-    where: { id: Number(id) },
-    include: {
-      supplier: {
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          supplierType: true,
-          riskIndex: true
-        }
-      },
-      evaluation: {
-        select: {
-          id: true,
-          score: true,
-          classification: true,
-          evaluationDate: true
-        }
-      }
-    }
-  });
+  return loadRncGraph(await repo.findById("RNC", id));
 }

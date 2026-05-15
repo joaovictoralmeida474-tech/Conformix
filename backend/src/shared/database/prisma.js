@@ -1,29 +1,29 @@
-import { isDatabaseConfigured, resolveDatabaseUrl } from "../config/databaseEnv.js";
+import { isSupabaseDataConfigured } from "../config/supabaseEnv.js";
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis;
 
-function createDatabaseUrlError() {
-  if (process.env.VERCEL === "1") {
-    return new Error(
-      "DATABASE_URL nao configurada na Vercel. Configure PostgreSQL nas variaveis de ambiente do projeto."
+function createPrismaClient() {
+  const databaseUrl = String(
+    process.env.SUPABASE_POSTGRES_PRISMA_URL ||
+      process.env.POSTGRES_PRISMA_URL ||
+      process.env.POSTGRES_URL ||
+      ""
+  ).trim();
+
+  if (!databaseUrl) {
+    throw new Error(
+      "Prisma local indisponivel. O runtime em producao usa Supabase (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)."
     );
   }
 
-  return new Error(
-    "DATABASE_URL nao configurada. Defina a conexao do banco antes de iniciar a API."
-  );
-}
-
-function createPrismaClient() {
-  const databaseUrl = resolveDatabaseUrl();
-
-  if (!databaseUrl) {
-    throw createDatabaseUrlError();
-  }
-
   return new PrismaClient({
-    log: process.env.VERCEL === "1" ? ["error"] : ["error", "warn"]
+    log: process.env.VERCEL === "1" ? ["error"] : ["error", "warn"],
+    datasources: {
+      db: {
+        url: databaseUrl
+      }
+    }
   });
 }
 
@@ -38,7 +38,9 @@ function getPrismaClient() {
   return client;
 }
 
-export { isDatabaseConfigured };
+export function isDatabaseConfigured() {
+  return isSupabaseDataConfigured();
+}
 
 export const prisma = new Proxy(
   {},

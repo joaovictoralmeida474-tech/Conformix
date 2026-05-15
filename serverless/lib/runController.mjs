@@ -1,9 +1,5 @@
 import "../../backend/src/shared/config/loadEnv.js";
-import { resolveDatabaseUrl } from "../../backend/src/shared/config/databaseEnv.js";
-
 import { readJsonBody, sendJson } from "./http.mjs";
-
-resolveDatabaseUrl();
 import { hasPermission } from "../../backend/src/shared/auth/permissions.js";
 import { createExpressRequest, createExpressResponse } from "./expressAdapter.mjs";
 import { withAuth } from "./withAuth.mjs";

@@ -1,5 +1,5 @@
-import { prisma } from "../database/prisma.js";
 import { ROLES, normalizeRole } from "./permissions.js";
+import { getSupabaseAdmin, throwIfSupabaseError } from "../database/supabaseStore.js";
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
@@ -61,47 +61,48 @@ export function buildSupabaseProfile(supabaseUser, overrides = {}) {
 }
 
 async function ensureImportedCompany(profile) {
+  const client = getSupabaseAdmin();
   const fallbackName = String(
     process.env.SUPABASE_IMPORTED_COMPANY_NAME || "Usuarios importados do Supabase"
   ).trim();
 
   if (profile.companyId) {
-    const existing = await prisma.company.findUnique({
-      where: {
-        id: profile.companyId
-      }
-    });
+    const existing = throwIfSupabaseError(
+      await client.from("Company").select("*").eq("id", profile.companyId).maybeSingle(),
+      "buscar empresa importada"
+    );
 
     if (existing) {
       return existing;
     }
 
-    return prisma.company.create({
-      data: {
-        id: profile.companyId,
-        name: `${fallbackName} ${profile.companyId}`
-      }
-    });
+    return throwIfSupabaseError(
+      await client
+        .from("Company")
+        .insert({ id: profile.companyId, name: `${fallbackName} ${profile.companyId}` })
+        .select("*")
+        .single(),
+      "criar empresa importada"
+    );
   }
 
-  let company = await prisma.company.findFirst({
-    where: {
-      name: fallbackName
-    }
-  });
+  const existing = throwIfSupabaseError(
+    await client.from("Company").select("*").eq("name", fallbackName).limit(1).maybeSingle(),
+    "buscar empresa padrao importada"
+  );
 
-  if (!company) {
-    company = await prisma.company.create({
-      data: {
-        name: fallbackName
-      }
-    });
+  if (existing) {
+    return existing;
   }
 
-  return company;
+  return throwIfSupabaseError(
+    await client.from("Company").insert({ name: fallbackName }).select("*").single(),
+    "criar empresa padrao importada"
+  );
 }
 
 async function ensureImportedDepartment(companyId, profile) {
+  const client = getSupabaseAdmin();
   const fallbackName = String(
     process.env.SUPABASE_IMPORTED_DEPARTMENT_NAME || "Acesso geral"
   ).trim();
@@ -111,66 +112,79 @@ async function ensureImportedDepartment(companyId, profile) {
   }
 
   if (profile.departmentId) {
-    const existing = await prisma.department.findUnique({
-      where: {
-        id: profile.departmentId
-      }
-    });
+    const existing = throwIfSupabaseError(
+      await client.from("Department").select("*").eq("id", profile.departmentId).maybeSingle(),
+      "buscar departamento importado"
+    );
 
     if (existing && Number(existing.companyId) === Number(companyId)) {
       return existing;
     }
 
-    return prisma.department.create({
-      data: {
-        id: profile.departmentId,
-        companyId: Number(companyId),
-        name: `${fallbackName} ${profile.departmentId}`,
-        slug: `${slugify(fallbackName)}-${profile.departmentId}`,
-        description: "Departamento importado automaticamente do Supabase",
-        active: true
-      }
-    });
+    return throwIfSupabaseError(
+      await client
+        .from("Department")
+        .insert({
+          id: profile.departmentId,
+          companyId: Number(companyId),
+          name: `${fallbackName} ${profile.departmentId}`,
+          slug: `${slugify(fallbackName)}-${profile.departmentId}`,
+          description: "Departamento importado automaticamente do Supabase",
+          active: true
+        })
+        .select("*")
+        .single(),
+      "criar departamento importado"
+    );
   }
 
   const slug = slugify(fallbackName);
-  let department = await prisma.department.findFirst({
-    where: {
-      companyId: Number(companyId),
-      slug
-    }
-  });
+  const existing = throwIfSupabaseError(
+    await client
+      .from("Department")
+      .select("*")
+      .eq("companyId", Number(companyId))
+      .eq("slug", slug)
+      .limit(1)
+      .maybeSingle(),
+    "buscar departamento padrao importado"
+  );
 
-  if (!department) {
-    department = await prisma.department.create({
-      data: {
+  if (existing) {
+    return existing;
+  }
+
+  return throwIfSupabaseError(
+    await client
+      .from("Department")
+      .insert({
         companyId: Number(companyId),
         name: fallbackName,
         slug,
         description: "Departamento padrao para logins importados do Supabase",
         active: true
-      }
-    });
-  }
-
-  return department;
+      })
+      .select("*")
+      .single(),
+    "criar departamento padrao importado"
+  );
 }
 
 export async function ensureSupabaseProvisioningScope(profile) {
   if (profile.role === ROLES.SUPER_ADMIN) {
-    let company = await prisma.company.findFirst({
-      where: {
-        name: String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim()
-      }
-    });
+    const client = getSupabaseAdmin();
+    const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim();
+    const existing = throwIfSupabaseError(
+      await client.from("Company").select("*").eq("name", companyName).limit(1).maybeSingle(),
+      "buscar empresa do super admin"
+    );
 
-    if (!company) {
-      company = await prisma.company.create({
-        data: {
-          name: String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim()
-        }
-      });
-    }
+    const company =
+      existing ||
+      throwIfSupabaseError(
+        await client.from("Company").insert({ name: companyName }).select("*").single(),
+        "criar empresa do super admin"
+      );
 
     return {
       companyId: company.id,

@@ -1,91 +1,69 @@
 import bcrypt from "bcryptjs";
 
-import { ROLES, normalizeRole } from "../auth/permissions.js";
-import { seedPermissions } from "./seed.js";
-import { isDatabaseConfigured, resolveDatabaseUrl } from "../config/databaseEnv.js";
-import { prisma } from "./prisma.js";
+import { PERMISSION_DEFINITIONS, ROLES, normalizeRole } from "../auth/permissions.js";
+import { isSupabaseDataConfigured } from "../config/supabaseEnv.js";
+import { getSupabaseAdmin, throwIfSupabaseError } from "./supabaseStore.js";
 
 let bootstrapPromise = null;
-
-function getBootstrapTimeoutMs() {
-  return process.env.VERCEL === "1" ? 8000 : 30000;
-}
-
-function withTimeout(promise, timeoutMs, label = "operacao") {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Timeout ao executar ${label} (${timeoutMs}ms)`));
-      }, timeoutMs);
-    })
-  ]);
-}
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
 export function hasUsablePostgresDatabase() {
-  return isDatabaseConfigured();
+  return isSupabaseDataConfigured();
 }
 
-export async function testDatabaseConnection(timeoutMs = getBootstrapTimeoutMs()) {
-  if (!isDatabaseConfigured()) {
-    return false;
-  }
-
-  try {
-    resolveDatabaseUrl();
-    await withTimeout(prisma.$queryRaw`SELECT 1`, timeoutMs, "teste de conexao PostgreSQL");
-    return true;
-  } catch (error) {
-    console.error("Teste de conexao PostgreSQL falhou:", error?.message || error);
-    return false;
-  }
+export async function testDatabaseConnection(timeoutMs = 8000) {
+  const { testSupabaseConnection } = await import("./supabaseStore.js");
+  return testSupabaseConnection(timeoutMs);
 }
 
 async function ensureDefaultCompany() {
+  const client = getSupabaseAdmin();
   const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim();
 
-  let company = await prisma.company.findFirst({
-    where: {
-      name: companyName
-    }
-  });
+  const existing = throwIfSupabaseError(
+    await client.from("Company").select("id,name").eq("name", companyName).limit(1).maybeSingle(),
+    "buscar empresa padrao"
+  );
 
-  if (!company) {
-    company = await prisma.company.create({
-      data: {
-        name: companyName,
-        departments: {
-          create: {
-            name: "Administracao Global",
-            slug: "administracao-global",
-            description: "Departamento padrao da plataforma",
-            active: true
-          }
-        }
-      },
-      include: {
-        departments: true
-      }
-    });
+  if (existing) {
+    const department = throwIfSupabaseError(
+      await client
+        .from("Department")
+        .select("id,name,slug,companyId,active")
+        .eq("companyId", existing.id)
+        .eq("active", true)
+        .limit(1)
+        .maybeSingle(),
+      "buscar departamento padrao"
+    );
+
+    return { company: existing, department };
   }
 
-  const department =
-    company.departments?.[0] ||
-    (await prisma.department.findFirst({
-      where: {
-        companyId: company.id,
-        active: true
-      }
-    }));
+  const company = throwIfSupabaseError(
+    await client.from("Company").insert({ name: companyName }).select("id,name").single(),
+    "criar empresa padrao"
+  );
 
-  return {
-    company,
-    department
-  };
+  const department = throwIfSupabaseError(
+    await client
+      .from("Department")
+      .insert({
+        companyId: company.id,
+        name: "Administracao Global",
+        slug: "administracao-global",
+        description: "Departamento padrao da plataforma",
+        active: true
+      })
+      .select("id,name,slug,companyId,active")
+      .single(),
+    "criar departamento padrao"
+  );
+
+  return { company, department };
 }
 
 export async function provisionUserFromSessionSnapshot(userSnapshot = {}) {
@@ -96,17 +74,18 @@ export async function provisionUserFromSessionSnapshot(userSnapshot = {}) {
     return null;
   }
 
-  const lookupConditions = [{ email }];
+  const client = getSupabaseAdmin();
+  let existing = throwIfSupabaseError(
+    await client.from("User").select("*").eq("email", email).maybeSingle(),
+    "buscar usuario por email"
+  );
 
-  if (userSnapshot.id) {
-    lookupConditions.push({ authUserId: String(userSnapshot.id) });
+  if (!existing && userSnapshot.id) {
+    existing = throwIfSupabaseError(
+      await client.from("User").select("*").eq("authUserId", String(userSnapshot.id)).maybeSingle(),
+      "buscar usuario por authUserId"
+    );
   }
-
-  const existing = await prisma.user.findFirst({
-    where: {
-      OR: lookupConditions
-    }
-  });
 
   if (existing) {
     return existing;
@@ -116,36 +95,62 @@ export async function provisionUserFromSessionSnapshot(userSnapshot = {}) {
   const passwordSeed = `supabase:${String(userSnapshot.id || email)}`;
   const hash = await bcrypt.hash(passwordSeed, 10);
 
-  return prisma.user.create({
-    data: {
-      name: String(userSnapshot.name || "Usuario").trim() || "Usuario",
-      email,
-      password: hash,
-      role: role === ROLES.SUPER_ADMIN ? ROLES.SUPER_ADMIN : role,
-      active: userSnapshot.active !== false,
-      companyId: company.id,
-      departmentId: role === ROLES.SUPER_ADMIN ? null : department?.id || null,
-      authUserId: String(userSnapshot.id || "") || null
+  return throwIfSupabaseError(
+    await client
+      .from("User")
+      .insert({
+        name: String(userSnapshot.name || "Usuario").trim() || "Usuario",
+        email,
+        password: hash,
+        role: role === ROLES.SUPER_ADMIN ? ROLES.SUPER_ADMIN : role,
+        active: userSnapshot.active !== false,
+        companyId: company.id,
+        departmentId: role === ROLES.SUPER_ADMIN ? null : department?.id || null,
+        authUserId: String(userSnapshot.id || "") || null
+      })
+      .select("*")
+      .single(),
+    "criar usuario da sessao"
+  );
+}
+
+async function seedPermissionsSupabase() {
+  const client = getSupabaseAdmin();
+
+  for (const item of PERMISSION_DEFINITIONS) {
+    const existing = throwIfSupabaseError(
+      await client.from("Permission").select("id").eq("key", item.key).maybeSingle(),
+      "buscar permissao"
+    );
+
+    if (existing) {
+      throwIfSupabaseError(
+        await client
+          .from("Permission")
+          .update({
+            name: item.name,
+            description: item.description || null
+          })
+          .eq("id", existing.id),
+        "atualizar permissao"
+      );
+      continue;
     }
-  });
+
+    throwIfSupabaseError(
+      await client.from("Permission").insert({
+        key: item.key,
+        name: item.name,
+        description: item.description || null
+      }),
+      "criar permissao"
+    );
+  }
 }
 
 async function runPlatformBootstrap(userSnapshot = null) {
-  if (!bootstrapPromise) {
-    bootstrapPromise = (async () => {
-      await seedPermissions();
-      await ensureDefaultCompany();
-
-      if (userSnapshot?.email) {
-        await provisionUserFromSessionSnapshot(userSnapshot);
-      }
-    })().catch((error) => {
-      bootstrapPromise = null;
-      throw error;
-    });
-  }
-
-  await bootstrapPromise;
+  await seedPermissionsSupabase();
+  await ensureDefaultCompany();
 
   if (userSnapshot?.email) {
     await provisionUserFromSessionSnapshot(userSnapshot);
@@ -153,16 +158,31 @@ async function runPlatformBootstrap(userSnapshot = null) {
 }
 
 export async function ensurePlatformBootstrap(userSnapshot = null) {
-  if (!hasUsablePostgresDatabase()) {
+  if (!isSupabaseDataConfigured()) {
     return false;
   }
 
+  const timeoutMs = process.env.VERCEL === "1" ? 8000 : 30000;
+
   try {
-    await withTimeout(
-      runPlatformBootstrap(userSnapshot),
-      getBootstrapTimeoutMs(),
-      "bootstrap da plataforma"
-    );
+    if (!bootstrapPromise) {
+      bootstrapPromise = Promise.race([
+        runPlatformBootstrap(userSnapshot),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Timeout no bootstrap da plataforma")), timeoutMs);
+        })
+      ]).catch((error) => {
+        bootstrapPromise = null;
+        throw error;
+      });
+    }
+
+    await bootstrapPromise;
+
+    if (userSnapshot?.email) {
+      await provisionUserFromSessionSnapshot(userSnapshot);
+    }
+
     return true;
   } catch (error) {
     console.error("Bootstrap da plataforma falhou:", error?.message || error);

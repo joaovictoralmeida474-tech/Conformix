@@ -8,7 +8,7 @@ function isDatabaseUnavailableError(error) {
   return (
     code.startsWith("P") ||
     /prisma/i.test(error?.name || "") ||
-    /DATABASE_URL nao configurada/i.test(message) ||
+    /Supabase nao configurado/i.test(message) ||
     /can't reach database server/i.test(message)
   );
 }
