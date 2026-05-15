@@ -4,12 +4,15 @@ import { getJwtSecret } from "./authToken.mjs";
 import { createSupabaseClient } from "./supabaseConfig.mjs";
 import { buildUserFromSupabase } from "./userFromSupabase.mjs";
 
-function signAccessToken(user) {
+function signAccessToken(user, supabaseAccessToken = "") {
+  const token = String(supabaseAccessToken || "").trim();
+
   return jwt.sign(
     {
       id: user.id,
       role: user.role,
-      userSnapshot: user
+      userSnapshot: user,
+      supabaseAccessToken: token || undefined
     },
     getJwtSecret(),
     {
@@ -40,6 +43,6 @@ export async function createSessionFromAccessToken(accessToken, supabaseConfig =
 
   return {
     user,
-    token: signAccessToken(user)
+    token: signAccessToken(user, token)
   };
 }

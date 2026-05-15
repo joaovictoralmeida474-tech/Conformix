@@ -5,6 +5,7 @@ import * as repo from "../../shared/database/supabaseRepo.js";
 import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 import { ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
 import { signAccessToken } from "../../shared/middlewares/auth.js";
+import { runWithSupabaseAccessToken } from "../../shared/database/supabaseContext.js";
 import { getUserContextById } from "../../shared/auth/userContext.js";
 import { log as writeAuditLog } from "../audit/auditService.js";
 import { assertStrongPassword } from "../../shared/utils/passwordPolicy.js";
@@ -340,22 +341,33 @@ export async function login({ email, password }) {
             continue;
           }
 
-          await repo.updateRow("User", user.id, {
-            lastLoginAt: new Date()
+          let supabaseAccessToken = "";
+
+          try {
+            const authResponse = await signInWithSupabase(currentEmail, currentPassword);
+            supabaseAccessToken = String(authResponse?.access_token || "").trim();
+          } catch {
+            supabaseAccessToken = "";
+          }
+
+          return runWithSupabaseAccessToken(supabaseAccessToken, async () => {
+            await repo.updateRow("User", user.id, {
+              lastLoginAt: new Date()
+            });
+
+            const context = await getUserContextById(user.id);
+
+            await writeAuditLogSafely(user.id, "login", {
+              entity: "auth",
+              entityId: user.id,
+              details: `Login realizado por ${context?.name || user.email}`
+            });
+
+            return {
+              user: context,
+              token: signAccessToken(context, { supabaseAccessToken })
+            };
           });
-
-          const context = await getUserContextById(user.id);
-
-          await writeAuditLogSafely(user.id, "login", {
-            entity: "auth",
-            entityId: user.id,
-            details: `Login realizado por ${context?.name || user.email}`
-          });
-
-          return {
-            user: context,
-            token: signAccessToken(context)
-          };
         }
       }
     }
@@ -365,6 +377,7 @@ export async function login({ email, password }) {
         try {
           const authResponse = await signInWithSupabase(currentEmail, currentPassword);
           const supabaseUser = authResponse?.user;
+          const supabaseAccessToken = String(authResponse?.access_token || "").trim();
 
           if (!supabaseUser?.email) {
             continue;
@@ -376,41 +389,43 @@ export async function login({ email, password }) {
 
             return {
               user: fallbackContext,
-              token: signAccessToken(fallbackContext)
+              token: signAccessToken(fallbackContext, { supabaseAccessToken })
             };
           }
 
-          let user = await findUserBySupabaseIdentity(supabaseUser);
+          return runWithSupabaseAccessToken(supabaseAccessToken, async () => {
+            let user = await findUserBySupabaseIdentity(supabaseUser);
 
-          if (!user) {
-            user = await provisionUserFromSupabase({
-              supabaseUser,
-              password: currentPassword
-            });
-          } else {
-            if (user.active === false) {
-              throw createInactiveUserError();
+            if (!user) {
+              user = await provisionUserFromSupabase({
+                supabaseUser,
+                password: currentPassword
+              });
+            } else {
+              if (user.active === false) {
+                throw createInactiveUserError();
+              }
+
+              user = await syncSupabaseUserToLocal({
+                existingUser: user,
+                supabaseUser,
+                password: currentPassword
+              });
             }
 
-            user = await syncSupabaseUserToLocal({
-              existingUser: user,
-              supabaseUser,
-              password: currentPassword
+            const context = await getUserContextById(user.id);
+
+            await writeAuditLogSafely(user.id, "login", {
+              entity: "auth",
+              entityId: user.id,
+              details: `Login realizado por ${context?.name || normalizedSupabaseEmail}`
             });
-          }
 
-          const context = await getUserContextById(user.id);
-
-          await writeAuditLogSafely(user.id, "login", {
-            entity: "auth",
-            entityId: user.id,
-            details: `Login realizado por ${context?.name || normalizedSupabaseEmail}`
+            return {
+              user: context,
+              token: signAccessToken(context, { supabaseAccessToken })
+            };
           });
-
-          return {
-            user: context,
-            token: signAccessToken(context)
-          };
         } catch (error) {
           if (isSupabaseUnavailableError(error)) {
             supabaseUnavailable = true;

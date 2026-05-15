@@ -14,12 +14,15 @@ function normalizePasswordCandidates(password) {
   return [...new Set([raw, trimmed].filter(Boolean))];
 }
 
-function signAccessToken(user) {
+function signAccessToken(user, supabaseAccessToken = "") {
+  const token = String(supabaseAccessToken || "").trim();
+
   return jwt.sign(
     {
       id: user.id,
       role: user.role,
-      userSnapshot: user
+      userSnapshot: user,
+      supabaseAccessToken: token || undefined
     },
     getJwtSecret(),
     {
@@ -53,7 +56,7 @@ export async function performLogin({ email, password, supabaseConfig = {} }) {
 
       return {
         user,
-        token: signAccessToken(user)
+        token: signAccessToken(user, authData?.session?.access_token || authData?.access_token)
       };
     } catch (error) {
       if (error?.code === "AUTH_INVALID_CREDENTIALS") {

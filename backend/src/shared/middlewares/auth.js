@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 
 import { hasPermission, isAdminRole, normalizeRole } from "../auth/permissions.js";
 import { getUserContextById } from "../auth/userContext.js";
+import { runWithSupabaseAccessToken } from "../database/supabaseContext.js";
 import {
   getAuthCookieName,
   getJwtSecret,
@@ -41,14 +42,16 @@ function extractTokenFromRequest(req) {
   return cookies[getAuthCookieName()] || null;
 }
 
-function signAccessToken(user) {
+function signAccessToken(user, options = {}) {
   const jwtSecret = getJwtSecret();
+  const supabaseAccessToken = String(options.supabaseAccessToken || "").trim();
 
   return jwt.sign(
     {
       id: user.id,
       role: normalizeRole(user.role),
-      userSnapshot: user
+      userSnapshot: user,
+      supabaseAccessToken: supabaseAccessToken || undefined
     },
     jwtSecret,
     {
@@ -103,31 +106,36 @@ export async function auth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, getJwtSecret());
+    const supabaseAccessToken = String(decoded?.supabaseAccessToken || "").trim();
     const fallbackUser =
       decoded?.userSnapshot && typeof decoded.userSnapshot === "object"
         ? decoded.userSnapshot
         : null;
-    let user = null;
 
-    try {
-      user = await getUserContextById(decoded.id);
-    } catch (error) {
-      if (!fallbackUser) {
-        throw error;
+    return runWithSupabaseAccessToken(supabaseAccessToken, async () => {
+      let user = null;
+
+      try {
+        user = await getUserContextById(decoded.id);
+      } catch (error) {
+        if (!fallbackUser) {
+          throw error;
+        }
       }
-    }
 
-    if (!user && fallbackUser) {
-      user = fallbackUser;
-    }
+      if (!user && fallbackUser) {
+        user = fallbackUser;
+      }
 
-    if (!user) {
-      return res.status(401).json({ error: "Nao autorizado" });
-    }
+      if (!user) {
+        return res.status(401).json({ error: "Nao autorizado" });
+      }
 
-    req.user = user;
-    req.token = token;
-    return next();
+      req.user = user;
+      req.token = token;
+      req.supabaseAccessToken = supabaseAccessToken;
+      return next();
+    });
   } catch {
     return res.status(401).json({ error: "Nao autorizado" });
   }

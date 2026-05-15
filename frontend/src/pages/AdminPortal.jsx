@@ -310,7 +310,7 @@ export default function AdminPortal() {
 
     setError("");
     setMessage(
-      `Banco Supabase indisponivel. Configure SUPABASE_URL e SUPABASE_ANON_KEY na Vercel para ${actionLabel}.`
+      `Banco Supabase indisponivel. Configure SUPABASE_URL e SUPABASE_ANON_KEY na Vercel, execute backend/supabase/rls_policies.sql no Supabase e faca login novamente para ${actionLabel}.`
     );
     return false;
   }
@@ -657,7 +657,7 @@ export default function AdminPortal() {
       {localDbUnavailable ? (
         <p className="dashboard-empty-copy">
           {settings?.featureFlags?.databaseError ||
-            "O painel administrativo esta em modo reduzido porque o Supabase nao esta conectado. Na Vercel, confira SUPABASE_URL e SUPABASE_ANON_KEY (Settings → API no painel do Supabase) e faca um novo deploy."}
+            "O painel administrativo esta em modo reduzido. Confira SUPABASE_URL e SUPABASE_ANON_KEY na Vercel, execute backend/supabase/rls_policies.sql no SQL Editor do Supabase e faca logout/login para renovar a sessao."}
         </p>
       ) : null}
       {loading ? <p className="dashboard-empty-copy">Carregando painel administrativo...</p> : null}
