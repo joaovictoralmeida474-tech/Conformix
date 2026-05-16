@@ -139,6 +139,16 @@ export async function downloadSupplierDocument(req, res) {
       req.params.documentId
     );
 
+    if (file.buffer) {
+      const downloadName = file.originalName || file.filename || "documento.pdf";
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename*=UTF-8''${encodeURIComponent(downloadName)}`
+      );
+      return res.send(file.buffer);
+    }
+
     res.download(file.path, file.originalName || file.filename);
   } catch (error) {
     res.status(404).json({ error: error.message || "Documento nao encontrado." });

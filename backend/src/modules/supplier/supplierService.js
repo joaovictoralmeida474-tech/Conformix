@@ -1,5 +1,7 @@
 import ExcelJS from "exceljs";
 import axios from "axios";
+import fs from "fs";
+import fsPromises from "fs/promises";
 import path from "path";
 
 import * as repo from "../../shared/database/supabaseRepo.js";
@@ -15,6 +17,7 @@ import {
 
 const supplierUploadsRoot = getSupplierUploadsRoot();
 const evaluationUploadsRoot = getEvaluationUploadsRoot();
+const SUPPLIER_DOCUMENTS_BUCKET = "supplier-documents";
 
 const SUPPLIER_TYPE_CADENCE = {
   CRITICO: 30,
@@ -41,6 +44,77 @@ function normalizeStatus(value) {
     return "BLOQUEADO";
   }
   return "ATIVO";
+}
+
+async function ensureSupplierDocumentsBucket(client) {
+  const existing = await client.storage.getBucket(SUPPLIER_DOCUMENTS_BUCKET);
+
+  if (!existing.error) {
+    return true;
+  }
+
+  const created = await client.storage.createBucket(SUPPLIER_DOCUMENTS_BUCKET, {
+    public: false
+  });
+
+  return !created.error;
+}
+
+async function uploadSupplierDocumentToStorage(supplierId, file) {
+  if (!file?.path || !file?.filename) {
+    return null;
+  }
+
+  try {
+    const client = getSupabaseAdmin();
+    const hasBucket = await ensureSupplierDocumentsBucket(client);
+
+    if (!hasBucket) {
+      return null;
+    }
+
+    const storagePath = `${Number(supplierId)}/${file.filename}`;
+    const buffer = await fsPromises.readFile(file.path);
+    const result = await client.storage
+      .from(SUPPLIER_DOCUMENTS_BUCKET)
+      .upload(storagePath, buffer, {
+        contentType: file.mimetype || "application/pdf",
+        upsert: true
+      });
+
+    if (result.error) {
+      console.error("Falha ao enviar documento para o Supabase Storage:", result.error.message);
+      return null;
+    }
+
+    return storagePath;
+  } catch (error) {
+    console.error("Falha ao preparar upload do documento:", error?.message || error);
+    return null;
+  }
+}
+
+async function downloadSupplierDocumentFromStorage(supplierId, filename) {
+  const client = getSupabaseAdmin();
+  const candidates = [
+    String(filename || "").trim(),
+    `${Number(supplierId)}/${String(filename || "").trim()}`
+  ].filter(Boolean);
+
+  for (const candidate of [...new Set(candidates)]) {
+    const result = await client.storage
+      .from(SUPPLIER_DOCUMENTS_BUCKET)
+      .download(candidate);
+
+    if (result.error || !result.data) {
+      continue;
+    }
+
+    const arrayBuffer = await result.data.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
+  return null;
 }
 
 function normalizeSupplierType(value) {
@@ -506,7 +580,7 @@ export async function syncDocuments(scope, supplierId, documents = [], files = [
     };
 
     if (file) {
-      payload.filename = file.filename;
+      payload.filename = (await uploadSupplierDocumentToStorage(supplier.id, file)) || file.filename;
       payload.originalName = file.originalname;
     }
 
@@ -538,11 +612,27 @@ export async function getDocumentFile(scope, supplierId, documentId) {
     throw new Error("Documento nao encontrado");
   }
 
-  return {
-    path: path.join(supplierUploadsRoot, document.filename),
-    filename: document.filename,
-    originalName: document.originalName
-  };
+  const localPath = path.join(supplierUploadsRoot, document.filename);
+
+  if (fs.existsSync(localPath)) {
+    return {
+      path: localPath,
+      filename: document.filename,
+      originalName: document.originalName
+    };
+  }
+
+  const buffer = await downloadSupplierDocumentFromStorage(supplier.id, document.filename);
+
+  if (buffer) {
+    return {
+      buffer,
+      filename: document.filename,
+      originalName: document.originalName
+    };
+  }
+
+  throw new Error("Arquivo do documento nao encontrado no armazenamento.");
 }
 
 export async function getEvaluationFile(scope, supplierId, evaluationId) {
