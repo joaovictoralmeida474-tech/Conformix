@@ -159,9 +159,24 @@ export async function updateSupabaseUserPassword(userId, password) {
 
 export async function deleteSupabaseUser(userId) {
   const { url, headers } = getSupabaseAdminConfig();
+  const normalizedUserId = String(userId || "").trim();
 
-  await axios.delete(`${url}/auth/v1/admin/users/${userId}`, {
-    proxy: false,
-    headers
-  });
+  if (!normalizedUserId) {
+    return false;
+  }
+
+  try {
+    await axios.delete(`${url}/auth/v1/admin/users/${normalizedUserId}`, {
+      proxy: false,
+      headers
+    });
+
+    return true;
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      return false;
+    }
+
+    throw error;
+  }
 }
