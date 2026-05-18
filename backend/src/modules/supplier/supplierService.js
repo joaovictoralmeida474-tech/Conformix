@@ -20,6 +20,8 @@ const evaluationUploadsRoot = getEvaluationUploadsRoot();
 const SUPPLIER_DOCUMENTS_BUCKET = "supplier-documents";
 const SUPPLIER_COLUMNS =
   "id,name,tradeName,cnpj,contact,email,phone,addressLine,addressNumber,addressComplement,district,city,state,postalCode,primaryActivity,registrationStatus,status,supplierType,score,riskIndex,trend,reactivationJustification,companyId,categoryId,lastEvaluationDate,nextReview";
+const SUPPLIER_LIST_COLUMNS =
+  "id,name,tradeName,cnpj,status,supplierType,score,riskIndex,trend,companyId,categoryId,city,state,nextReview";
 const SUPPLIER_EXPORT_COLUMNS = "id,name,cnpj,categoryId,supplierType,status,score,riskIndex,city,nextReview,companyId";
 
 const SUPPLIER_TYPE_CADENCE = {
@@ -343,12 +345,59 @@ function serializeSupplier(supplier) {
   };
 }
 
-async function findSupplier(scope, id) {
+function serializeSupplierListItem(supplier, category = null) {
+  return {
+    id: supplier.id,
+    name: supplier.name,
+    tradeName: supplier.tradeName,
+    cnpj: supplier.cnpj,
+    categoryId: supplier.categoryId,
+    category: category
+      ? {
+          id: category.id,
+          slug: category.slug,
+          name: category.name
+        }
+      : null,
+    supplierType: supplier.supplierType,
+    status: supplier.status,
+    score: supplier.score,
+    riskIndex: supplier.riskIndex,
+    trend: supplier.trend,
+    companyId: supplier.companyId,
+    city: supplier.city,
+    state: supplier.state,
+    nextReview: supplier.nextReview,
+    expiringSoon: checkExpiry(supplier.nextReview)
+  };
+}
+
+async function loadCategoriesById(categoryIds = []) {
+  const ids = [...new Set(categoryIds.map(Number).filter(Boolean))];
+
+  if (!ids.length) {
+    return new Map();
+  }
+
   const client = getSupabaseAdmin();
-  let query = client.from("Supplier").select(SUPPLIER_COLUMNS).eq("id", Number(id));
+  const categories = throwIfSupabaseError(
+    await client.from("Category").select("id,slug,name").in("id", ids),
+    "listar categorias dos fornecedores"
+  );
+
+  return new Map(categories.map((item) => [item.id, item]));
+}
+
+async function findSupplierRow(scope, id, columns = SUPPLIER_COLUMNS) {
+  const client = getSupabaseAdmin();
+  let query = client.from("Supplier").select(columns).eq("id", Number(id));
   query = applyCompanyScope(query, scope);
 
-  const supplier = throwIfSupabaseError(await query.maybeSingle(), "buscar fornecedor");
+  return throwIfSupabaseError(await query.maybeSingle(), "buscar fornecedor");
+}
+
+async function findSupplier(scope, id) {
+  const supplier = await findSupplierRow(scope, id);
 
   if (!supplier) {
     return null;
@@ -412,7 +461,7 @@ async function resolveSupplierCompanyAndCategory(
 
 export async function list(scope, filters = {}) {
   const client = getSupabaseAdmin();
-  let query = client.from("Supplier").select(SUPPLIER_COLUMNS).order("name", { ascending: true });
+  let query = client.from("Supplier").select(SUPPLIER_LIST_COLUMNS).order("name", { ascending: true });
   query = applyCompanyScope(query, scope);
 
   if (filters.search) {
@@ -424,9 +473,9 @@ export async function list(scope, filters = {}) {
   }
 
   const suppliers = throwIfSupabaseError(await query, "listar fornecedores");
-  const hydrated = await Promise.all(suppliers.map((item) => loadSupplierGraph(item)));
+  const categoryMap = await loadCategoriesById(suppliers.map((item) => item.categoryId));
 
-  return hydrated.map(serializeSupplier);
+  return suppliers.map((item) => serializeSupplierListItem(item, categoryMap.get(item.categoryId) || null));
 }
 
 export async function getById(scope, id) {
@@ -474,11 +523,12 @@ export async function create(scope, data) {
     nextReview: data.nextReview ? new Date(data.nextReview) : null
   });
 
-  return getById(scope, supplier.id);
+  const categoryMap = await loadCategoriesById([supplier.categoryId]);
+  return serializeSupplierListItem(supplier, categoryMap.get(supplier.categoryId) || null);
 }
 
 export async function update(scope, id, data) {
-  const existing = await findSupplier(scope, id);
+  const existing = await findSupplierRow(scope, id);
 
   if (!existing) {
     throw new Error("Fornecedor nao encontrado");
@@ -516,7 +566,9 @@ export async function update(scope, id, data) {
     nextReview: data.nextReview ? new Date(data.nextReview) : existing.nextReview
   });
 
-  return getById(scope, id);
+  const updated = await findSupplierRow(scope, id, SUPPLIER_LIST_COLUMNS);
+  const categoryMap = await loadCategoriesById([updated?.categoryId]);
+  return serializeSupplierListItem(updated, categoryMap.get(updated?.categoryId) || null);
 }
 
 export async function remove(scope, id) {

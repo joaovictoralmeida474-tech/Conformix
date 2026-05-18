@@ -5,6 +5,43 @@ const USER_ADMIN_COLUMNS = "id,name,email,role,active,companyId,departmentId,las
 const PERMISSION_COLUMNS = "id,key,name,description,createdAt";
 const DEPARTMENT_COLUMNS = "id,name,slug,description,active,companyId,createdAt,updatedAt";
 const AUDIT_LOG_COLUMNS = "id,userId,action,entity,entityId,details,createdAt";
+const ADMIN_CACHE_TTL_MS = Number(process.env.ADMIN_CACHE_TTL_MS || 30_000);
+
+const adminDataCache = new Map();
+
+function getAdminCacheScopeKey(currentUser) {
+  return [
+    normalizeRole(currentUser?.role),
+    Number(currentUser?.companyId || 0),
+    Number(currentUser?.departmentId || 0),
+    Number(currentUser?.id || 0),
+    Array.isArray(currentUser?.permissions) ? currentUser.permissions.join("|") : ""
+  ].join(":");
+}
+
+async function withAdminCache(currentUser, name, loader) {
+  if (ADMIN_CACHE_TTL_MS <= 0) {
+    return loader();
+  }
+
+  const cacheKey = `${name}:${getAdminCacheScopeKey(currentUser)}`;
+  const cached = adminDataCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
+  const data = await loader();
+  adminDataCache.set(cacheKey, {
+    data,
+    expiresAt: Date.now() + ADMIN_CACHE_TTL_MS
+  });
+  return data;
+}
+
+export function clearAdminDataCache() {
+  adminDataCache.clear();
+}
 
 function getSystemCompanyName() {
   return String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim();
@@ -194,7 +231,7 @@ async function loadUsersWithRelations(filter = {}) {
   }));
 }
 
-export async function getSettings(currentUser) {
+async function buildSettings(currentUser) {
   const client = getSupabaseAdmin();
   const currentRole = normalizeRole(currentUser.role);
   const actorAllowedKeys =
@@ -253,7 +290,7 @@ export async function getSettings(currentUser) {
   };
 }
 
-export async function getOverview(currentUser) {
+async function buildOverview(currentUser) {
   const client = getSupabaseAdmin();
   const currentRole = normalizeRole(currentUser.role);
 
@@ -372,7 +409,7 @@ export async function getOverview(currentUser) {
   };
 }
 
-export async function listDepartments(currentUser) {
+async function buildDepartments(currentUser) {
   const client = getSupabaseAdmin();
   const currentRole = normalizeRole(currentUser.role);
 
@@ -415,6 +452,18 @@ export async function listUsers(currentUser) {
 
   const users = await loadUsersWithRelations(filter);
   return users.map((user) => serializeAdminRecord(user, user.permissionKeys || []));
+}
+
+export async function getSettings(currentUser) {
+  return withAdminCache(currentUser, "settings", () => buildSettings(currentUser));
+}
+
+export async function getOverview(currentUser) {
+  return withAdminCache(currentUser, "overview", () => buildOverview(currentUser));
+}
+
+export async function listDepartments(currentUser) {
+  return withAdminCache(currentUser, "departments", () => buildDepartments(currentUser));
 }
 
 export async function listAdmins(currentUser) {

@@ -414,16 +414,19 @@ export default function AdminPortal() {
       }
 
       if (recordId) {
-        await api.put(`/admin/users/${recordId}`, payload);
+        const { data } = await api.put(`/admin/users/${recordId}`, payload);
+        setUsers((current) => current.map((item) => (item.id === data.id ? data : item)));
         setMessage("Usuario atualizado com sucesso.");
       } else {
-        await api.post("/admin/users", payload);
+        const { data } = await api.post("/admin/users", payload);
+        setUsers((current) =>
+          [data, ...current].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+        );
         setMessage("Usuario criado com sucesso.");
       }
 
       setUserModal(null);
       setUserForm(emptyUserForm);
-      await loadUsers();
       await loadOverview().catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o usuario.");
@@ -434,11 +437,12 @@ export default function AdminPortal() {
     if (!requireLocalDatabase("alterar o status do usuario")) return;
 
     try {
-      await api.patch(`/admin/users/${record.id}/status`, {
+      const { data } = await api.patch(`/admin/users/${record.id}/status`, {
         active: !record.active
       });
+      setUsers((current) => current.map((item) => (item.id === data.id ? data : item)));
       setMessage(record.active ? "Usuario desativado com sucesso." : "Usuario ativado com sucesso.");
-      await Promise.all([loadUsers(), loadOverview().catch(() => null)]);
+      await loadOverview().catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel alterar o status do usuario.");
     }
@@ -451,8 +455,8 @@ export default function AdminPortal() {
 
     try {
       await api.delete(`/admin/users/${recordId}`);
+      setUsers((current) => current.filter((item) => Number(item.id) !== Number(recordId)));
       setMessage("Usuario excluido com sucesso.");
-      await loadUsers();
       await loadOverview().catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel excluir o usuario.");
@@ -477,16 +481,20 @@ export default function AdminPortal() {
       }
 
       if (recordId) {
-        await api.put(`/admin/admins/${recordId}`, payload);
+        const { data } = await api.put(`/admin/admins/${recordId}`, payload);
+        setAdmins((current) => current.map((item) => (item.id === data.id ? data : item)));
         setMessage("Admin atualizado com sucesso.");
       } else {
-        await api.post("/admin/admins", payload);
+        const { data } = await api.post("/admin/admins", payload);
+        setAdmins((current) =>
+          [data, ...current].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+        );
         setMessage("Admin criado com sucesso.");
       }
 
       setAdminModal(null);
       setAdminForm(emptyAdminForm);
-      await Promise.all([loadAdmins(), loadOverview()]);
+      await loadOverview();
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o admin.");
     }
@@ -546,11 +554,12 @@ export default function AdminPortal() {
     if (!requireLocalDatabase("alterar o status do admin")) return;
 
     try {
-      await api.patch(`/admin/admins/${record.id}/status`, {
+      const { data } = await api.patch(`/admin/admins/${record.id}/status`, {
         active: !record.active
       });
+      setAdmins((current) => current.map((item) => (item.id === data.id ? data : item)));
       setMessage(record.active ? "Admin desativado com sucesso." : "Admin ativado com sucesso.");
-      await Promise.all([loadAdmins(), loadOverview()]);
+      await loadOverview();
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel alterar o status do admin.");
     }
@@ -563,8 +572,9 @@ export default function AdminPortal() {
 
     try {
       await api.delete(`/admin/admins/${recordId}`);
+      setAdmins((current) => current.filter((item) => Number(item.id) !== Number(recordId)));
       setMessage("Admin excluido com sucesso.");
-      await Promise.all([loadAdmins(), loadOverview()]);
+      await loadOverview();
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel excluir o admin.");
     }
@@ -583,16 +593,20 @@ export default function AdminPortal() {
       };
 
       if (recordId) {
-        await api.put(`/admin/departments/${recordId}`, payload);
+        const { data } = await api.put(`/admin/departments/${recordId}`, payload);
+        setDepartments((current) => current.map((item) => (item.id === data.id ? data : item)));
         setMessage("Departamento atualizado com sucesso.");
       } else {
-        await api.post("/admin/departments", payload);
+        const { data } = await api.post("/admin/departments", payload);
+        setDepartments((current) =>
+          [data, ...current].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+        );
         setMessage("Departamento criado com sucesso.");
       }
 
       setDepartmentModal(null);
       setDepartmentForm(emptyDepartmentForm);
-      await Promise.all([loadDepartments(), loadOverview().catch(() => null)]);
+      await loadOverview().catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o departamento.");
     }

@@ -94,6 +94,10 @@ function handleError(res, error) {
   res.status(400).json({ error: error.message });
 }
 
+function clearAdminCaches() {
+  adminService.clearAdminDataCache?.();
+}
+
 export async function getAdminOverview(req, res) {
   if (!hasUsablePostgresDatabase()) {
     return res.json(buildOverviewFallback(req.user));
@@ -132,6 +136,7 @@ export async function listUsers(req, res) {
 export async function createUser(req, res) {
   try {
     const data = await adminService.createUser(req.user, req.body);
+    clearAdminCaches();
     res.status(201).json(data);
   } catch (error) {
     handleError(res, error);
@@ -141,6 +146,7 @@ export async function createUser(req, res) {
 export async function updateUser(req, res) {
   try {
     const data = await adminService.updateUser(req.user, req.params.id, req.body);
+    clearAdminCaches();
     res.json(data);
   } catch (error) {
     handleError(res, error);
@@ -150,6 +156,7 @@ export async function updateUser(req, res) {
 export async function setUserStatus(req, res) {
   try {
     const data = await adminService.setUserStatus(req.user, req.params.id, req.body.active);
+    clearAdminCaches();
     res.json(data);
   } catch (error) {
     handleError(res, error);
@@ -159,6 +166,7 @@ export async function setUserStatus(req, res) {
 export async function deleteUser(req, res) {
   try {
     await adminService.deleteUser(req.user, req.params.id);
+    clearAdminCaches();
     res.sendStatus(204);
   } catch (error) {
     handleError(res, error);
@@ -194,6 +202,7 @@ export async function listAdmins(req, res) {
 export async function createAdmin(req, res) {
   try {
     const data = await adminService.createAdmin(req.user, req.body);
+    clearAdminCaches();
     res.status(201).json(data);
   } catch (error) {
     handleError(res, error);
@@ -203,6 +212,7 @@ export async function createAdmin(req, res) {
 export async function updateAdmin(req, res) {
   try {
     const data = await adminService.updateAdmin(req.user, req.params.id, req.body);
+    clearAdminCaches();
     res.json(data);
   } catch (error) {
     handleError(res, error);
@@ -212,6 +222,7 @@ export async function updateAdmin(req, res) {
 export async function setAdminStatus(req, res) {
   try {
     const data = await adminService.setAdminStatus(req.user, req.params.id, req.body.active);
+    clearAdminCaches();
     res.json(data);
   } catch (error) {
     handleError(res, error);
@@ -221,6 +232,7 @@ export async function setAdminStatus(req, res) {
 export async function deleteAdmin(req, res) {
   try {
     await adminService.deleteAdmin(req.user, req.params.id);
+    clearAdminCaches();
     res.sendStatus(204);
   } catch (error) {
     handleError(res, error);
@@ -257,6 +269,7 @@ export async function listDepartments(req, res) {
 export async function createDepartment(req, res) {
   try {
     const data = await adminService.createDepartment(req.user, req.body);
+    clearAdminCaches();
     res.status(201).json(data);
   } catch (error) {
     handleError(res, error);
@@ -266,6 +279,7 @@ export async function createDepartment(req, res) {
 export async function updateDepartment(req, res) {
   try {
     const data = await adminService.updateDepartment(req.user, req.params.id, req.body);
+    clearAdminCaches();
     res.json(data);
   } catch (error) {
     handleError(res, error);
@@ -275,6 +289,7 @@ export async function updateDepartment(req, res) {
 export async function deleteDepartment(req, res) {
   try {
     await adminService.deleteDepartment(req.user, req.params.id);
+    clearAdminCaches();
     res.sendStatus(204);
   } catch (error) {
     handleError(res, error);
@@ -284,6 +299,7 @@ export async function deleteDepartment(req, res) {
 export async function createCompany(req, res) {
   try {
     const data = await adminService.createCompany(req.user, req.body);
+    clearAdminCaches();
     res.status(201).json(data);
   } catch (error) {
     handleError(res, error);
@@ -293,6 +309,7 @@ export async function createCompany(req, res) {
 export async function deleteCompany(req, res) {
   try {
     await adminService.deleteCompany(req.user, req.params.id);
+    clearAdminCaches();
     res.sendStatus(204);
   } catch (error) {
     handleError(res, error);

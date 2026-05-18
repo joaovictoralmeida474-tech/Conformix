@@ -65,14 +65,19 @@ export default function Categories() {
       };
 
       if (editingId) {
-        await api.put(`/categories/${editingId}`, payload);
+        const response = await api.put(`/categories/${editingId}`, payload);
+        setCategories((current) =>
+          current.map((category) => (category.id === response.data.id ? response.data : category))
+        );
         setMessage("Categoria atualizada com sucesso.");
       } else {
-        await api.post("/categories", payload);
+        const response = await api.post("/categories", payload);
+        setCategories((current) =>
+          [response.data, ...current].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+        );
         setMessage("Categoria criada com sucesso.");
       }
 
-      await load();
       setForm(initialForm);
       setQuestionText("");
       setDocumentText("");

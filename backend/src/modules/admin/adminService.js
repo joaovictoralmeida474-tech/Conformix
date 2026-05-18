@@ -1,6 +1,7 @@
 export {
   getOverview,
   getSettings,
+  clearAdminDataCache,
   listDepartments,
   listUsers,
   listAdmins

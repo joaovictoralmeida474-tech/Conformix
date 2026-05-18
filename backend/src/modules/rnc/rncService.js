@@ -63,6 +63,46 @@ async function listRncRowsForScope(scope) {
   return throwIfSupabaseError(await query, "listar rnc");
 }
 
+async function loadRncGraphs(rncRows = []) {
+  if (!rncRows.length) {
+    return [];
+  }
+
+  const client = getSupabaseAdmin();
+  const supplierIds = [...new Set(rncRows.map((item) => item.supplierId).filter(Boolean))];
+  const evaluationIds = [...new Set(rncRows.map((item) => item.evaluationId).filter(Boolean))];
+
+  const [suppliers, evaluations] = await Promise.all([
+    supplierIds.length
+      ? throwIfSupabaseError(
+          await client
+            .from("Supplier")
+            .select("id,name,status,supplierType,riskIndex")
+            .in("id", supplierIds),
+          "listar fornecedores das rnc"
+        )
+      : [],
+    evaluationIds.length
+      ? throwIfSupabaseError(
+          await client
+            .from("Evaluation")
+            .select("id,score,classification,evaluationDate")
+            .in("id", evaluationIds),
+          "listar avaliacoes das rnc"
+        )
+      : []
+  ]);
+
+  const supplierMap = new Map(suppliers.map((item) => [item.id, item]));
+  const evaluationMap = new Map(evaluations.map((item) => [item.id, item]));
+
+  return rncRows.map((item) => ({
+    ...item,
+    supplier: supplierMap.get(item.supplierId) || null,
+    evaluation: evaluationMap.get(item.evaluationId) || null
+  }));
+}
+
 async function findRncInScope(scope, id) {
   const rnc = await repo.findById("RNC", id);
 
@@ -84,7 +124,7 @@ async function findRncInScope(scope, id) {
 
 export async function list(scope) {
   const items = await listRncRowsForScope(scope);
-  const hydrated = await Promise.all(items.map((item) => loadRncGraph(item)));
+  const hydrated = await loadRncGraphs(items);
 
   const missingDeadline = hydrated.filter(
     (item) => !item.deadline && item.evaluation?.evaluationDate

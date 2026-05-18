@@ -3,6 +3,8 @@ import { buildSupplierCompanyWhere } from "../../shared/auth/dataScope.js";
 
 const AUDIT_USER_COLUMNS = "id,email,name";
 const AUDIT_LOG_COLUMNS = "id,userId,action,entity,entityId,details,createdAt";
+const DEFAULT_AUDIT_LIMIT = 100;
+const MAX_AUDIT_LIMIT = 200;
 
 export async function log(userId, action, meta = {}) {
   const client = getSupabaseAdmin();
@@ -24,9 +26,14 @@ export async function log(userId, action, meta = {}) {
   );
 }
 
-export async function listByCompany(scope) {
+export async function listByCompany(scope, options = {}) {
   const client = getSupabaseAdmin();
   const companyFilter = buildSupplierCompanyWhere(scope).supplier;
+  const limit = Math.min(
+    MAX_AUDIT_LIMIT,
+    Math.max(1, Number.parseInt(options.limit, 10) || DEFAULT_AUDIT_LIMIT)
+  );
+  const offset = Math.max(0, Number.parseInt(options.offset, 10) || 0);
 
   let userQuery = client.from("User").select(AUDIT_USER_COLUMNS);
 
@@ -46,7 +53,8 @@ export async function listByCompany(scope) {
       .from("AuditLog")
       .select(AUDIT_LOG_COLUMNS)
       .in("userId", userIds)
-      .order("createdAt", { ascending: false }),
+      .order("createdAt", { ascending: false })
+      .range(offset, offset + limit - 1),
     "listar logs de auditoria"
   );
 

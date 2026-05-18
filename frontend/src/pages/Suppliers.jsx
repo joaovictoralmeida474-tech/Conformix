@@ -188,6 +188,7 @@ export default function Suppliers() {
   const canEvaluateSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_EVALUATE);
   const canExportSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_EXPORT);
   const [suppliers, setSuppliers] = useState([]);
+  const [supplierDetails, setSupplierDetails] = useState({});
   const [categories, setCategories] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [supplierForm, setSupplierForm] = useState(initialSupplierForm);
@@ -201,11 +202,12 @@ export default function Suppliers() {
   const [message, setMessage] = useState("");
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [savingSupplier, setSavingSupplier] = useState(false);
+  const [loadingSupplierDetails, setLoadingSupplierDetails] = useState(false);
   const [evaluationFile, setEvaluationFile] = useState(null);
 
   const selectedSupplier = useMemo(
-    () => suppliers.find((supplier) => supplier.id === selectedId) || null,
-    [suppliers, selectedId]
+    () => supplierDetails[selectedId] || suppliers.find((supplier) => supplier.id === selectedId) || null,
+    [supplierDetails, suppliers, selectedId]
   );
 
   const selectedCategoryId = useMemo(() => {
@@ -292,6 +294,28 @@ export default function Suppliers() {
 
     if (selectedId && !response.data.find((item) => item.id === selectedId)) {
       setSelectedId(response.data[0]?.id || null);
+    }
+  }
+
+  async function loadSupplierDetails(supplierId, options = {}) {
+    const id = Number(supplierId);
+
+    if (!id) {
+      return null;
+    }
+
+    if (!options.force && supplierDetails[id]) {
+      return supplierDetails[id];
+    }
+
+    setLoadingSupplierDetails(true);
+
+    try {
+      const response = await api.get(`/suppliers/${id}`);
+      setSupplierDetails((current) => ({ ...current, [id]: response.data }));
+      return response.data;
+    } finally {
+      setLoadingSupplierDetails(false);
     }
   }
 
@@ -411,11 +435,13 @@ export default function Suppliers() {
       }
     }
 
-    await api.post(`/suppliers/${supplierId}/documents`, formData, {
+    const response = await api.post(`/suppliers/${supplierId}/documents`, formData, {
       headers: {
         "Content-Type": "multipart/form-data"
       }
     });
+
+    return response.data;
   }
 
   async function saveSupplier() {
@@ -434,8 +460,22 @@ export default function Suppliers() {
         ? await api.put(`/suppliers/${editingId}`, payload)
         : await api.post("/suppliers", payload);
 
-      await syncSupplierDocuments(response.data.id);
-      await loadAll();
+      const updatedDetails = await syncSupplierDocuments(response.data.id);
+      setSuppliers((current) => {
+        const exists = current.some((supplier) => supplier.id === response.data.id);
+        return exists
+          ? current.map((supplier) => (supplier.id === response.data.id ? response.data : supplier))
+          : [response.data, ...current].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+      });
+      setSupplierDetails((current) => {
+        if (updatedDetails) {
+          return { ...current, [response.data.id]: updatedDetails };
+        }
+
+        const next = { ...current };
+        delete next[response.data.id];
+        return next;
+      });
       setSelectedId(response.data.id);
       setActivePanel("list");
       setMessage(editingId ? "Fornecedor atualizado com sucesso." : "Fornecedor criado com sucesso.");
@@ -447,32 +487,48 @@ export default function Suppliers() {
     }
   }
 
-  function editSupplier(supplier) {
+  async function editSupplier(supplier) {
     if (!canManageSuppliers) return;
-    setEditingId(supplier.id);
-    setSelectedId(supplier.id);
-    setSupplierForm(mapSupplierToForm(supplier));
-    setDocumentEntries(buildDocumentEntries(supplier.category?.documents || [], [], supplier.documents || []));
-    setActivePanel("form");
-    setMessage("");
-    setError("");
+    try {
+      setError("");
+      const detailed = await loadSupplierDetails(supplier.id);
+      if (!detailed) return;
+      setEditingId(detailed.id);
+      setSelectedId(detailed.id);
+      setSupplierForm(mapSupplierToForm(detailed));
+      setDocumentEntries(buildDocumentEntries(detailed.category?.documents || [], [], detailed.documents || []));
+      setActivePanel("form");
+      setMessage("");
+    } catch (err) {
+      setError(err.response?.data?.error || "Nao foi possivel carregar o fornecedor.");
+    }
   }
 
-  function viewSupplier(supplier) {
-    setSelectedId(supplier.id);
-    setActivePanel("details");
-    setMessage("");
-    setError("");
+  async function viewSupplier(supplier) {
+    try {
+      setSelectedId(supplier.id);
+      setActivePanel("details");
+      setMessage("");
+      setError("");
+      await loadSupplierDetails(supplier.id);
+    } catch (err) {
+      setError(err.response?.data?.error || "Nao foi possivel carregar o fornecedor.");
+    }
   }
 
-  function openEvaluation(supplier) {
+  async function openEvaluation(supplier) {
     if (!canEvaluateSuppliers) return;
-    setSelectedId(supplier.id);
-    setActivePanel("evaluation");
-    setEvaluationForm(initialEvaluationForm);
-    setEvaluationFile(null);
-    setMessage("");
-    setError("");
+    try {
+      setSelectedId(supplier.id);
+      setMessage("");
+      setError("");
+      await loadSupplierDetails(supplier.id);
+      setActivePanel("evaluation");
+      setEvaluationForm(initialEvaluationForm);
+      setEvaluationFile(null);
+    } catch (err) {
+      setError(err.response?.data?.error || "Nao foi possivel carregar o fornecedor.");
+    }
   }
 
   async function deleteSupplier(id) {
@@ -492,6 +548,12 @@ export default function Suppliers() {
       if (selectedId === id) {
         setSelectedId(null);
       }
+
+      setSupplierDetails((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
 
       await loadAll();
       setActivePanel("list");
@@ -577,6 +639,7 @@ export default function Suppliers() {
           supplier.id === response.data.id ? response.data : supplier
         )
       );
+      setSupplierDetails((current) => ({ ...current, [response.data.id]: response.data }));
 
       setEvaluationForm(initialEvaluationForm);
       setEvaluationFile(null);
@@ -733,6 +796,19 @@ export default function Suppliers() {
 
   async function applyFilters() {
     await loadSuppliers(filters);
+  }
+
+  if (
+    ["details", "form", "evaluation"].includes(activePanel) &&
+    selectedId &&
+    loadingSupplierDetails &&
+    !supplierDetails[selectedId]
+  ) {
+    return (
+      <div className="supplier-shell">
+        <p className="dashboard-empty-copy">Carregando dados do fornecedor...</p>
+      </div>
+    );
   }
 
   if (activePanel === "details" && selectedSupplier) {

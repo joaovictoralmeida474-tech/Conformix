@@ -4,6 +4,10 @@ import { applyCompanyScope, getScopedCompanyId } from "../../shared/database/sup
 import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 import { loadCategoryBundle } from "../../shared/database/supabaseRelations.js";
 
+const CATEGORY_COLUMNS = "id,slug,name,description,active,companyId";
+const CATEGORY_QUESTION_COLUMNS = "id,categoryId,prompt,sortOrder,active";
+const CATEGORY_DOCUMENT_COLUMNS = "id,categoryId,name,sortOrder,active";
+
 function slugify(value = "") {
   return String(value)
     .normalize("NFD")
@@ -49,12 +53,59 @@ function serialize(item) {
 
 async function listCategoriesForScope(scope) {
   const client = getSupabaseAdmin();
-  let query = client.from("Category").select("*").order("name", { ascending: true });
+  let query = client.from("Category").select(CATEGORY_COLUMNS).order("name", { ascending: true });
   query = applyCompanyScope(query, scope);
 
   const categories = throwIfSupabaseError(await query, "listar categorias");
-  const bundles = await Promise.all(categories.map((item) => loadCategoryBundle(item.id)));
-  return bundles.filter(Boolean).map(serialize);
+
+  if (!categories.length) {
+    return [];
+  }
+
+  const categoryIds = categories.map((item) => item.id);
+  const [questions, documents] = await Promise.all([
+    throwIfSupabaseError(
+      await client
+        .from("CategoryQuestion")
+        .select(CATEGORY_QUESTION_COLUMNS)
+        .in("categoryId", categoryIds)
+        .order("sortOrder", { ascending: true }),
+      "listar perguntas das categorias"
+    ),
+    throwIfSupabaseError(
+      await client
+        .from("CategoryRequiredDocument")
+        .select(CATEGORY_DOCUMENT_COLUMNS)
+        .in("categoryId", categoryIds)
+        .order("sortOrder", { ascending: true }),
+      "listar documentos das categorias"
+    )
+  ]);
+
+  const questionsByCategory = new Map();
+  const documentsByCategory = new Map();
+
+  for (const question of questions) {
+    if (!questionsByCategory.has(question.categoryId)) {
+      questionsByCategory.set(question.categoryId, []);
+    }
+    questionsByCategory.get(question.categoryId).push(question);
+  }
+
+  for (const document of documents) {
+    if (!documentsByCategory.has(document.categoryId)) {
+      documentsByCategory.set(document.categoryId, []);
+    }
+    documentsByCategory.get(document.categoryId).push(document);
+  }
+
+  return categories.map((item) =>
+    serialize({
+      ...item,
+      questions: questionsByCategory.get(item.id) || [],
+      documents: documentsByCategory.get(item.id) || []
+    })
+  );
 }
 
 async function findCategoryInScope(scope, id) {
@@ -92,32 +143,35 @@ async function findDuplicateCategory(companyId, slug, name, excludeId = null) {
 }
 
 async function replaceCategoryChildren(categoryId, questions, documents) {
+  const client = getSupabaseAdmin();
+
   await repo.deleteWhere("CategoryQuestion", { categoryId: Number(categoryId) });
   await repo.deleteWhere("CategoryRequiredDocument", { categoryId: Number(categoryId) });
 
-  for (const [index, prompt] of questions.entries()) {
-    await repo.insertRow(
-      "CategoryQuestion",
-      {
-        categoryId: Number(categoryId),
-        prompt,
-        sortOrder: index + 1,
-        active: true
-      },
-      { single: false }
+  const questionRows = questions.map((prompt, index) => ({
+    categoryId: Number(categoryId),
+    prompt,
+    sortOrder: index + 1,
+    active: true
+  }));
+  const documentRows = documents.map((name, index) => ({
+    categoryId: Number(categoryId),
+    name,
+    sortOrder: index + 1,
+    active: true
+  }));
+
+  if (questionRows.length) {
+    throwIfSupabaseError(
+      await client.from("CategoryQuestion").insert(questionRows),
+      "salvar perguntas da categoria"
     );
   }
 
-  for (const [index, name] of documents.entries()) {
-    await repo.insertRow(
-      "CategoryRequiredDocument",
-      {
-        categoryId: Number(categoryId),
-        name,
-        sortOrder: index + 1,
-        active: true
-      },
-      { single: false }
+  if (documentRows.length) {
+    throwIfSupabaseError(
+      await client.from("CategoryRequiredDocument").insert(documentRows),
+      "salvar documentos da categoria"
     );
   }
 }

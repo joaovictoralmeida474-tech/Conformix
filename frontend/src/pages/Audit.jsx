@@ -7,7 +7,7 @@ export default function Audit() {
 
   useEffect(() => {
     api
-      .get("/audit")
+      .get("/audit", { params: { limit: 100 } })
       .then((response) => setItems(response.data))
       .catch(() => setError("Nao foi possivel carregar a trilha de auditoria."));
   }, []);
