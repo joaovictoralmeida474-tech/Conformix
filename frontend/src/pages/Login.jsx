@@ -568,7 +568,7 @@ export default function Login() {
 
               <form onSubmit={login}>
                 <div className="login-field-group-exact">
-                  <label>E-MAIL / USUARIO</label>
+                  <label>E-MAIL / USUÁRIO</label>
                   <div
                     className="login-input-shell-exact"
                     style={{
