@@ -221,6 +221,22 @@ function riskIndexForSupplier(supplier) {
   );
 }
 
+function calculateRiskIndex({ scores = [], nextReview = null, status = "ATIVO", openRncCount = 0 }) {
+  const normalizedScores = scores.map((item) => Number(item || 0)).filter((value) => !Number.isNaN(value));
+
+  if (!normalizedScores.length) return 0;
+
+  const averageScore = average(normalizedScores);
+  const overdueFactor = nextReview && new Date(nextReview).getTime() < Date.now() ? 15 : 0;
+  const blockedFactor = status === "BLOQUEADO" ? 20 : 0;
+  const openRncFactor = Math.min(25, Number(openRncCount || 0) * 8);
+
+  return Math.max(
+    0,
+    Math.min(100, Number(((100 - averageScore) + overdueFactor + blockedFactor + openRncFactor).toFixed(2)))
+  );
+}
+
 function nextReviewFromType(supplierType, lastDate) {
   if (!lastDate) return null;
   const days = SUPPLIER_TYPE_CADENCE[normalizeSupplierType(supplierType)] || 180;
@@ -743,17 +759,18 @@ export async function createEvaluation(scope, supplierId, evaluatorId, payload =
   });
   evaluationId = evaluation.id;
 
-  for (const answer of answers) {
-    await repo.insertRow(
-      "EvaluationAnswer",
-      {
+  const answerRows = answers.map((answer) => ({
         evaluationId: evaluation.id,
         categoryQuestionId: answer.questionId,
         questionText: answer.questionText,
         score: answer.score,
         sortOrder: answer.sortOrder
-      },
-      { single: false }
+  }));
+
+  if (answerRows.length) {
+    throwIfSupabaseError(
+      await getSupabaseAdmin().from("EvaluationAnswer").insert(answerRows),
+      "salvar respostas da avaliacao"
     );
   }
 
@@ -768,9 +785,11 @@ export async function createEvaluation(scope, supplierId, evaluatorId, payload =
 
   const trend = trendFromEvaluations(previousEvaluations);
 
+  const nextStatus = shouldBlock ? "BLOQUEADO" : supplier.status;
+
   await repo.updateRow("Supplier", supplier.id, {
     score,
-    status: shouldBlock ? "BLOQUEADO" : supplier.status,
+    status: nextStatus,
     trend,
     lastEvaluationDate: evaluationDate,
     nextReview
@@ -786,27 +805,16 @@ export async function createEvaluation(scope, supplierId, evaluatorId, payload =
     });
   }
 
-  if (shouldBlock && evaluationId) {
-    await repo.updateRow("Supplier", supplier.id, { status: "BLOQUEADO" });
-
-    const linkedRnc = await repo.findOne("RNC", {
-      supplierId: supplier.id,
-      evaluationId
-    });
-
-    if (!linkedRnc) {
-      await repo.insertRow("RNC", {
-        supplierId: supplier.id,
-        evaluationId,
-        status: "ABERTA",
-        description: "Fornecedor abaixo da nota minima",
-        deadline: defaultRncDeadline
-      });
-    }
-  }
-
-  const refreshed = await findSupplier(scope, supplier.id);
-  const riskIndex = riskIndexForSupplier(refreshed);
+  const openRncCount = await repo.countRows("RNC", {
+    supplierId: supplier.id,
+    status: "ABERTA"
+  });
+  const riskIndex = calculateRiskIndex({
+    scores: previousEvaluations.map((item) => item.score),
+    nextReview,
+    status: nextStatus,
+    openRncCount
+  });
 
   await repo.updateRow("Supplier", supplier.id, { riskIndex });
 
