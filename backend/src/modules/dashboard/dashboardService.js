@@ -6,6 +6,40 @@ const DASHBOARD_SUPPLIER_COLUMNS = "id,name,status,nextReview,supplierType,score
 const DASHBOARD_DOCUMENT_COLUMNS = "supplierId,expiresAt";
 const DASHBOARD_EVALUATION_COLUMNS = "id,supplierId,evaluationDate,score";
 const DASHBOARD_RNC_COLUMNS = "id,supplierId,status,deadline,createdAt";
+const DASHBOARD_CACHE_TTL_MS = Number(process.env.DASHBOARD_CACHE_TTL_MS || 30_000);
+
+const dashboardCache = new Map();
+
+function getDashboardCacheKey(scope) {
+  if (isSuperAdminScope(scope)) {
+    return "dashboard:super-admin";
+  }
+
+  const companyId = Number(scope?.companyId || 0);
+  return `dashboard:company:${Number.isInteger(companyId) && companyId > 0 ? companyId : "unknown"}`;
+}
+
+function getCachedDashboard(cacheKey) {
+  const cached = dashboardCache.get(cacheKey);
+
+  if (!cached || cached.expiresAt <= Date.now()) {
+    dashboardCache.delete(cacheKey);
+    return null;
+  }
+
+  return cached.data;
+}
+
+function setCachedDashboard(cacheKey, data) {
+  if (DASHBOARD_CACHE_TTL_MS <= 0) {
+    return;
+  }
+
+  dashboardCache.set(cacheKey, {
+    data,
+    expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS
+  });
+}
 
 function isOverdue(value) {
   return value ? new Date(value).getTime() < Date.now() : false;
@@ -158,7 +192,7 @@ async function loadDashboardRncs(scope) {
   }));
 }
 
-export async function getMetrics(scope) {
+async function buildMetrics(scope) {
   const [suppliers, openRncs] = await Promise.all([
     loadDashboardSuppliers(scope),
     loadDashboardRncs(scope)
@@ -219,4 +253,17 @@ export async function getMetrics(scope) {
     scores: suppliers.map((item) => Number(item.score || 0)),
     risks: suppliers.map((item) => Number(item.riskIndex || 0))
   };
+}
+
+export async function getMetrics(scope) {
+  const cacheKey = getDashboardCacheKey(scope);
+  const cached = getCachedDashboard(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const data = await buildMetrics(scope);
+  setCachedDashboard(cacheKey, data);
+  return data;
 }
