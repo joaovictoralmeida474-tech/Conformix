@@ -1433,6 +1433,315 @@ body.login-theme {
   font-size: 10px;
 }
 
+/* Exact-size pass for the shared Readdy login reference. */
+body.login-theme {
+  min-width: 100%;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(0, 230, 180, 0.08), transparent 18%),
+    radial-gradient(circle at 85% 8%, rgba(30, 160, 255, 0.12), transparent 18%),
+    radial-gradient(circle at 50% 42%, rgba(0, 230, 180, 0.05), transparent 32%),
+    linear-gradient(135deg, #020b16 0%, #05243a 50%, #03101f 100%);
+}
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(28, 89, 121, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 89, 121, 0.08) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+.login-shell-exact {
+  width: min(580px, calc(100vw - 36px));
+  max-width: 580px;
+  min-height: auto;
+  padding: 0;
+  gap: 118px;
+  transform: translateY(-2px);
+}
+
+.login-hero-exact {
+  width: 230px;
+  max-width: 230px;
+  flex: 0 0 230px;
+}
+
+.login-brand-exact {
+  margin: 0 0 24px;
+}
+
+.login-brand-image-exact {
+  height: 43px;
+}
+
+.login-title-exact {
+  max-width: 230px;
+  margin: 0 0 14px;
+  font-size: 21px;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+
+.login-description-exact {
+  max-width: 236px;
+  margin: 0 0 20px;
+  font-size: 9px;
+  line-height: 1.72;
+  color: #8aa8ba;
+}
+
+.login-features-exact {
+  gap: 8px;
+  margin: 0 0 22px;
+}
+
+.login-feature-row {
+  gap: 9px;
+  min-height: 22px;
+}
+
+.login-feature-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+}
+
+.login-feature-icon i {
+  font-size: 11px;
+}
+
+.login-feature-label {
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.login-feature-dot {
+  width: 5px;
+  height: 5px;
+}
+
+.login-stats-exact {
+  gap: 20px;
+  padding-top: 18px;
+}
+
+.login-stat-exact {
+  min-width: 46px;
+}
+
+.login-stat-value {
+  font-size: 16px;
+}
+
+.login-stat-label {
+  margin-top: 3px;
+  font-size: 8px;
+}
+
+.login-form-wrap-exact {
+  width: 232px;
+  max-width: 232px;
+  flex: 0 0 232px;
+}
+
+.login-card-exact {
+  width: 232px;
+  min-height: 310px;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at top left, rgba(30, 160, 255, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(5, 21, 42, 0.94), rgba(2, 12, 29, 0.97));
+}
+
+.login-card-body-exact {
+  padding: 19px 20px 17px;
+}
+
+.login-form-header-exact {
+  margin-bottom: 15px;
+}
+
+.login-form-secure-exact {
+  gap: 7px;
+  margin-bottom: 11px;
+}
+
+.login-form-secure-icon-exact {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 9px;
+}
+
+.login-form-secure-exact span,
+.login-field-group-exact label,
+.login-divider-exact span,
+.login-badge-item-exact span {
+  font-size: 7px;
+  letter-spacing: 0.12em;
+}
+
+.login-form-header-exact h2 {
+  margin-bottom: 3px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.login-form-header-exact p {
+  font-size: 8px;
+}
+
+.login-field-group-exact {
+  margin-bottom: 10px;
+}
+
+.login-field-group-exact label {
+  margin-bottom: 5px;
+}
+
+.login-input-shell-exact {
+  border-radius: 6px;
+}
+
+.login-input-icon-exact {
+  width: 28px;
+  height: 28px;
+}
+
+.login-input-icon-exact i {
+  font-size: 10px;
+}
+
+.login-input-exact {
+  height: 28px;
+  font-size: 8px;
+  padding-right: 10px;
+}
+
+.login-input-password-exact {
+  padding-right: 30px;
+}
+
+.login-password-toggle {
+  right: 5px;
+  width: 20px;
+  height: 20px;
+}
+
+.login-password-toggle i {
+  font-size: 10px;
+}
+
+.login-row-exact {
+  gap: 8px;
+  margin-bottom: 13px;
+}
+
+.login-remember-exact {
+  gap: 5px;
+}
+
+.login-remember-exact span,
+.login-link-button-exact,
+.login-request-exact,
+.login-request-link-exact {
+  font-size: 7px;
+}
+
+.login-remember-box-exact {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.login-submit-glow-exact {
+  inset-inline: 12px;
+  height: 10px;
+}
+
+.login-submit-exact {
+  height: 29px;
+  border-radius: 6px;
+  font-size: 7px;
+  letter-spacing: 0.12em;
+}
+
+.login-submit-content-exact {
+  gap: 5px;
+}
+
+.login-submit-content-exact i {
+  font-size: 9px;
+}
+
+.login-divider-exact {
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.login-request-link-exact {
+  gap: 3px;
+}
+
+.login-request-link-exact i {
+  font-size: 8px;
+}
+
+.login-badges-exact {
+  gap: 11px;
+  margin-top: 12px;
+}
+
+.login-badge-item-exact {
+  gap: 3px;
+}
+
+.login-badge-item-exact i {
+  font-size: 8px;
+}
+
+.login-corner {
+  transform: scale(0.72);
+  transform-origin: center;
+}
+
+.login-edge-line-bottom {
+  bottom: 18px;
+}
+
+.login-page::before {
+  top: 51.5%;
+}
+
+.login-page::after {
+  bottom: 18px;
+}
+
+@media (min-width: 1280px) {
+  .login-shell-exact {
+    transform: translateY(-2px) scale(1.08);
+  }
+}
+
+@media (max-width: 720px) {
+  .login-shell-exact {
+    width: min(232px, calc(100vw - 32px));
+    gap: 0;
+    transform: none;
+  }
+
+  .login-form-wrap-exact,
+  .login-card-exact {
+    width: min(232px, calc(100vw - 32px));
+    max-width: min(232px, calc(100vw - 32px));
+    flex-basis: auto;
+  }
+}
+
 .login-card-bottom-glow-exact {
   position: absolute;
   left: 0;
