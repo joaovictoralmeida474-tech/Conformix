@@ -1,5 +1,15 @@
 import { getSupabaseAdmin, throwIfSupabaseError } from "./supabaseStore.js";
 
+const CATEGORY_COLUMNS = "id,slug,name,description,active,companyId";
+const CATEGORY_QUESTION_COLUMNS = "id,categoryId,prompt,sortOrder,active";
+const CATEGORY_DOCUMENT_COLUMNS = "id,categoryId,name,sortOrder,active";
+const SUPPLIER_DOCUMENT_COLUMNS = "id,supplierId,requiredDocumentId,documentName,filename,originalName,expiresAt";
+const RNC_COLUMNS =
+  "id,supplierId,evaluationId,status,actionPlan,description,cause,correctiveAction,responsible,deadline,treatedAt,createdAt";
+const EVALUATION_COLUMNS =
+  "id,supplierId,evaluatorId,evaluationDate,invoiceNumber,observations,attachmentFilename,attachmentOriginalName,score,classification,createdAt";
+const EVALUATION_ANSWER_COLUMNS = "id,evaluationId,categoryQuestionId,questionText,score,sortOrder";
+
 export async function loadCategoryBundle(categoryId) {
   if (!categoryId) {
     return null;
@@ -7,7 +17,7 @@ export async function loadCategoryBundle(categoryId) {
 
   const client = getSupabaseAdmin();
   const category = throwIfSupabaseError(
-    await client.from("Category").select("*").eq("id", Number(categoryId)).maybeSingle(),
+    await client.from("Category").select(CATEGORY_COLUMNS).eq("id", Number(categoryId)).maybeSingle(),
     "buscar categoria"
   );
 
@@ -19,7 +29,7 @@ export async function loadCategoryBundle(categoryId) {
     throwIfSupabaseError(
       await client
         .from("CategoryQuestion")
-        .select("*")
+        .select(CATEGORY_QUESTION_COLUMNS)
         .eq("categoryId", category.id)
         .order("sortOrder", { ascending: true }),
       "listar perguntas da categoria"
@@ -27,7 +37,7 @@ export async function loadCategoryBundle(categoryId) {
     throwIfSupabaseError(
       await client
         .from("CategoryRequiredDocument")
-        .select("*")
+        .select(CATEGORY_DOCUMENT_COLUMNS)
         .eq("categoryId", category.id)
         .order("sortOrder", { ascending: true }),
       "listar documentos da categoria"
@@ -46,13 +56,13 @@ export async function loadSupplierGraph(supplierRow) {
   const [category, documents, rncs, evaluations] = await Promise.all([
     loadCategoryBundle(supplierRow.categoryId),
     throwIfSupabaseError(
-      await client.from("SupplierDocument").select("*").eq("supplierId", supplierRow.id),
+      await client.from("SupplierDocument").select(SUPPLIER_DOCUMENT_COLUMNS).eq("supplierId", supplierRow.id),
       "listar documentos do fornecedor"
     ),
     throwIfSupabaseError(
       await client
         .from("RNC")
-        .select("*")
+        .select(RNC_COLUMNS)
         .eq("supplierId", supplierRow.id)
         .order("createdAt", { ascending: false }),
       "listar rnc do fornecedor"
@@ -60,7 +70,7 @@ export async function loadSupplierGraph(supplierRow) {
     throwIfSupabaseError(
       await client
         .from("Evaluation")
-        .select("*")
+        .select(EVALUATION_COLUMNS)
         .eq("supplierId", supplierRow.id)
         .order("evaluationDate", { ascending: false })
         .order("id", { ascending: false }),
@@ -86,7 +96,7 @@ export async function loadSupplierGraph(supplierRow) {
     answerItems = throwIfSupabaseError(
       await client
         .from("EvaluationAnswer")
-        .select("*")
+        .select(EVALUATION_ANSWER_COLUMNS)
         .in("evaluationId", evaluationIds)
         .order("sortOrder", { ascending: true }),
       "listar respostas das avaliacoes"

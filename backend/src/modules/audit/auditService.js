@@ -1,6 +1,9 @@
 import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 import { buildSupplierCompanyWhere } from "../../shared/auth/dataScope.js";
 
+const AUDIT_USER_COLUMNS = "id,email,name";
+const AUDIT_LOG_COLUMNS = "id,userId,action,entity,entityId,details,createdAt";
+
 export async function log(userId, action, meta = {}) {
   const client = getSupabaseAdmin();
   const normalizedUserId = Number(userId);
@@ -25,7 +28,7 @@ export async function listByCompany(scope) {
   const client = getSupabaseAdmin();
   const companyFilter = buildSupplierCompanyWhere(scope).supplier;
 
-  let userQuery = client.from("User").select("id");
+  let userQuery = client.from("User").select(AUDIT_USER_COLUMNS);
 
   if (companyFilter?.companyId) {
     userQuery = userQuery.eq("companyId", companyFilter.companyId);
@@ -41,7 +44,7 @@ export async function listByCompany(scope) {
   const logs = throwIfSupabaseError(
     await client
       .from("AuditLog")
-      .select("*")
+      .select(AUDIT_LOG_COLUMNS)
       .in("userId", userIds)
       .order("createdAt", { ascending: false }),
     "listar logs de auditoria"

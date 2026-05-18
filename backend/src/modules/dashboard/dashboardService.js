@@ -2,6 +2,11 @@ import { applyCompanyScope, getSupplierIdsForScope } from "../../shared/database
 import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 import { isSuperAdminScope } from "../../shared/auth/dataScope.js";
 
+const DASHBOARD_SUPPLIER_COLUMNS = "id,name,status,nextReview,supplierType,score,riskIndex,companyId";
+const DASHBOARD_DOCUMENT_COLUMNS = "supplierId,expiresAt";
+const DASHBOARD_EVALUATION_COLUMNS = "id,supplierId,evaluationDate,score";
+const DASHBOARD_RNC_COLUMNS = "id,supplierId,status,deadline,createdAt";
+
 function isOverdue(value) {
   return value ? new Date(value).getTime() < Date.now() : false;
 }
@@ -69,7 +74,7 @@ function buildAlerts(suppliers, rncs) {
 
 async function loadDashboardSuppliers(scope) {
   const client = getSupabaseAdmin();
-  let query = client.from("Supplier").select("*").order("name", { ascending: true });
+  let query = client.from("Supplier").select(DASHBOARD_SUPPLIER_COLUMNS).order("name", { ascending: true });
   query = applyCompanyScope(query, scope);
 
   const suppliers = throwIfSupabaseError(await query, "listar fornecedores do dashboard");
@@ -81,13 +86,13 @@ async function loadDashboardSuppliers(scope) {
   const supplierIds = suppliers.map((item) => item.id);
   const [documents, evaluations] = await Promise.all([
     throwIfSupabaseError(
-      await client.from("SupplierDocument").select("*").in("supplierId", supplierIds),
+      await client.from("SupplierDocument").select(DASHBOARD_DOCUMENT_COLUMNS).in("supplierId", supplierIds),
       "listar documentos do dashboard"
     ),
     throwIfSupabaseError(
       await client
         .from("Evaluation")
-        .select("*")
+        .select(DASHBOARD_EVALUATION_COLUMNS)
         .in("supplierId", supplierIds)
         .order("evaluationDate", { ascending: false })
         .order("id", { ascending: false }),
@@ -122,7 +127,7 @@ async function loadDashboardSuppliers(scope) {
 
 async function loadDashboardRncs(scope) {
   const client = getSupabaseAdmin();
-  let query = client.from("RNC").select("*").order("createdAt", { ascending: false });
+  let query = client.from("RNC").select(DASHBOARD_RNC_COLUMNS).order("createdAt", { ascending: false });
 
   if (!isSuperAdminScope(scope)) {
     const supplierIds = await getSupplierIdsForScope(scope);

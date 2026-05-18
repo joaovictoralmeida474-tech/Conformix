@@ -731,7 +731,11 @@ export async function listSystemLogs(currentUser) {
 
   const client = getSupabaseAdmin();
   const logs = throwIfSupabaseError(
-    await client.from("AuditLog").select("*").order("createdAt", { ascending: false }).limit(50),
+    await client
+      .from("AuditLog")
+      .select("id,userId,action,entity,entityId,details,createdAt")
+      .order("createdAt", { ascending: false })
+      .limit(50),
     "listar logs"
   );
 

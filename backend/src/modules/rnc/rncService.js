@@ -3,6 +3,9 @@ import * as repo from "../../shared/database/supabaseRepo.js";
 import { getSupplierIdsForScope } from "../../shared/database/supabaseScope.js";
 import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 
+const RNC_COLUMNS =
+  "id,supplierId,evaluationId,status,actionPlan,description,cause,correctiveAction,responsible,deadline,treatedAt,createdAt";
+
 function addThirtyDays(baseDate) {
   const deadline = new Date(baseDate);
   deadline.setDate(deadline.getDate() + 30);
@@ -45,7 +48,7 @@ async function loadRncGraph(rncRow) {
 
 async function listRncRowsForScope(scope) {
   const client = getSupabaseAdmin();
-  let query = client.from("RNC").select("*").order("createdAt", { ascending: false });
+  let query = client.from("RNC").select(RNC_COLUMNS).order("createdAt", { ascending: false });
 
   if (!isSuperAdminScope(scope)) {
     const supplierIds = await getSupplierIdsForScope(scope);

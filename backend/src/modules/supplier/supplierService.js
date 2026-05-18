@@ -18,6 +18,9 @@ import {
 const supplierUploadsRoot = getSupplierUploadsRoot();
 const evaluationUploadsRoot = getEvaluationUploadsRoot();
 const SUPPLIER_DOCUMENTS_BUCKET = "supplier-documents";
+const SUPPLIER_COLUMNS =
+  "id,name,tradeName,cnpj,contact,email,phone,addressLine,addressNumber,addressComplement,district,city,state,postalCode,primaryActivity,registrationStatus,status,supplierType,score,riskIndex,trend,reactivationJustification,companyId,categoryId,lastEvaluationDate,nextReview";
+const SUPPLIER_EXPORT_COLUMNS = "id,name,cnpj,categoryId,supplierType,status,score,riskIndex,city,nextReview,companyId";
 
 const SUPPLIER_TYPE_CADENCE = {
   CRITICO: 30,
@@ -342,7 +345,7 @@ function serializeSupplier(supplier) {
 
 async function findSupplier(scope, id) {
   const client = getSupabaseAdmin();
-  let query = client.from("Supplier").select("*").eq("id", Number(id));
+  let query = client.from("Supplier").select(SUPPLIER_COLUMNS).eq("id", Number(id));
   query = applyCompanyScope(query, scope);
 
   const supplier = throwIfSupabaseError(await query.maybeSingle(), "buscar fornecedor");
@@ -409,7 +412,7 @@ async function resolveSupplierCompanyAndCategory(
 
 export async function list(scope, filters = {}) {
   const client = getSupabaseAdmin();
-  let query = client.from("Supplier").select("*").order("name", { ascending: true });
+  let query = client.from("Supplier").select(SUPPLIER_COLUMNS).order("name", { ascending: true });
   query = applyCompanyScope(query, scope);
 
   if (filters.search) {
@@ -775,7 +778,7 @@ export async function exportSuppliers(scope, res) {
   ];
 
   const client = getSupabaseAdmin();
-  let query = client.from("Supplier").select("*").order("name", { ascending: true });
+  let query = client.from("Supplier").select(SUPPLIER_EXPORT_COLUMNS).order("name", { ascending: true });
   query = applyCompanyScope(query, scope);
   const data = throwIfSupabaseError(await query, "exportar fornecedores");
 

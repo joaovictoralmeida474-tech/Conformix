@@ -1,6 +1,11 @@
 import { ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../../shared/auth/permissions.js";
 import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 
+const USER_ADMIN_COLUMNS = "id,name,email,role,active,companyId,departmentId,lastLoginAt,createdAt";
+const PERMISSION_COLUMNS = "id,key,name,description,createdAt";
+const DEPARTMENT_COLUMNS = "id,name,slug,description,active,companyId,createdAt,updatedAt";
+const AUDIT_LOG_COLUMNS = "id,userId,action,entity,entityId,details,createdAt";
+
 function getSystemCompanyName() {
   return String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim();
 }
@@ -152,7 +157,7 @@ async function loadPermissionKeysByUserIds(userIds = []) {
 
 async function loadUsersWithRelations(filter = {}) {
   const client = getSupabaseAdmin();
-  let query = client.from("User").select("*");
+  let query = client.from("User").select(USER_ADMIN_COLUMNS);
 
   if (filter.role) {
     query = query.eq("role", filter.role);
@@ -207,7 +212,7 @@ export async function getSettings(currentUser) {
 
   const companies = throwIfSupabaseError(await companiesQuery, "listar empresas");
 
-  let permissionsQuery = client.from("Permission").select("*").order("key");
+  let permissionsQuery = client.from("Permission").select(PERMISSION_COLUMNS).order("key");
 
   if (actorAllowedKeys?.length) {
     permissionsQuery = permissionsQuery.in("key", actorAllowedKeys);
@@ -256,7 +261,7 @@ export async function getOverview(currentUser) {
     const [companies, departments, users, admins, logs, allUsers] = await Promise.all([
       throwIfSupabaseError(await client.from("Company").select("id,name"), "listar empresas"),
       throwIfSupabaseError(
-        await client.from("Department").select("*").order("companyId").order("name"),
+        await client.from("Department").select(DEPARTMENT_COLUMNS).order("companyId").order("name"),
         "listar departamentos"
       ),
       throwIfSupabaseError(
@@ -273,7 +278,7 @@ export async function getOverview(currentUser) {
       throwIfSupabaseError(
         await client
           .from("AuditLog")
-          .select("*")
+          .select(AUDIT_LOG_COLUMNS)
           .order("createdAt", { ascending: false })
           .limit(10),
         "listar logs"
@@ -310,7 +315,7 @@ export async function getOverview(currentUser) {
 
   const departmentId = Number(currentUser.departmentId);
   const departmentRow = throwIfSupabaseError(
-    await client.from("Department").select("*").eq("id", departmentId).maybeSingle(),
+    await client.from("Department").select(DEPARTMENT_COLUMNS).eq("id", departmentId).maybeSingle(),
     "buscar departamento"
   );
   const departmentCompany = departmentRow
@@ -331,7 +336,7 @@ export async function getOverview(currentUser) {
   const logs = throwIfSupabaseError(
     await client
       .from("AuditLog")
-      .select("*")
+      .select(AUDIT_LOG_COLUMNS)
       .order("createdAt", { ascending: false })
       .limit(50),
     "listar logs"
@@ -371,7 +376,7 @@ export async function listDepartments(currentUser) {
   const client = getSupabaseAdmin();
   const currentRole = normalizeRole(currentUser.role);
 
-  let query = client.from("Department").select("*").order("companyId").order("name");
+  let query = client.from("Department").select(DEPARTMENT_COLUMNS).order("companyId").order("name");
 
   if (currentRole !== ROLES.SUPER_ADMIN) {
     query = query.eq("companyId", currentUser.companyId).eq("id", currentUser.departmentId);
