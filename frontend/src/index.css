@@ -5033,12 +5033,21 @@ body.login-theme .login-input-icon-exact i {
 
 body.login-theme .login-input-exact {
   height: 3rem;
-  color: #fff;
+  color: #b9fbef;
+  caret-color: #00ffcc;
   font-size: 0.875rem;
 }
 
 body.login-theme .login-input-exact::placeholder {
   color: #3a5a7a;
+}
+
+body.login-theme .login-input-exact:-webkit-autofill,
+body.login-theme .login-input-exact:-webkit-autofill:hover,
+body.login-theme .login-input-exact:-webkit-autofill:focus {
+  -webkit-text-fill-color: #b9fbef;
+  caret-color: #00ffcc;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 body.login-theme .login-password-toggle {
