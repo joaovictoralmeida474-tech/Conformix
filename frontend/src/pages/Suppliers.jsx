@@ -281,12 +281,12 @@ export default function Suppliers() {
     );
   }, [activePanel, editingId, selectedCategory, selectedSupplier]);
 
-  async function loadSuppliers(activeFilters = filters) {
+  async function loadSuppliers(activeFilters = filters, options = {}) {
     const params = {};
     if (activeFilters.search) params.search = activeFilters.search;
     if (activeFilters.status) params.status = activeFilters.status;
 
-    const response = await cachedGet("/suppliers", { params });
+    const response = await cachedGet("/suppliers", { params }, options);
     setSuppliers(response.data);
 
     if (!selectedId && response.data.length) {
@@ -305,14 +305,10 @@ export default function Suppliers() {
       return null;
     }
 
-    if (!options.force && supplierDetails[id]) {
-      return supplierDetails[id];
-    }
-
     setLoadingSupplierDetails(true);
 
     try {
-      const response = await cachedGet(`/suppliers/${id}`, {}, { force: options.force });
+      const response = await cachedGet(`/suppliers/${id}`, {}, options);
       setSupplierDetails((current) => ({ ...current, [id]: response.data }));
       return response.data;
     } finally {
@@ -320,23 +316,31 @@ export default function Suppliers() {
     }
   }
 
-  async function loadCategories() {
-    const response = await cachedGet("/categories");
+  async function loadCategories(options = {}) {
+    const response = await cachedGet("/categories", {}, options);
     setCategories(response.data);
   }
 
-  async function loadCompanies() {
+  async function loadCompanies(options = {}) {
     if (role !== ROLES.SUPER_ADMIN) {
       setCompanies([]);
       return;
     }
 
-    const response = await cachedGet("/admin/settings");
+    const response = await cachedGet("/admin/settings", {}, options);
     setCompanies(response.data?.companies || []);
   }
 
-  async function loadAll(activeFilters = filters) {
-    await Promise.all([loadSuppliers(activeFilters), loadCategories(), loadCompanies()]);
+  async function loadAll(activeFilters = filters, options = {}) {
+    if (options.force) {
+      setSupplierDetails({});
+    }
+
+    await Promise.all([
+      loadSuppliers(activeFilters, options),
+      loadCategories(options),
+      loadCompanies(options)
+    ]);
   }
 
   useEffect(() => {
@@ -481,6 +485,7 @@ export default function Suppliers() {
       setActivePanel("list");
       setMessage(editingId ? "Fornecedor atualizado com sucesso." : "Fornecedor criado com sucesso.");
       resetSupplierEditor();
+      await loadAll(filters, { force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o fornecedor.");
     } finally {
@@ -556,7 +561,7 @@ export default function Suppliers() {
         return next;
       });
 
-      await loadAll();
+      await loadAll(filters, { force: true });
       setActivePanel("list");
       setMessage("Fornecedor excluido com sucesso.");
     } catch (err) {
@@ -635,12 +640,8 @@ export default function Suppliers() {
         }
       });
 
-      setSuppliers((current) =>
-        current.map((supplier) =>
-          supplier.id === response.data.id ? response.data : supplier
-        )
-      );
-      setSupplierDetails((current) => ({ ...current, [response.data.id]: response.data }));
+      await loadSuppliers(filters, { force: true });
+      await loadSupplierDetails(response.data.id, { force: true });
 
       setEvaluationForm(initialEvaluationForm);
       setEvaluationFile(null);
@@ -796,7 +797,7 @@ export default function Suppliers() {
   }
 
   async function applyFilters() {
-    await loadSuppliers(filters);
+    await loadSuppliers(filters, { force: true });
   }
 
   if (

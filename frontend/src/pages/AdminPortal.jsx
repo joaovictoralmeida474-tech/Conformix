@@ -230,64 +230,64 @@ export default function AdminPortal() {
     return departments.filter((item) => Number(item.companyId) === targetCompanyId);
   }, [adminForm.companyId, departments, role, user?.departmentId]);
 
-  async function loadOverview() {
-    const { data } = await cachedGet("/admin/overview");
+  async function loadOverview(options = {}) {
+    const { data } = await cachedGet("/admin/overview", {}, options);
     setOverview(data);
   }
 
-  async function loadUsers() {
-    const { data } = await cachedGet("/admin/users");
+  async function loadUsers(options = {}) {
+    const { data } = await cachedGet("/admin/users", {}, options);
     setUsers(data);
   }
 
-  async function loadAdmins() {
-    const { data } = await cachedGet("/admin/admins");
+  async function loadAdmins(options = {}) {
+    const { data } = await cachedGet("/admin/admins", {}, options);
     setAdmins(data);
   }
 
-  async function loadDepartments() {
-    const { data } = await cachedGet("/admin/departments");
+  async function loadDepartments(options = {}) {
+    const { data } = await cachedGet("/admin/departments", {}, options);
     setDepartments(data);
   }
 
-  async function loadSettings() {
-    const { data } = await cachedGet("/admin/settings");
+  async function loadSettings(options = {}) {
+    const { data } = await cachedGet("/admin/settings", {}, options);
     setSettings(data);
   }
 
-  async function loadSectionData() {
+  async function loadSectionData(options = {}) {
     try {
       setLoading(true);
       setError("");
 
       if (section === "overview") {
         await Promise.all([
-          loadOverview(),
-          hasPermission(user, PERMISSIONS.DEPARTMENTS_VIEW) ? loadDepartments() : Promise.resolve()
+          loadOverview(options),
+          hasPermission(user, PERMISSIONS.DEPARTMENTS_VIEW) ? loadDepartments(options) : Promise.resolve()
         ]);
       }
 
       if (section === "users") {
         await Promise.all([
-          loadUsers(),
-          hasPermission(user, PERMISSIONS.DEPARTMENTS_VIEW) ? loadDepartments() : Promise.resolve(),
-          hasPermission(user, PERMISSIONS.USERS_MANAGE) ? loadSettings() : Promise.resolve()
+          loadUsers(options),
+          hasPermission(user, PERMISSIONS.DEPARTMENTS_VIEW) ? loadDepartments(options) : Promise.resolve(),
+          hasPermission(user, PERMISSIONS.USERS_MANAGE) ? loadSettings(options) : Promise.resolve()
         ]);
       }
 
       if (section === "admins") {
-        await Promise.all([loadAdmins(), loadDepartments(), loadSettings()]);
+        await Promise.all([loadAdmins(options), loadDepartments(options), loadSettings(options)]);
       }
 
       if (section === "departments") {
         await Promise.all([
-          loadDepartments(),
-          hasPermission(user, PERMISSIONS.SETTINGS_VIEW) ? loadSettings() : Promise.resolve()
+          loadDepartments(options),
+          hasPermission(user, PERMISSIONS.SETTINGS_VIEW) ? loadSettings(options) : Promise.resolve()
         ]);
       }
 
       if (section === "settings") {
-        await Promise.all([loadSettings(), loadDepartments()]);
+        await Promise.all([loadSettings(options), loadDepartments(options)]);
       }
     } catch (err) {
       const apiError = err?.response?.data?.error;
@@ -428,7 +428,7 @@ export default function AdminPortal() {
 
       setUserModal(null);
       setUserForm(emptyUserForm);
-      await loadOverview().catch(() => null);
+      await loadOverview({ force: true }).catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o usuario.");
     }
@@ -443,7 +443,7 @@ export default function AdminPortal() {
       });
       setUsers((current) => current.map((item) => (item.id === data.id ? data : item)));
       setMessage(record.active ? "Usuario desativado com sucesso." : "Usuario ativado com sucesso.");
-      await loadOverview().catch(() => null);
+      await loadOverview({ force: true }).catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel alterar o status do usuario.");
     }
@@ -458,7 +458,7 @@ export default function AdminPortal() {
       await api.delete(`/admin/users/${recordId}`);
       setUsers((current) => current.filter((item) => Number(item.id) !== Number(recordId)));
       setMessage("Usuario excluido com sucesso.");
-      await loadOverview().catch(() => null);
+      await loadOverview({ force: true }).catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel excluir o usuario.");
     }
@@ -495,7 +495,7 @@ export default function AdminPortal() {
 
       setAdminModal(null);
       setAdminForm(emptyAdminForm);
-      await loadOverview();
+      await loadOverview({ force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o admin.");
     }
@@ -509,7 +509,11 @@ export default function AdminPortal() {
       setMessage("Empresa criada com sucesso.");
       setCompanyModal(false);
       setCompanyForm(emptyCompanyForm);
-      await Promise.all([loadSettings(), loadDepartments().catch(() => null), loadOverview().catch(() => null)]);
+      await Promise.all([
+        loadSettings({ force: true }),
+        loadDepartments({ force: true }).catch(() => null),
+        loadOverview({ force: true }).catch(() => null)
+      ]);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel criar a empresa.");
     }
@@ -524,9 +528,9 @@ export default function AdminPortal() {
       await api.delete(`/admin/departments/${recordId}`);
       setMessage("Departamento excluido com sucesso.");
       await Promise.all([
-        loadDepartments(),
-        loadSettings().catch(() => null),
-        loadOverview().catch(() => null)
+        loadDepartments({ force: true }),
+        loadSettings({ force: true }).catch(() => null),
+        loadOverview({ force: true }).catch(() => null)
       ]);
     } catch (err) {
       setError(getApiErrorMessage(err, "Nao foi possivel excluir o departamento."));
@@ -542,9 +546,9 @@ export default function AdminPortal() {
       await api.delete(`/admin/companies/${recordId}`);
       setMessage("Empresa excluida com sucesso.");
       await Promise.all([
-        loadSettings(),
-        loadDepartments().catch(() => null),
-        loadOverview().catch(() => null)
+        loadSettings({ force: true }),
+        loadDepartments({ force: true }).catch(() => null),
+        loadOverview({ force: true }).catch(() => null)
       ]);
     } catch (err) {
       setError(getApiErrorMessage(err, "Nao foi possivel excluir a empresa."));
@@ -560,7 +564,7 @@ export default function AdminPortal() {
       });
       setAdmins((current) => current.map((item) => (item.id === data.id ? data : item)));
       setMessage(record.active ? "Admin desativado com sucesso." : "Admin ativado com sucesso.");
-      await loadOverview();
+      await loadOverview({ force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel alterar o status do admin.");
     }
@@ -575,7 +579,7 @@ export default function AdminPortal() {
       await api.delete(`/admin/admins/${recordId}`);
       setAdmins((current) => current.filter((item) => Number(item.id) !== Number(recordId)));
       setMessage("Admin excluido com sucesso.");
-      await loadOverview();
+      await loadOverview({ force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel excluir o admin.");
     }
@@ -607,7 +611,7 @@ export default function AdminPortal() {
 
       setDepartmentModal(null);
       setDepartmentForm(emptyDepartmentForm);
-      await loadOverview().catch(() => null);
+      await loadOverview({ force: true }).catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o departamento.");
     }

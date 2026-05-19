@@ -38,18 +38,18 @@ export default function Categories() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  async function load() {
-    const response = await cachedGet("/categories");
+  async function load(options = {}) {
+    const response = await cachedGet("/categories", {}, options);
     setCategories(response.data);
   }
 
-  async function loadCompanies() {
+  async function loadCompanies(options = {}) {
     if (role !== ROLES.SUPER_ADMIN) {
       setCompanies([]);
       return;
     }
 
-    const response = await cachedGet("/admin/settings");
+    const response = await cachedGet("/admin/settings", {}, options);
     setCompanies(response.data?.companies || []);
   }
 
@@ -84,6 +84,7 @@ export default function Categories() {
       setDocumentText("");
       setEditingId(null);
       setActivePanel("list");
+      await load({ force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar a categoria.");
     }
@@ -131,7 +132,7 @@ export default function Categories() {
         setActivePanel("list");
       }
 
-      await load();
+      await load({ force: true });
       setMessage("Categoria excluida com sucesso.");
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel excluir a categoria.");

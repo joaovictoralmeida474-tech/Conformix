@@ -40,9 +40,9 @@ export default function RNC() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  async function load() {
+  async function load(options = {}) {
     try {
-      const response = await cachedGet("/rnc");
+      const response = await cachedGet("/rnc", {}, options);
       setItems(response.data);
     } catch (loadError) {
       setError("Nao foi possivel carregar as RNCs.");
@@ -72,7 +72,7 @@ export default function RNC() {
       setError("");
       setMessage("");
       await api.put(`/rnc/${selectedItem.id}`, form);
-      await load();
+      await load({ force: true });
       setMessage(isResolvedStatus(selectedItem.status) ? "RNC atualizada com sucesso." : "Tratativa salva com sucesso.");
       setSelectedItem(null);
     } catch (err) {

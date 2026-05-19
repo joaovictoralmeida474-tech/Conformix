@@ -12,9 +12,48 @@ function normalizeParams(params) {
   return JSON.stringify(entries);
 }
 
+export function normalizeRequestPath(url = "") {
+  let path = String(url || "").trim();
+  if (!path) {
+    return "";
+  }
+
+  try {
+    if (/^https?:\/\//i.test(path)) {
+      path = new URL(path).pathname;
+    }
+  } catch {
+    // Mantem o path original se a URL for invalida.
+  }
+
+  const apiMatch = path.match(/\/api(\/.*)$/i);
+  if (apiMatch?.[1]) {
+    path = apiMatch[1];
+  }
+
+  path = path.split("?")[0];
+  if (!path.startsWith("/")) {
+    path = `/${path}`;
+  }
+
+  return path;
+}
+
 export function getCacheKey(url, params) {
-  const path = String(url || "").split("?")[0];
+  const path = normalizeRequestPath(url);
   return `${path}|${normalizeParams(params)}`;
+}
+
+function cloneValue(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  try {
+    return structuredClone(value);
+  } catch {
+    return JSON.parse(JSON.stringify(value));
+  }
 }
 
 export function getCached(key) {
@@ -22,15 +61,15 @@ export function getCached(key) {
     return undefined;
   }
 
-  return store.get(key);
+  return cloneValue(store.get(key));
 }
 
 export function setCached(key, data) {
-  store.set(key, data);
+  store.set(key, cloneValue(data));
 }
 
 export function invalidateByUrlPrefix(urlPrefix) {
-  const prefix = String(urlPrefix || "").split("?")[0];
+  const prefix = normalizeRequestPath(urlPrefix);
 
   for (const key of store.keys()) {
     const path = key.split("|")[0];
@@ -45,7 +84,7 @@ export function clearApiCache() {
 }
 
 export function invalidateCacheForMutation(url = "") {
-  const path = String(url || "").split("?")[0];
+  const path = normalizeRequestPath(url);
 
   if (path.startsWith("/suppliers")) {
     invalidateByUrlPrefix("/suppliers");
@@ -55,12 +94,15 @@ export function invalidateCacheForMutation(url = "") {
 
   if (path.startsWith("/categories")) {
     invalidateByUrlPrefix("/categories");
+    invalidateByUrlPrefix("/suppliers");
+    invalidateByUrlPrefix("/dashboard");
     return;
   }
 
   if (path.startsWith("/rnc")) {
     invalidateByUrlPrefix("/rnc");
     invalidateByUrlPrefix("/dashboard");
+    invalidateByUrlPrefix("/suppliers");
     return;
   }
 

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { clearApiCache, invalidateCacheForMutation } from "./apiCache";
+import { clearApiCache, invalidateCacheForMutation, normalizeRequestPath } from "./apiCache";
 import { clearSession } from "../utils/authStorage";
 
 function resolveApiBaseUrl() {
@@ -39,13 +39,26 @@ export const api = axios.create({
   withCredentials: true
 });
 
+function getRequestPath(config = {}) {
+  const requestUrl = String(config.url || "");
+
+  if (/^https?:\/\//i.test(requestUrl)) {
+    return normalizeRequestPath(requestUrl);
+  }
+
+  const baseURL = String(config.baseURL || api.defaults.baseURL || "").replace(/\/$/, "");
+  const relativeUrl = requestUrl.startsWith("/") ? requestUrl : `/${requestUrl}`;
+
+  return normalizeRequestPath(`${baseURL}${relativeUrl}`);
+}
+
 api.interceptors.response.use(
   response => {
     const method = String(response?.config?.method || "get").toUpperCase();
-    const requestUrl = String(response?.config?.url || "");
+    const requestPath = getRequestPath(response?.config);
 
     if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-      invalidateCacheForMutation(requestUrl);
+      invalidateCacheForMutation(requestPath);
     }
 
     return response;
