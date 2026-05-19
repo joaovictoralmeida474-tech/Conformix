@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../services/api";
+import { cachedGet } from "../services/cachedApi";
 import {
   BarElement,
   CategoryScale,
@@ -40,7 +40,7 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    api.get("/dashboard").then((res) => setData(res.data));
+    cachedGet("/dashboard").then((res) => setData(res.data));
   }, []);
 
   const chartLabels = data.labels.slice(0, 20);

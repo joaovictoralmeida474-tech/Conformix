@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
+import { cachedGet } from "../services/cachedApi";
 import { ROLES, normalizeRole } from "../utils/access";
 
 const initialForm = {
@@ -38,7 +39,7 @@ export default function Categories() {
   const [message, setMessage] = useState("");
 
   async function load() {
-    const response = await api.get("/categories");
+    const response = await cachedGet("/categories");
     setCategories(response.data);
   }
 
@@ -48,7 +49,7 @@ export default function Categories() {
       return;
     }
 
-    const response = await api.get("/admin/settings");
+    const response = await cachedGet("/admin/settings");
     setCompanies(response.data?.companies || []);
   }
 

@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
+import { cachedGet } from "../services/cachedApi";
 import { PERMISSIONS, ROLES, hasPermission, normalizeRole } from "../utils/access";
 
 const initialSupplierForm = {
@@ -285,7 +286,7 @@ export default function Suppliers() {
     if (activeFilters.search) params.search = activeFilters.search;
     if (activeFilters.status) params.status = activeFilters.status;
 
-    const response = await api.get("/suppliers", { params });
+    const response = await cachedGet("/suppliers", { params });
     setSuppliers(response.data);
 
     if (!selectedId && response.data.length) {
@@ -311,7 +312,7 @@ export default function Suppliers() {
     setLoadingSupplierDetails(true);
 
     try {
-      const response = await api.get(`/suppliers/${id}`);
+      const response = await cachedGet(`/suppliers/${id}`, {}, { force: options.force });
       setSupplierDetails((current) => ({ ...current, [id]: response.data }));
       return response.data;
     } finally {
@@ -320,7 +321,7 @@ export default function Suppliers() {
   }
 
   async function loadCategories() {
-    const response = await api.get("/categories");
+    const response = await cachedGet("/categories");
     setCategories(response.data);
   }
 
@@ -330,7 +331,7 @@ export default function Suppliers() {
       return;
     }
 
-    const response = await api.get("/admin/settings");
+    const response = await cachedGet("/admin/settings");
     setCompanies(response.data?.companies || []);
   }
 

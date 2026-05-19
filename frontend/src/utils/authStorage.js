@@ -1,3 +1,5 @@
+import { clearApiCache } from "../services/apiCache";
+
 const REMEMBER_ME_KEY = "rememberMe";
 const USER_KEY = "conformixUser";
 const TOKEN_KEY = "conformixToken";
@@ -101,6 +103,7 @@ export function saveSession({ user, token, rememberMe }) {
 
 export function clearSession() {
   memoryUser = null;
+  clearApiCache();
   removeRaw(REMEMBER_ME_KEY);
   removeRaw(USER_KEY);
   removeRaw(TOKEN_KEY);

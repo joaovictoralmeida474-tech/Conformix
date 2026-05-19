@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
+import { cachedGet } from "../services/cachedApi";
 import { PERMISSIONS, ROLES, hasPermission, normalizeRole } from "../utils/access";
 
 const emptyUserForm = {
@@ -230,27 +231,27 @@ export default function AdminPortal() {
   }, [adminForm.companyId, departments, role, user?.departmentId]);
 
   async function loadOverview() {
-    const { data } = await api.get("/admin/overview");
+    const { data } = await cachedGet("/admin/overview");
     setOverview(data);
   }
 
   async function loadUsers() {
-    const { data } = await api.get("/admin/users");
+    const { data } = await cachedGet("/admin/users");
     setUsers(data);
   }
 
   async function loadAdmins() {
-    const { data } = await api.get("/admin/admins");
+    const { data } = await cachedGet("/admin/admins");
     setAdmins(data);
   }
 
   async function loadDepartments() {
-    const { data } = await api.get("/admin/departments");
+    const { data } = await cachedGet("/admin/departments");
     setDepartments(data);
   }
 
   async function loadSettings() {
-    const { data } = await api.get("/admin/settings");
+    const { data } = await cachedGet("/admin/settings");
     setSettings(data);
   }
 

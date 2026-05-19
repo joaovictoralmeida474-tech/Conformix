@@ -1,4 +1,5 @@
 import axios from "axios";
+import { clearApiCache, invalidateCacheForMutation } from "./apiCache";
 import { clearSession } from "../utils/authStorage";
 
 function resolveApiBaseUrl() {
@@ -39,13 +40,23 @@ export const api = axios.create({
 });
 
 api.interceptors.response.use(
-  response => response,
+  response => {
+    const method = String(response?.config?.method || "get").toUpperCase();
+    const requestUrl = String(response?.config?.url || "");
+
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+      invalidateCacheForMutation(requestUrl);
+    }
+
+    return response;
+  },
   error => {
     const status = error?.response?.status;
     const isAuthFailure = status === 401 || status === 403;
     const requestUrl = String(error?.config?.url || "");
 
     if (isAuthFailure && !isAuthRouteRequest(requestUrl)) {
+      clearApiCache();
       clearSession();
 
       if (typeof window !== "undefined" && window.location.pathname !== "/") {

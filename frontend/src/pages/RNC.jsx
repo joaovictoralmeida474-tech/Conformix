@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
+import { cachedGet } from "../services/cachedApi";
 import { PERMISSIONS, hasPermission } from "../utils/access";
 
 const initialForm = {
@@ -41,7 +42,7 @@ export default function RNC() {
 
   async function load() {
     try {
-      const response = await api.get("/rnc");
+      const response = await cachedGet("/rnc");
       setItems(response.data);
     } catch (loadError) {
       setError("Nao foi possivel carregar as RNCs.");

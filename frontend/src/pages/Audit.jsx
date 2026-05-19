@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { api } from "../services/api";
+import { cachedGet } from "../services/cachedApi";
 
 export default function Audit() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api
-      .get("/audit", { params: { limit: 100 } })
+    cachedGet("/audit", { params: { limit: 100 } })
       .then((response) => setItems(response.data))
       .catch(() => setError("Nao foi possivel carregar a trilha de auditoria."));
   }, []);
