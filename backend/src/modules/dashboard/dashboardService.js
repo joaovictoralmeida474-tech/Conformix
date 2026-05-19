@@ -4,8 +4,8 @@ import { isSuperAdminScope } from "../../shared/auth/dataScope.js";
 
 const DASHBOARD_SUPPLIER_COLUMNS = "id,name,status,nextReview,supplierType,score,riskIndex,companyId";
 const DASHBOARD_DOCUMENT_COLUMNS = "supplierId,expiresAt";
-const DASHBOARD_EVALUATION_COLUMNS = "id,supplierId,evaluationDate,score";
 const DASHBOARD_RNC_COLUMNS = "id,supplierId,status,deadline,createdAt";
+const DASHBOARD_CHART_LIMIT = Number(process.env.DASHBOARD_CHART_LIMIT || 40);
 const DASHBOARD_CACHE_TTL_MS = Number(process.env.DASHBOARD_CACHE_TTL_MS || 30_000);
 
 const dashboardCache = new Map();
@@ -118,24 +118,12 @@ async function loadDashboardSuppliers(scope) {
   }
 
   const supplierIds = suppliers.map((item) => item.id);
-  const [documents, evaluations] = await Promise.all([
-    throwIfSupabaseError(
-      await client.from("SupplierDocument").select(DASHBOARD_DOCUMENT_COLUMNS).in("supplierId", supplierIds),
-      "listar documentos do dashboard"
-    ),
-    throwIfSupabaseError(
-      await client
-        .from("Evaluation")
-        .select(DASHBOARD_EVALUATION_COLUMNS)
-        .in("supplierId", supplierIds)
-        .order("evaluationDate", { ascending: false })
-        .order("id", { ascending: false }),
-      "listar avaliacoes do dashboard"
-    )
-  ]);
+  const documents = throwIfSupabaseError(
+    await client.from("SupplierDocument").select(DASHBOARD_DOCUMENT_COLUMNS).in("supplierId", supplierIds),
+    "listar documentos do dashboard"
+  );
 
   const documentsBySupplier = new Map();
-  const latestEvaluationBySupplier = new Map();
 
   for (const document of documents) {
     if (!documentsBySupplier.has(document.supplierId)) {
@@ -144,18 +132,9 @@ async function loadDashboardSuppliers(scope) {
     documentsBySupplier.get(document.supplierId).push(document);
   }
 
-  for (const evaluation of evaluations) {
-    if (!latestEvaluationBySupplier.has(evaluation.supplierId)) {
-      latestEvaluationBySupplier.set(evaluation.supplierId, evaluation);
-    }
-  }
-
   return suppliers.map((supplier) => ({
     ...supplier,
-    documents: documentsBySupplier.get(supplier.id) || [],
-    evaluations: latestEvaluationBySupplier.has(supplier.id)
-      ? [latestEvaluationBySupplier.get(supplier.id)]
-      : []
+    documents: documentsBySupplier.get(supplier.id) || []
   }));
 }
 
@@ -249,9 +228,9 @@ async function buildMetrics(scope) {
     alerts,
     openRncs: openRncItems,
     overdueRncs: openRncs.filter((item) => item.deadline && isOverdue(item.deadline) && item.status === "ABERTA"),
-    labels: suppliers.map((item) => item.name),
-    scores: suppliers.map((item) => Number(item.score || 0)),
-    risks: suppliers.map((item) => Number(item.riskIndex || 0))
+    labels: suppliers.slice(0, DASHBOARD_CHART_LIMIT).map((item) => item.name),
+    scores: suppliers.slice(0, DASHBOARD_CHART_LIMIT).map((item) => Number(item.score || 0)),
+    risks: suppliers.slice(0, DASHBOARD_CHART_LIMIT).map((item) => Number(item.riskIndex || 0))
   };
 }
 

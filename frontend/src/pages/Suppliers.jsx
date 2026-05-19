@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
 import { cachedGet } from "../services/cachedApi";
@@ -343,8 +341,16 @@ export default function Suppliers() {
     ]);
   }
 
+  function prefetchSupplierDetails(supplierId) {
+    const id = Number(supplierId);
+    if (!id) return;
+    void loadSupplierDetails(id);
+  }
+
   useEffect(() => {
-    loadAll();
+    void loadSuppliers();
+    void loadCompanies();
+    void loadCategories();
   }, [role]);
 
   function resetSupplierEditor() {
@@ -485,7 +491,10 @@ export default function Suppliers() {
       setActivePanel("list");
       setMessage(editingId ? "Fornecedor atualizado com sucesso." : "Fornecedor criado com sucesso.");
       resetSupplierEditor();
-      await loadAll(filters, { force: true });
+      await Promise.all([
+        loadSuppliers(filters, { force: true }),
+        loadSupplierDetails(response.data.id, { force: true })
+      ]);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o fornecedor.");
     } finally {
@@ -493,47 +502,44 @@ export default function Suppliers() {
     }
   }
 
-  async function editSupplier(supplier) {
+  function editSupplier(supplier) {
     if (!canManageSuppliers) return;
-    try {
-      setError("");
-      const detailed = await loadSupplierDetails(supplier.id);
-      if (!detailed) return;
-      setEditingId(detailed.id);
-      setSelectedId(detailed.id);
-      setSupplierForm(mapSupplierToForm(detailed));
-      setDocumentEntries(buildDocumentEntries(detailed.category?.documents || [], [], detailed.documents || []));
-      setActivePanel("form");
-      setMessage("");
-    } catch (err) {
-      setError(err.response?.data?.error || "Nao foi possivel carregar o fornecedor.");
-    }
+    setError("");
+    setMessage("");
+    setSelectedId(supplier.id);
+    setActivePanel("form");
+    void loadSupplierDetails(supplier.id, { force: false })
+      .then((detailed) => {
+        if (!detailed) return;
+        setEditingId(detailed.id);
+        setSupplierForm(mapSupplierToForm(detailed));
+        setDocumentEntries(
+          buildDocumentEntries(detailed.category?.documents || [], [], detailed.documents || [])
+        );
+      })
+      .catch((err) => {
+        setError(err.response?.data?.error || "Nao foi possivel carregar o fornecedor.");
+      });
   }
 
-  async function viewSupplier(supplier) {
-    try {
-      setSelectedId(supplier.id);
-      setActivePanel("details");
-      setMessage("");
-      setError("");
-      await loadSupplierDetails(supplier.id);
-    } catch (err) {
-      setError(err.response?.data?.error || "Nao foi possivel carregar o fornecedor.");
-    }
+  function viewSupplier(supplier) {
+    setSelectedId(supplier.id);
+    setActivePanel("details");
+    setMessage("");
+    setError("");
+    void loadSupplierDetails(supplier.id);
   }
 
-  async function openEvaluation(supplier) {
+  function openEvaluation(supplier) {
     if (!canEvaluateSuppliers) return;
-    try {
-      setSelectedId(supplier.id);
-      setMessage("");
-      setError("");
-      await loadSupplierDetails(supplier.id);
-      setActivePanel("evaluation");
-      setEvaluationForm(initialEvaluationForm);
-      setEvaluationFile(null);
-    } catch (err) {
-      setError(err.response?.data?.error || "Nao foi possivel carregar o fornecedor.");
+    setSelectedId(supplier.id);
+    setActivePanel("evaluation");
+    setEvaluationForm(initialEvaluationForm);
+    setEvaluationFile(null);
+    setMessage("");
+    setError("");
+    if (!categories.length) {
+      void loadCategories();
     }
   }
 
@@ -561,7 +567,7 @@ export default function Suppliers() {
         return next;
       });
 
-      await loadAll(filters, { force: true });
+      await loadSuppliers(filters, { force: true });
       setActivePanel("list");
       setMessage("Fornecedor excluido com sucesso.");
     } catch (err) {
@@ -668,8 +674,13 @@ export default function Suppliers() {
     );
   }
 
-  function printDossier() {
+  async function printDossier() {
     if (!selectedSupplier) return;
+
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable")
+    ]);
 
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
     const left = 40;
@@ -800,19 +811,6 @@ export default function Suppliers() {
     await loadSuppliers(filters, { force: true });
   }
 
-  if (
-    ["details", "form", "evaluation"].includes(activePanel) &&
-    selectedId &&
-    loadingSupplierDetails &&
-    !supplierDetails[selectedId]
-  ) {
-    return (
-      <div className="supplier-shell">
-        <p className="dashboard-empty-copy">Carregando dados do fornecedor...</p>
-      </div>
-    );
-  }
-
   if (activePanel === "details" && selectedSupplier) {
     return (
       <div className="supplier-shell">
@@ -825,6 +823,9 @@ export default function Suppliers() {
                 {formatCnpj(selectedSupplier.cnpj)} | {getTypeLabel(selectedSupplier.supplierType).toLowerCase()} | risco{" "}
                 {Number(selectedSupplier.riskIndex || 0).toFixed(2)} | tendencia {getTrendLabel(selectedSupplier.trend)}
               </p>
+              {loadingSupplierDetails && !supplierDetails[selectedId] ? (
+                <p className="dashboard-empty-copy">Atualizando detalhes...</p>
+              ) : null}
             </div>
 
             <div className="supplier-hero-actions">
@@ -1479,7 +1480,7 @@ export default function Suppliers() {
             <tbody>
               {suppliers.length ? (
                 suppliers.map((supplier) => (
-                  <tr key={supplier.id}>
+                  <tr key={supplier.id} onMouseEnter={() => prefetchSupplierDetails(supplier.id)}>
                     <td>
                       <strong>{supplier.name}</strong>
                       <span>{supplier.tradeName || "-"}</span>

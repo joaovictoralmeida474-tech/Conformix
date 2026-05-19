@@ -49,11 +49,15 @@ function cloneValue(value) {
     return undefined;
   }
 
-  try {
-    return structuredClone(value);
-  } catch {
-    return JSON.parse(JSON.stringify(value));
+  if (Array.isArray(value)) {
+    return value.map((item) => (item && typeof item === "object" ? { ...item } : item));
   }
+
+  if (value && typeof value === "object") {
+    return { ...value };
+  }
+
+  return value;
 }
 
 export function getCached(key) {

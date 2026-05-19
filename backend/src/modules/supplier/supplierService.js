@@ -6,7 +6,7 @@ import path from "path";
 
 import * as repo from "../../shared/database/supabaseRepo.js";
 import { applyCompanyScope } from "../../shared/database/supabaseScope.js";
-import { loadSupplierGraph } from "../../shared/database/supabaseRelations.js";
+import { loadCategoryBundle, loadSupplierGraph } from "../../shared/database/supabaseRelations.js";
 import { getSupabaseAdmin, throwIfSupabaseError } from "../../shared/database/supabaseStore.js";
 import { checkExpiry } from "../../shared/utils/checkExpiry.js";
 import { getEvaluationUploadsRoot, getSupplierUploadsRoot } from "../../shared/uploads.js";
@@ -671,13 +671,22 @@ export async function syncDocuments(scope, supplierId, documents = [], files = [
 }
 
 export async function getDocumentFile(scope, supplierId, documentId) {
-  const supplier = await findSupplier(scope, supplierId);
+  const supplier = await findSupplierRow(scope, supplierId, "id");
 
   if (!supplier) {
     throw new Error("Fornecedor nao encontrado");
   }
 
-  const document = (supplier.documents || []).find((item) => Number(item.id) === Number(documentId));
+  const client = getSupabaseAdmin();
+  const document = throwIfSupabaseError(
+    await client
+      .from("SupplierDocument")
+      .select("id,filename,originalName,supplierId")
+      .eq("supplierId", Number(supplierId))
+      .eq("id", Number(documentId))
+      .maybeSingle(),
+    "buscar documento do fornecedor"
+  );
 
   if (!document || !document.filename) {
     throw new Error("Documento nao encontrado");
@@ -707,13 +716,22 @@ export async function getDocumentFile(scope, supplierId, documentId) {
 }
 
 export async function getEvaluationFile(scope, supplierId, evaluationId) {
-  const supplier = await findSupplier(scope, supplierId);
+  const supplier = await findSupplierRow(scope, supplierId, "id");
 
   if (!supplier) {
     throw new Error("Fornecedor nao encontrado");
   }
 
-  const evaluation = (supplier.evaluations || []).find((item) => Number(item.id) === Number(evaluationId));
+  const client = getSupabaseAdmin();
+  const evaluation = throwIfSupabaseError(
+    await client
+      .from("Evaluation")
+      .select("id,attachmentFilename,attachmentOriginalName,supplierId")
+      .eq("supplierId", Number(supplierId))
+      .eq("id", Number(evaluationId))
+      .maybeSingle(),
+    "buscar avaliacao do fornecedor"
+  );
 
   if (!evaluation || !evaluation.attachmentFilename) {
     throw new Error("Documento da avaliacao nao encontrado");
@@ -727,11 +745,14 @@ export async function getEvaluationFile(scope, supplierId, evaluationId) {
 }
 
 export async function createEvaluation(scope, supplierId, evaluatorId, payload = {}, attachment = null) {
-  const supplier = await findSupplier(scope, supplierId);
+  const supplierRow = await findSupplierRow(scope, supplierId);
 
-  if (!supplier) {
+  if (!supplierRow) {
     throw new Error("Fornecedor nao encontrado");
   }
+
+  const category = await loadCategoryBundle(supplierRow.categoryId);
+  const supplier = { ...supplierRow, category };
 
   const answers = normalizeEvaluationAnswers(payload.answers || [], supplier);
   if (!answers.length) {

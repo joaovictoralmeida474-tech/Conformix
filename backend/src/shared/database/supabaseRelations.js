@@ -9,6 +9,8 @@ const RNC_COLUMNS =
 const EVALUATION_COLUMNS =
   "id,supplierId,evaluatorId,evaluationDate,invoiceNumber,observations,attachmentFilename,attachmentOriginalName,score,classification,createdAt";
 const EVALUATION_ANSWER_COLUMNS = "id,evaluationId,categoryQuestionId,questionText,score,sortOrder";
+const SUPPLIER_GRAPH_EVALUATION_LIMIT = Number(process.env.SUPPLIER_GRAPH_EVALUATION_LIMIT || 25);
+const SUPPLIER_GRAPH_RNC_LIMIT = Number(process.env.SUPPLIER_GRAPH_RNC_LIMIT || 50);
 
 export async function loadCategoryBundle(categoryId) {
   if (!categoryId) {
@@ -64,7 +66,8 @@ export async function loadSupplierGraph(supplierRow) {
         .from("RNC")
         .select(RNC_COLUMNS)
         .eq("supplierId", supplierRow.id)
-        .order("createdAt", { ascending: false }),
+        .order("createdAt", { ascending: false })
+        .limit(SUPPLIER_GRAPH_RNC_LIMIT),
       "listar rnc do fornecedor"
     ),
     throwIfSupabaseError(
@@ -73,7 +76,8 @@ export async function loadSupplierGraph(supplierRow) {
         .select(EVALUATION_COLUMNS)
         .eq("supplierId", supplierRow.id)
         .order("evaluationDate", { ascending: false })
-        .order("id", { ascending: false }),
+        .order("id", { ascending: false })
+        .limit(SUPPLIER_GRAPH_EVALUATION_LIMIT),
       "listar avaliacoes do fornecedor"
     )
   ]);

@@ -126,27 +126,11 @@ export async function list(scope) {
   const items = await listRncRowsForScope(scope);
   const hydrated = await loadRncGraphs(items);
 
-  const missingDeadline = hydrated.filter(
-    (item) => !item.deadline && item.evaluation?.evaluationDate
+  return hydrated.map((item) =>
+    !item.deadline && item.evaluation?.evaluationDate
+      ? { ...item, deadline: addThirtyDays(item.evaluation.evaluationDate) }
+      : item
   );
-
-  if (missingDeadline.length) {
-    await Promise.all(
-      missingDeadline.map((item) =>
-        repo.updateRow("RNC", item.id, {
-          deadline: addThirtyDays(item.evaluation.evaluationDate)
-        })
-      )
-    );
-
-    return hydrated.map((item) =>
-      !item.deadline && item.evaluation?.evaluationDate
-        ? { ...item, deadline: addThirtyDays(item.evaluation.evaluationDate) }
-        : item
-    );
-  }
-
-  return hydrated;
 }
 
 export async function update(scope, id, data) {
