@@ -49,6 +49,7 @@ export function invalidateCacheForMutation(url = "") {
 
   if (path.startsWith("/suppliers")) {
     invalidateByUrlPrefix("/suppliers");
+    invalidateByUrlPrefix("/dashboard");
     return;
   }
 
@@ -59,6 +60,7 @@ export function invalidateCacheForMutation(url = "") {
 
   if (path.startsWith("/rnc")) {
     invalidateByUrlPrefix("/rnc");
+    invalidateByUrlPrefix("/dashboard");
     return;
   }
 
