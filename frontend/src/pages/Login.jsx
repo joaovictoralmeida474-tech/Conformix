@@ -421,14 +421,15 @@ export default function Login() {
         <section className="login-hero-exact anim-fade-slide-right">
           <div className="login-brand-exact">
             <div className="login-brand-3d">
+              <span className="login-brand-glow-exact" aria-hidden="true" />
               <img
                 src={integraxtechLogo}
                 alt="Integrax"
                 className="login-brand-image-exact"
-                width={1024}
-                height={341}
+                width={2048}
+                height={682}
                 loading="eager"
-                decoding="async"
+                decoding="sync"
                 fetchPriority="high"
               />
             </div>
@@ -556,14 +557,15 @@ export default function Login() {
             <div className="login-card-body-exact">
               <div className="login-mobile-brand-exact">
                 <div className="login-brand-3d login-brand-3d-mobile">
+                  <span className="login-brand-glow-exact" aria-hidden="true" />
                   <img
                     src={integraxtechLogo}
                     alt="Integrax"
                     className="login-brand-image-mobile-exact"
-                    width={1024}
-                    height={341}
+                    width={2048}
+                    height={682}
                     loading="eager"
-                    decoding="async"
+                    decoding="sync"
                     fetchPriority="high"
                   />
                 </div>
