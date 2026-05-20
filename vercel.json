@@ -8,52 +8,6 @@
       "maxDuration": 30
     }
   },
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "conformix.vercel.app"
-        }
-      ],
-      "destination": "https://integraxx.vercel.app/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.conformix.vercel.app"
-        }
-      ],
-      "destination": "https://integraxx.vercel.app/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "integrax.vercel.app"
-        }
-      ],
-      "destination": "https://integraxx.vercel.app/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.integrax.vercel.app"
-        }
-      ],
-      "destination": "https://integraxx.vercel.app/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/:path*",
