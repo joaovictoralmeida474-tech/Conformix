@@ -13,7 +13,7 @@ function getInitials(name) {
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() || "")
-    .join("") || "IX";
+    .join("") || "IXX";
 }
 
 function getRoleLabel(role) {
@@ -96,7 +96,7 @@ export default function Sidebar() {
       <div className="sidebar-brand-panel">
         <img
           src={integraxLogo}
-          alt="Integrax"
+          alt="Integraxx"
           className="sidebar-brand-logo"
         />
       </div>
@@ -115,7 +115,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-profile-card">
-        <div className="sidebar-profile-avatar">{getInitials(user?.name || user?.email || "Integrax")}</div>
+        <div className="sidebar-profile-avatar">{getInitials(user?.name || user?.email || "Integraxx")}</div>
         <div className="sidebar-profile-copy">
           <strong>{user?.name || user?.email || "Administrador"}</strong>
           <small>{getRoleLabel(user?.role)}</small>

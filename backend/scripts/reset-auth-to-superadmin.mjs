@@ -14,7 +14,7 @@ function normalizeEmail(email) {
 }
 
 async function ensureSuperAdminCompany() {
-  const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Integrax Platform").trim();
+  const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Integraxx Platform").trim();
   const departmentName = "Administracao Global";
   const departmentSlug = "administracao-global";
 

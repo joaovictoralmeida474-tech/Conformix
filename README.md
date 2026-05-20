@@ -1,14 +1,14 @@
-# Integrax
+# Integraxx
 
 ## URL de producao (Vercel)
 
-O endereco `*.vercel.app` segue o **nome do projeto** no painel da Vercel (nao vem do codigo).
+URL oficial: **`https://integrax.vercel.app`**
 
-Para trocar `conformix.vercel.app` por `integrax.vercel.app`:
+Ao renomear o projeto na Vercel, a URL antiga (`conformix.vercel.app`) pode continuar funcionando como alias. Isso e normal.
 
-1. Abra [vercel.com/dashboard](https://vercel.com/dashboard) e entre no projeto atual.
-2. **Settings** → **General** → **Project Name** → altere para `integrax` e salve.
-3. O site passa a abrir em `https://integrax.vercel.app` (faca um novo deploy se precisar).
-4. No **Supabase** → **Authentication** → **URL Configuration**, atualize **Site URL** e **Redirect URLs** para `https://integrax.vercel.app` (e remova URLs antigas com `conformix` se existirem).
+1. Use e compartilhe sempre **`https://integrax.vercel.app`**.
+2. Faca um **deploy** apos alterar o `vercel.json` (redirect automatico do dominio antigo para o novo).
+3. No **Supabase** → **Authentication** → **URL Configuration**, defina **Site URL** = `https://integrax.vercel.app` e inclua `https://integrax.vercel.app/**` em **Redirect URLs**.
+4. Opcional na Vercel: **Settings** → **Domains** e confira se `integrax.vercel.app` esta como dominio de producao.
 
-O backend ja aceita automaticamente o dominio atual da Vercel em CORS apos o redeploy.
+O backend aceita automaticamente o dominio atual da Vercel em CORS.

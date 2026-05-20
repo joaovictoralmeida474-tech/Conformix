@@ -104,7 +104,7 @@ async function ensureSuperAdmin() {
     .toLowerCase();
   const password = String(process.env.SUPER_ADMIN_PASSWORD || "");
   const name = String(process.env.SUPER_ADMIN_NAME || "Super Admin").trim();
-  const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Integrax Platform").trim();
+  const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Integraxx Platform").trim();
 
   if (!email || !password) {
     throw new Error(

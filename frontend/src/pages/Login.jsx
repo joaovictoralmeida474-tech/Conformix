@@ -424,7 +424,7 @@ export default function Login() {
               <span className="login-brand-glow-exact" aria-hidden="true" />
               <img
                 src={integraxtechLogo}
-                alt="Integrax"
+                alt="Integraxx"
                 className="login-brand-image-exact"
                 width={2048}
                 height={682}
@@ -560,7 +560,7 @@ export default function Login() {
                   <span className="login-brand-glow-exact" aria-hidden="true" />
                   <img
                     src={integraxtechLogo}
-                    alt="Integrax"
+                    alt="Integraxx"
                     className="login-brand-image-mobile-exact"
                     width={2048}
                     height={682}
