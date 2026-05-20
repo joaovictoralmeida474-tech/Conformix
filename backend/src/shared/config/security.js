@@ -46,8 +46,28 @@ export function getJwtSecret() {
   return secret;
 }
 
+function getVercelDeploymentOrigins() {
+  const hosts = [
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL
+  ]
+    .map((value) =>
+      String(value || "")
+        .trim()
+        .replace(/^https?:\/\//i, "")
+        .replace(/\/$/, "")
+    )
+    .filter(Boolean);
+
+  return [...new Set(hosts.map((host) => `https://${host}`))];
+}
+
 export function getAllowedCorsOrigins() {
-  return parseOrigins(process.env.CORS_ALLOWED_ORIGINS);
+  const configured = parseOrigins(process.env.CORS_ALLOWED_ORIGINS);
+  const vercelOrigins = getVercelDeploymentOrigins();
+
+  return [...new Set([...configured, ...vercelOrigins])];
 }
 
 function normalizeHost(value) {
