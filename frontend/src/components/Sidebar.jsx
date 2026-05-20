@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { clearSession } from "../utils/authStorage";
-import integraxxLogo from "../assets/integraxx-logo-transparent.png";
+import integraxxSidebarLogo from "../assets/integraxx-sidebar-logo-transparent.png";
 import { PERMISSIONS, canAccessAdmin, hasPermission } from "../utils/access";
 
 function getInitials(name) {
@@ -90,24 +90,33 @@ export default function Sidebar() {
         className="sidebar-collapse-toggle"
         onClick={toggleCollapse}
         aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
+        aria-expanded={!isCollapsed}
       >
-        <i className={isCollapsed ? "ri-arrow-right-s-line" : "ri-arrow-left-s-line"} />
+        <i className={isCollapsed ? "ri-arrow-right-s-line" : "ri-arrow-left-s-line"} aria-hidden="true" />
       </button>
 
       <div className="sidebar-brand-panel">
         <img
-          src={integraxxLogo}
+          src={integraxxSidebarLogo}
           alt="Integraxx"
           className="sidebar-brand-logo"
+          width={512}
+          height={171}
         />
       </div>
 
-      <nav className="sidebar-nav">
+      <nav className="sidebar-nav" aria-label="Menu principal">
         <ul className="nav-list">
           {links.map((link) => (
             <li key={link.to}>
-              <NavLink to={link.to} className="nav-link sidebar-menu-link" title={link.label}>
-                <i className={link.icon} />
+              <NavLink
+                to={link.to}
+                className={({ isActive }) =>
+                  `nav-link sidebar-menu-link${isActive ? " active" : ""}`
+                }
+                title={link.label}
+              >
+                <i className={link.icon} aria-hidden="true" />
                 <span>{link.label}</span>
               </NavLink>
             </li>
@@ -116,19 +125,24 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-profile-card">
-        <div className="sidebar-profile-avatar">{getInitials(user?.name || user?.email || "Integraxx")}</div>
-        <div className="sidebar-profile-copy">
-          <strong>{user?.name || user?.email || "Administrador"}</strong>
-          <small>{getRoleLabel(user?.role)}</small>
+        <div className="sidebar-profile-main">
+          <div className="sidebar-profile-avatar" aria-hidden="true">
+            {getInitials(user?.name || user?.email || "Integraxx")}
+          </div>
+          <div className="sidebar-profile-copy">
+            <strong>{user?.name || user?.email || "Administrador"}</strong>
+            <small>{getRoleLabel(user?.role)}</small>
+          </div>
         </div>
         <button
           type="button"
-          className="nav-button sidebar-logout-inline"
+          className="sidebar-logout-button"
           onClick={logout}
           aria-label="Sair"
           title="Sair"
         >
-          <i className="ri-logout-box-r-line" />
+          <i className="ri-logout-box-r-line" aria-hidden="true" />
+          <span>Sair</span>
         </button>
       </div>
     </aside>
