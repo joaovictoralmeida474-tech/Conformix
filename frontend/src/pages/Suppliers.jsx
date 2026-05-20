@@ -491,10 +491,6 @@ export default function Suppliers() {
       setActivePanel("list");
       setMessage(editingId ? "Fornecedor atualizado com sucesso." : "Fornecedor criado com sucesso.");
       resetSupplierEditor();
-      await Promise.all([
-        loadSuppliers(filters, { force: true }),
-        loadSupplierDetails(response.data.id, { force: true })
-      ]);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o fornecedor.");
     } finally {
@@ -567,7 +563,7 @@ export default function Suppliers() {
         return next;
       });
 
-      await loadSuppliers(filters, { force: true });
+      setSuppliers((current) => current.filter((item) => Number(item.id) !== Number(id)));
       setActivePanel("list");
       setMessage("Fornecedor excluido com sucesso.");
     } catch (err) {
@@ -646,13 +642,11 @@ export default function Suppliers() {
         }
       });
 
-      await loadSuppliers(filters, { force: true });
-      await loadSupplierDetails(response.data.id, { force: true });
-
       setEvaluationForm(initialEvaluationForm);
       setEvaluationFile(null);
       setActivePanel("details");
       setMessage("Avaliacao registrada com sucesso.");
+      void loadSupplierDetails(selectedSupplier.id);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel registrar a avaliacao.");
     }

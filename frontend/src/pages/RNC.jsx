@@ -71,9 +71,9 @@ export default function RNC() {
     try {
       setError("");
       setMessage("");
-      await api.put(`/rnc/${selectedItem.id}`, form);
-      await load({ force: true });
-      setMessage(isResolvedStatus(selectedItem.status) ? "RNC atualizada com sucesso." : "Tratativa salva com sucesso.");
+      const { data } = await api.put(`/rnc/${selectedItem.id}`, form);
+      setItems((current) => current.map((item) => (item.id === data.id ? data : item)));
+      setMessage(isResolvedStatus(data.status) ? "RNC atualizada com sucesso." : "Tratativa salva com sucesso.");
       setSelectedItem(null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel atualizar a RNC.");

@@ -84,7 +84,6 @@ export default function Categories() {
       setDocumentText("");
       setEditingId(null);
       setActivePanel("list");
-      await load({ force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar a categoria.");
     }
@@ -132,7 +131,7 @@ export default function Categories() {
         setActivePanel("list");
       }
 
-      await load({ force: true });
+      setCategories((current) => current.filter((category) => Number(category.id) !== Number(id)));
       setMessage("Categoria excluida com sucesso.");
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel excluir a categoria.");

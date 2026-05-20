@@ -5,7 +5,7 @@ const USER_ADMIN_COLUMNS = "id,name,email,role,active,companyId,departmentId,las
 const PERMISSION_COLUMNS = "id,key,name,description,createdAt";
 const DEPARTMENT_COLUMNS = "id,name,slug,description,active,companyId,createdAt,updatedAt";
 const AUDIT_LOG_COLUMNS = "id,userId,action,entity,entityId,details,createdAt";
-const ADMIN_CACHE_TTL_MS = Number(process.env.ADMIN_CACHE_TTL_MS || 30_000);
+const ADMIN_CACHE_TTL_MS = Number(process.env.ADMIN_CACHE_TTL_MS || 60_000);
 
 const adminDataCache = new Map();
 

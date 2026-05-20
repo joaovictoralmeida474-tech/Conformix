@@ -9,7 +9,7 @@ export async function listRNC(req, res) {
 export async function updateRNC(req, res) {
   try {
     const updated = await rncService.update(req.user, req.params.id, req.body);
-    await log(req.user.id, "update", {
+    log(req.user.id, "update", {
       entity: "rnc",
       entityId: updated.id,
       details: `Atualizou RNC ${updated.id}`

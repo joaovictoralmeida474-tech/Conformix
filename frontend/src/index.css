@@ -5493,6 +5493,16 @@ body.login-theme .login-badge-item-exact i {
   box-sizing: border-box;
 }
 
+.route-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  color: #8fa4c2;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
 @media (max-width: 1080px) {
   .admin-stat-grid,
   .admin-overview-grid {

@@ -6,7 +6,7 @@ const AUDIT_LOG_COLUMNS = "id,userId,action,entity,entityId,details,createdAt";
 const DEFAULT_AUDIT_LIMIT = 100;
 const MAX_AUDIT_LIMIT = 200;
 
-export async function log(userId, action, meta = {}) {
+async function writeAuditLog(userId, action, meta = {}) {
   const client = getSupabaseAdmin();
   const normalizedUserId = Number(userId);
 
@@ -24,6 +24,12 @@ export async function log(userId, action, meta = {}) {
     }),
     "registrar log de auditoria"
   );
+}
+
+export function log(userId, action, meta = {}) {
+  void writeAuditLog(userId, action, meta).catch((error) => {
+    console.error("Falha ao registrar auditoria:", error?.message || error);
+  });
 }
 
 export async function listByCompany(scope, options = {}) {

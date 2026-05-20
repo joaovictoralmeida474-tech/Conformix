@@ -1,14 +1,34 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Suppliers from "./pages/Suppliers";
-import Categories from "./pages/Categories";
-import RNC from "./pages/RNC";
-import Audit from "./pages/Audit";
-import AdminPortal from "./pages/AdminPortal";
 import Layout from "./layouts/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { PERMISSIONS } from "./utils/access";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Suppliers = lazy(() => import("./pages/Suppliers"));
+const Categories = lazy(() => import("./pages/Categories"));
+const RNC = lazy(() => import("./pages/RNC"));
+const Audit = lazy(() => import("./pages/Audit"));
+const AdminPortal = lazy(() => import("./pages/AdminPortal"));
+
+function PageFallback() {
+  return (
+    <div className="route-loading" aria-live="polite">
+      Carregando...
+    </div>
+  );
+}
+
+function ProtectedPage({ permissions = [], roles = [], children }) {
+  return (
+    <ProtectedRoute permissions={permissions} roles={roles}>
+      <Layout>
+        <Suspense fallback={<PageFallback />}>{children}</Suspense>
+      </Layout>
+    </ProtectedRoute>
+  );
+}
 
 export default function App() {
   return (
@@ -19,110 +39,90 @@ export default function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.DASHBOARD_VIEW]}>
-              <Layout>
-                <Dashboard />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.DASHBOARD_VIEW]}>
+              <Dashboard />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/suppliers"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.SUPPLIERS_VIEW]}>
-              <Layout>
-                <Suppliers />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.SUPPLIERS_VIEW]}>
+              <Suppliers />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/categories"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.CATEGORIES_VIEW]}>
-              <Layout>
-                <Categories />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.CATEGORIES_VIEW]}>
+              <Categories />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/rnc"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.RNC_VIEW]}>
-              <Layout>
-                <RNC />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.RNC_VIEW]}>
+              <RNC />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/audit"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.AUDIT_VIEW]}>
-              <Layout>
-                <Audit />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.AUDIT_VIEW]}>
+              <Audit />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/admin"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.ADMIN_DASHBOARD_VIEW]}>
-              <Layout>
-                <AdminPortal />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.ADMIN_DASHBOARD_VIEW]}>
+              <AdminPortal />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/admin/usuarios"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.USERS_VIEW]}>
-              <Layout>
-                <AdminPortal />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.USERS_VIEW]}>
+              <AdminPortal />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/admin/admins"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.ADMINS_VIEW]}>
-              <Layout>
-                <AdminPortal />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.ADMINS_VIEW]}>
+              <AdminPortal />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/admin/departamentos"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.DEPARTMENTS_VIEW]}>
-              <Layout>
-                <AdminPortal />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.DEPARTMENTS_VIEW]}>
+              <AdminPortal />
+            </ProtectedPage>
           }
         />
 
         <Route
           path="/admin/configuracoes"
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.SETTINGS_VIEW]}>
-              <Layout>
-                <AdminPortal />
-              </Layout>
-            </ProtectedRoute>
+            <ProtectedPage permissions={[PERMISSIONS.ADMIN_ACCESS, PERMISSIONS.SETTINGS_VIEW]}>
+              <AdminPortal />
+            </ProtectedPage>
           }
         />
       </Routes>

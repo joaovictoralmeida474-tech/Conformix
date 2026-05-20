@@ -61,7 +61,7 @@ export default function Login() {
 
     function seedParticles() {
       particles.length = 0;
-      const total = Math.min(180, Math.max(92, Math.floor(window.innerWidth / 11)));
+      const total = Math.min(72, Math.max(48, Math.floor(window.innerWidth / 18)));
 
       for (let index = 0; index < total; index += 1) {
         particles.push({

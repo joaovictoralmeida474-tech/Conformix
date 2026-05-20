@@ -29,7 +29,7 @@ export async function listSuppliers(req, res) {
 export async function createSupplier(req, res) {
   try {
     const supplier = await supplierService.create(req.user, req.body);
-    await log(req.user.id, "create", {
+    log(req.user.id, "create", {
       entity: "fornecedor",
       entityId: supplier.id,
       details: `Criou fornecedor ${supplier.name}`
@@ -52,7 +52,7 @@ export async function getSupplier(req, res) {
 export async function updateSupplier(req, res) {
   try {
     const supplier = await supplierService.update(req.user, req.params.id, req.body);
-    await log(req.user.id, "update", {
+    log(req.user.id, "update", {
       entity: "fornecedor",
       entityId: supplier.id,
       details: `Atualizou fornecedor ${supplier.name}`
@@ -66,7 +66,7 @@ export async function updateSupplier(req, res) {
 export async function deleteSupplier(req, res) {
   try {
     await supplierService.remove(req.user, req.params.id);
-    await log(req.user.id, "delete", {
+    log(req.user.id, "delete", {
       entity: "fornecedor",
       entityId: req.params.id,
       details: `Excluiu fornecedor ${req.params.id}`
@@ -102,7 +102,7 @@ export async function evaluateSupplier(req, res) {
       req.file || null
     );
 
-    await log(req.user.id, "create", {
+    log(req.user.id, "create", {
       entity: "avaliacao",
       entityId: req.params.id,
       details: `Avaliou fornecedor ${req.params.id}`
@@ -168,7 +168,7 @@ export async function syncSupplierDocuments(req, res) {
       req.files || []
     );
 
-    await log(req.user.id, "update", {
+    log(req.user.id, "update", {
       entity: "fornecedor_documentos",
       entityId: Number(req.params.id),
       details: `Atualizou documentos do fornecedor ${req.params.id}`

@@ -29,7 +29,7 @@ export async function listCategories(req, res) {
 export async function createCategory(req, res) {
   try {
     const item = await categoryService.create(req.user, req.body);
-    await log(req.user.id, "create", {
+    log(req.user.id, "create", {
       entity: "categoria",
       entityId: item.id,
       details: `Criou categoria ${item.name}`
@@ -43,7 +43,7 @@ export async function createCategory(req, res) {
 export async function updateCategory(req, res) {
   try {
     const item = await categoryService.update(req.user, req.params.id, req.body);
-    await log(req.user.id, "update", {
+    log(req.user.id, "update", {
       entity: "categoria",
       entityId: item.id,
       details: `Atualizou categoria ${item.name}`
@@ -57,7 +57,7 @@ export async function updateCategory(req, res) {
 export async function deleteCategory(req, res) {
   try {
     await categoryService.remove(req.user, req.params.id);
-    await log(req.user.id, "delete", {
+    log(req.user.id, "delete", {
       entity: "categoria",
       entityId: req.params.id,
       details: `Excluiu categoria ${req.params.id}`

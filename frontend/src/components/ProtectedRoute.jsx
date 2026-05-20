@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { api } from "../services/api";
 import { getDefaultRouteForUser, hasPermission } from "../utils/access";
 import {
@@ -9,20 +9,30 @@ import {
   saveSession
 } from "../utils/authStorage";
 
+const SESSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+
 export default function ProtectedRoute({ children, permissions = [], roles = [] }) {
-  const location = useLocation();
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(!getStoredUser());
   const [user, setUser] = useState(getStoredUser());
+  const lastValidationRef = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function validateSession() {
+    async function validateSession(force = false) {
+      const now = Date.now();
       const storedUser = getStoredUser();
 
       if (storedUser && isMounted) {
         setUser(storedUser);
+        setIsChecking(false);
       }
+
+      if (!force && now - lastValidationRef.current < SESSION_CHECK_INTERVAL_MS && storedUser) {
+        return;
+      }
+
+      lastValidationRef.current = now;
 
       try {
         const { data } = await api.get("/auth/me");
@@ -34,36 +44,44 @@ export default function ProtectedRoute({ children, permissions = [], roles = [] 
 
         if (isMounted) {
           setUser(data);
+          setIsChecking(false);
         }
       } catch {
         clearSession();
 
         if (isMounted) {
           setUser(null);
-        }
-      } finally {
-        if (isMounted) {
           setIsChecking(false);
         }
       }
     }
 
-    validateSession();
+    validateSession(!getStoredUser());
+
+    let focusTimer = null;
 
     function handleWindowFocus() {
-      validateSession();
+      window.clearTimeout(focusTimer);
+      focusTimer = window.setTimeout(() => {
+        validateSession(false);
+      }, 400);
     }
 
     window.addEventListener("focus", handleWindowFocus);
 
     return () => {
       isMounted = false;
+      window.clearTimeout(focusTimer);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [location.pathname]);
+  }, []);
 
   if (isChecking) {
-    return null;
+    return (
+      <div className="route-loading" aria-live="polite">
+        Carregando...
+      </div>
+    );
   }
 
   if (!user) {

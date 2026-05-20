@@ -428,7 +428,6 @@ export default function AdminPortal() {
 
       setUserModal(null);
       setUserForm(emptyUserForm);
-      await loadOverview({ force: true }).catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o usuario.");
     }
@@ -443,7 +442,6 @@ export default function AdminPortal() {
       });
       setUsers((current) => current.map((item) => (item.id === data.id ? data : item)));
       setMessage(record.active ? "Usuario desativado com sucesso." : "Usuario ativado com sucesso.");
-      await loadOverview({ force: true }).catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel alterar o status do usuario.");
     }
@@ -458,7 +456,6 @@ export default function AdminPortal() {
       await api.delete(`/admin/users/${recordId}`);
       setUsers((current) => current.filter((item) => Number(item.id) !== Number(recordId)));
       setMessage("Usuario excluido com sucesso.");
-      await loadOverview({ force: true }).catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel excluir o usuario.");
     }
@@ -495,7 +492,6 @@ export default function AdminPortal() {
 
       setAdminModal(null);
       setAdminForm(emptyAdminForm);
-      await loadOverview({ force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o admin.");
     }
@@ -511,8 +507,7 @@ export default function AdminPortal() {
       setCompanyForm(emptyCompanyForm);
       await Promise.all([
         loadSettings({ force: true }),
-        loadDepartments({ force: true }).catch(() => null),
-        loadOverview({ force: true }).catch(() => null)
+        loadDepartments({ force: true }).catch(() => null)
       ]);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel criar a empresa.");
@@ -526,12 +521,8 @@ export default function AdminPortal() {
 
     try {
       await api.delete(`/admin/departments/${recordId}`);
+      setDepartments((current) => current.filter((item) => Number(item.id) !== Number(recordId)));
       setMessage("Departamento excluido com sucesso.");
-      await Promise.all([
-        loadDepartments({ force: true }),
-        loadSettings({ force: true }).catch(() => null),
-        loadOverview({ force: true }).catch(() => null)
-      ]);
     } catch (err) {
       setError(getApiErrorMessage(err, "Nao foi possivel excluir o departamento."));
     }
@@ -544,12 +535,15 @@ export default function AdminPortal() {
 
     try {
       await api.delete(`/admin/companies/${recordId}`);
+      setSettings((current) =>
+        current
+          ? {
+              ...current,
+              companies: (current.companies || []).filter((item) => Number(item.id) !== Number(recordId))
+            }
+          : current
+      );
       setMessage("Empresa excluida com sucesso.");
-      await Promise.all([
-        loadSettings({ force: true }),
-        loadDepartments({ force: true }).catch(() => null),
-        loadOverview({ force: true }).catch(() => null)
-      ]);
     } catch (err) {
       setError(getApiErrorMessage(err, "Nao foi possivel excluir a empresa."));
     }
@@ -564,7 +558,6 @@ export default function AdminPortal() {
       });
       setAdmins((current) => current.map((item) => (item.id === data.id ? data : item)));
       setMessage(record.active ? "Admin desativado com sucesso." : "Admin ativado com sucesso.");
-      await loadOverview({ force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel alterar o status do admin.");
     }
@@ -579,7 +572,6 @@ export default function AdminPortal() {
       await api.delete(`/admin/admins/${recordId}`);
       setAdmins((current) => current.filter((item) => Number(item.id) !== Number(recordId)));
       setMessage("Admin excluido com sucesso.");
-      await loadOverview({ force: true });
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel excluir o admin.");
     }
@@ -611,7 +603,6 @@ export default function AdminPortal() {
 
       setDepartmentModal(null);
       setDepartmentForm(emptyDepartmentForm);
-      await loadOverview({ force: true }).catch(() => null);
     } catch (err) {
       setError(err.response?.data?.error || "Nao foi possivel salvar o departamento.");
     }

@@ -6,7 +6,7 @@ const DASHBOARD_SUPPLIER_COLUMNS = "id,name,status,nextReview,supplierType,score
 const DASHBOARD_DOCUMENT_COLUMNS = "supplierId,expiresAt";
 const DASHBOARD_RNC_COLUMNS = "id,supplierId,status,deadline,createdAt";
 const DASHBOARD_CHART_LIMIT = Number(process.env.DASHBOARD_CHART_LIMIT || 40);
-const DASHBOARD_CACHE_TTL_MS = Number(process.env.DASHBOARD_CACHE_TTL_MS || 30_000);
+const DASHBOARD_CACHE_TTL_MS = Number(process.env.DASHBOARD_CACHE_TTL_MS || 60_000);
 
 const dashboardCache = new Map();
 

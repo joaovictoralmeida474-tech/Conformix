@@ -1,3 +1,4 @@
+const DEFAULT_CACHE_TTL_MS = 90_000;
 const store = new Map();
 
 function normalizeParams(params) {
@@ -65,11 +66,24 @@ export function getCached(key) {
     return undefined;
   }
 
-  return cloneValue(store.get(key));
+  return cloneValue(store.get(key).data);
 }
 
-export function setCached(key, data) {
-  store.set(key, cloneValue(data));
+export function isCacheFresh(key, ttlMs = DEFAULT_CACHE_TTL_MS) {
+  const entry = store.get(key);
+
+  if (!entry) {
+    return false;
+  }
+
+  return entry.expiresAt > Date.now();
+}
+
+export function setCached(key, data, ttlMs = DEFAULT_CACHE_TTL_MS) {
+  store.set(key, {
+    data: cloneValue(data),
+    expiresAt: Date.now() + Math.max(1_000, Number(ttlMs) || DEFAULT_CACHE_TTL_MS)
+  });
 }
 
 export function invalidateByUrlPrefix(urlPrefix) {
@@ -129,4 +143,8 @@ export function invalidateCacheForMutation(url = "") {
     invalidateByUrlPrefix("/suppliers");
     invalidateByUrlPrefix("/dashboard");
   }
+}
+
+export function primeCache(url, data, params, ttlMs = DEFAULT_CACHE_TTL_MS) {
+  setCached(getCacheKey(url, params), data, ttlMs);
 }
