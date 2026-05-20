@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { clearSession } from "../utils/authStorage";
-import integraxLogo from "../assets/integraxtech-logo-transparent.png";
+import integraxxLogo from "../assets/integraxx-logo-transparent.png";
 import { PERMISSIONS, canAccessAdmin, hasPermission } from "../utils/access";
 
 function getInitials(name) {
@@ -69,6 +69,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     const storedState =
+      window.localStorage.getItem("integraxx-sidebar-collapsed") ||
       window.localStorage.getItem("integrax-sidebar-collapsed") ||
       window.localStorage.getItem("conformix-sidebar-collapsed");
     if (storedState === "1") {
@@ -79,11 +80,11 @@ export default function Sidebar() {
   function toggleCollapse() {
     const nextState = !isCollapsed;
     setIsCollapsed(nextState);
-    window.localStorage.setItem("integrax-sidebar-collapsed", nextState ? "1" : "0");
+    window.localStorage.setItem("integraxx-sidebar-collapsed", nextState ? "1" : "0");
   }
 
   return (
-    <aside className={`sidebar sidebar--integrax${isCollapsed ? " is-collapsed" : ""}`}>
+    <aside className={`sidebar sidebar--integraxx${isCollapsed ? " is-collapsed" : ""}`}>
       <button
         type="button"
         className="sidebar-collapse-toggle"
@@ -95,7 +96,7 @@ export default function Sidebar() {
 
       <div className="sidebar-brand-panel">
         <img
-          src={integraxLogo}
+          src={integraxxLogo}
           alt="Integraxx"
           className="sidebar-brand-logo"
         />

@@ -32,7 +32,7 @@ export function sendJson(res, statusCode, payload) {
 }
 
 export function setAuthCookie(res, token, rememberMe = false) {
-  const cookieName = "conformix_auth";
+  const cookieName = "integraxx_auth";
   const maxAge = rememberMe ? 7 * 24 * 60 * 60 : null;
   const parts = [
     `${cookieName}=${encodeURIComponent(token)}`,

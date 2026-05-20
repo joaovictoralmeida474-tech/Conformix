@@ -1,7 +1,12 @@
 import "../backend/src/shared/config/loadEnv.js";
 
 import { readJsonBody, sendJson, setAuthCookie } from "./lib/http.mjs";
-import { getTokenFromRequest, verifyAccessToken } from "./lib/authToken.mjs";
+import {
+  AUTH_COOKIE_NAME,
+  getTokenFromRequest,
+  LEGACY_AUTH_COOKIE_NAMES,
+  verifyAccessToken
+} from "./lib/authToken.mjs";
 import { performLogin } from "./lib/loginCore.mjs";
 import { createSessionFromAccessToken } from "./lib/sessionCore.mjs";
 
@@ -56,20 +61,28 @@ async function handleMe(req, res) {
 }
 
 function handleLogout(_req, res) {
-  const cookieOptions = [
-    "conformix_auth=",
-    "HttpOnly",
-    "Path=/",
-    "SameSite=Strict",
-    "Priority=High",
-    "Max-Age=0"
-  ];
+  const secure = process.env.VERCEL === "1" || process.env.COOKIE_SECURE === "true";
+  const cookieNames = [AUTH_COOKIE_NAME, ...LEGACY_AUTH_COOKIE_NAMES];
 
-  if (process.env.VERCEL === "1" || process.env.COOKIE_SECURE === "true") {
-    cookieOptions.push("Secure");
-  }
+  res.setHeader(
+    "Set-Cookie",
+    cookieNames.map((cookieName) => {
+      const parts = [
+        `${cookieName}=`,
+        "HttpOnly",
+        "Path=/",
+        "SameSite=Strict",
+        "Priority=High",
+        "Max-Age=0"
+      ];
 
-  res.setHeader("Set-Cookie", cookieOptions.join("; "));
+      if (secure) {
+        parts.push("Secure");
+      }
+
+      return parts.join("; ");
+    })
+  );
   return sendJson(res, 200, { success: true });
 }
 

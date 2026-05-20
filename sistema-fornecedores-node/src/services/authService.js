@@ -21,6 +21,7 @@ function getAuthEmailCandidates(email) {
     .trim()
     .toLowerCase();
   const superAdminAliases = new Set([
+    'superadmin@integraxx.local',
     'superadmin@conformix.local',
     ...parseConfiguredEmails(process.env.SUPER_ADMIN_EMAILS),
     ...parseConfiguredEmails(process.env.ADMIN_EMAILS)

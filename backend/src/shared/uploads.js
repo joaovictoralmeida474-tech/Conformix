@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 function getRuntimeUploadsBaseDir() {
   if (process.env.VERCEL === "1") {
-    return path.join(os.tmpdir(), "integrax-uploads");
+    return path.join(os.tmpdir(), "integraxx-uploads");
   }
 
   return path.resolve(__dirname, "../uploads");

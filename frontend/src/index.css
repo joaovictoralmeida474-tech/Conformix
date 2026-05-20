@@ -4024,7 +4024,7 @@ body.login-theme {
   }
 }
 
-.sidebar--integrax {
+.sidebar--integraxx {
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -4041,7 +4041,7 @@ body.login-theme {
   transition: width 0.25s ease, min-width 0.25s ease;
 }
 
-.sidebar--integrax::before {
+.sidebar--integraxx::before {
   display: none;
 }
 
@@ -4089,7 +4089,7 @@ body.login-theme {
   overflow-y: auto;
 }
 
-.sidebar--integrax .nav-list {
+.sidebar--integraxx .nav-list {
   display: grid;
   gap: 12px;
   margin: 0;
@@ -4097,7 +4097,7 @@ body.login-theme {
   list-style: none;
 }
 
-.sidebar--integrax .nav-list li + li {
+.sidebar--integraxx .nav-list li + li {
   margin-top: 0;
 }
 
@@ -4259,17 +4259,17 @@ body.login-theme {
   font-size: 18px;
 }
 
-.sidebar--integrax.is-collapsed {
+.sidebar--integraxx.is-collapsed {
   width: 82px;
   min-width: 82px;
 }
 
-.sidebar--integrax.is-collapsed .sidebar-brand-panel {
+.sidebar--integraxx.is-collapsed .sidebar-brand-panel {
   padding-left: 12px;
   padding-right: 12px;
 }
 
-.sidebar--integrax.is-collapsed .sidebar-brand-logo {
+.sidebar--integraxx.is-collapsed .sidebar-brand-logo {
   width: 58px;
   height: 58px;
   max-width: 58px;
@@ -4277,13 +4277,13 @@ body.login-theme {
   object-fit: contain;
 }
 
-.sidebar--integrax.is-collapsed .sidebar-brand-copy,
-.sidebar--integrax.is-collapsed .sidebar-menu-link span,
-.sidebar--integrax.is-collapsed .sidebar-profile-copy {
+.sidebar--integraxx.is-collapsed .sidebar-brand-copy,
+.sidebar--integraxx.is-collapsed .sidebar-menu-link span,
+.sidebar--integraxx.is-collapsed .sidebar-profile-copy {
   display: none;
 }
 
-.sidebar--integrax.is-collapsed .sidebar-menu-link {
+.sidebar--integraxx.is-collapsed .sidebar-menu-link {
   justify-content: center;
   border-radius: 12px;
   margin: 0 10px;
@@ -4292,11 +4292,11 @@ body.login-theme {
   border-left: 0;
 }
 
-.sidebar--integrax.is-collapsed .sidebar-menu-link i {
+.sidebar--integraxx.is-collapsed .sidebar-menu-link i {
   font-size: 21px;
 }
 
-.sidebar--integrax.is-collapsed .sidebar-profile-card {
+.sidebar--integraxx.is-collapsed .sidebar-profile-card {
   grid-template-columns: 1fr;
   justify-items: center;
   gap: 10px;
@@ -4304,7 +4304,7 @@ body.login-theme {
 }
 
 @media (max-width: 900px) {
-  .sidebar--integrax {
+  .sidebar--integraxx {
     width: 100%;
     min-width: 100%;
     height: auto;

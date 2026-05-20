@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 
-const FALLBACK_JWT_SECRET = "conformix-vercel-fallback-jwt-secret-2026-secure-seed";
-const AUTH_COOKIE_NAME = "conformix_auth";
+const FALLBACK_JWT_SECRET = "integraxx-vercel-fallback-jwt-secret-2026-secure-seed";
+const AUTH_COOKIE_NAME = "integraxx_auth";
+const LEGACY_AUTH_COOKIE_NAMES = ["conformix_auth", "integrax_auth"];
 
 export function getJwtSecret() {
   const secret = String(process.env.JWT_SECRET || "").trim();
@@ -40,7 +41,18 @@ export function getTokenFromRequest(req) {
   }
 
   const cookies = parseCookies(req.headers?.cookie);
-  return cookies[AUTH_COOKIE_NAME] || null;
+
+  if (cookies[AUTH_COOKIE_NAME]) {
+    return cookies[AUTH_COOKIE_NAME];
+  }
+
+  for (const legacyName of LEGACY_AUTH_COOKIE_NAMES) {
+    if (cookies[legacyName]) {
+      return cookies[legacyName];
+    }
+  }
+
+  return null;
 }
 
 export function verifyAccessToken(token) {
@@ -55,3 +67,5 @@ export function verifyAccessToken(token) {
     user
   };
 }
+
+export { AUTH_COOKIE_NAME, LEGACY_AUTH_COOKIE_NAMES };

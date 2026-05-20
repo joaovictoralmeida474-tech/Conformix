@@ -8,7 +8,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
 ];
 
 const LOCALHOST_ORIGIN_PATTERN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
-const FALLBACK_JWT_SECRET = "conformix-vercel-fallback-jwt-secret-2026-secure-seed";
+const FALLBACK_JWT_SECRET = "integraxx-vercel-fallback-jwt-secret-2026-secure-seed";
+export const LEGACY_AUTH_COOKIE_NAMES = ["conformix_auth", "integrax_auth"];
 
 function normalizeBoolean(value, defaultValue = false) {
   if (value === undefined || value === null || value === "") {
@@ -111,7 +112,42 @@ export function getMaxUploadSizeBytes() {
 }
 
 export function getAuthCookieName() {
-  return "conformix_auth";
+  return "integraxx_auth";
+}
+
+export function getTokenFromAuthCookies(cookies = {}) {
+  const primary = cookies[getAuthCookieName()];
+  if (primary) return primary;
+
+  for (const legacyName of LEGACY_AUTH_COOKIE_NAMES) {
+    if (cookies[legacyName]) {
+      return cookies[legacyName];
+    }
+  }
+
+  return null;
+}
+
+export function getAuthCookieClearHeaders() {
+  const names = [getAuthCookieName(), ...LEGACY_AUTH_COOKIE_NAMES];
+  const secure = shouldUseSecureCookies();
+
+  return names.map((cookieName) => {
+    const parts = [
+      `${cookieName}=`,
+      "HttpOnly",
+      "Path=/",
+      "SameSite=Strict",
+      "Priority=High",
+      "Max-Age=0"
+    ];
+
+    if (secure) {
+      parts.push("Secure");
+    }
+
+    return parts.join("; ");
+  });
 }
 
 export function getRememberMeDurationMs() {

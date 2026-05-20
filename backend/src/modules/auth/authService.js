@@ -28,7 +28,9 @@ function normalizePasswordCandidates(password) {
 
 function getSuperAdminAliases() {
   const configured = normalizeEmail(process.env.SUPER_ADMIN_EMAIL);
-  return new Set(["superadmin@conformix.local", configured].filter(Boolean));
+  return new Set(
+    ["superadmin@integraxx.local", "superadmin@conformix.local", configured].filter(Boolean)
+  );
 }
 
 function getAuthEmailCandidates(email) {

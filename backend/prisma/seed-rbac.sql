@@ -81,7 +81,7 @@ BEGIN
 
   SELECT "id" INTO super_admin_id
   FROM "User"
-  WHERE "email" = 'superadmin@conformix.local'
+  WHERE "email" IN ('superadmin@integraxx.local', 'superadmin@conformix.local')
   LIMIT 1;
 
   IF super_admin_id IS NULL THEN
@@ -90,7 +90,7 @@ BEGIN
     )
     VALUES (
       'Super Admin',
-      'superadmin@conformix.local',
+      'superadmin@integraxx.local',
       '$2b$10$zjPFE9QwPNHvqcnUZNymQ.KB9CBbGXOXaaCAF1hMrd.0YOoEcmpzO',
       'SUPER_ADMIN',
       true,

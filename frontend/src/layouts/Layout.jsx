@@ -7,6 +7,7 @@ export default function Layout({ children }) {
 
   useEffect(() => {
     const storedPreset =
+      window.localStorage.getItem("integraxx-theme-preset") ||
       window.localStorage.getItem("integrax-theme-preset") ||
       window.localStorage.getItem("conformix-theme-preset");
     if (storedPreset) {
@@ -20,7 +21,7 @@ export default function Layout({ children }) {
 
   useEffect(() => {
     document.body.setAttribute("data-theme-preset", themePreset);
-    window.localStorage.setItem("integrax-theme-preset", themePreset);
+    window.localStorage.setItem("integraxx-theme-preset", themePreset);
   }, [themePreset]);
 
   return (

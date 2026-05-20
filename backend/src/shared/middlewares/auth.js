@@ -7,9 +7,11 @@ import {
   runWithSupabaseAccessTokenAsync
 } from "../database/supabaseContext.js";
 import {
+  getAuthCookieClearHeaders,
   getAuthCookieName,
   getJwtSecret,
   getRememberMeDurationMs,
+  getTokenFromAuthCookies,
   shouldUseSecureCookies
 } from "../config/security.js";
 
@@ -42,7 +44,7 @@ function extractTokenFromRequest(req) {
   if (headerToken) return headerToken;
 
   const cookies = parseCookies(req.headers.cookie);
-  return cookies[getAuthCookieName()] || null;
+  return getTokenFromAuthCookies(cookies);
 }
 
 function signAccessToken(user, options = {}) {
@@ -84,20 +86,7 @@ export function setAuthCookie(res, token, rememberMe = false) {
 }
 
 export function clearAuthCookie(res) {
-  const cookieOptions = [
-    `${getAuthCookieName()}=`,
-    "HttpOnly",
-    "Path=/",
-    "SameSite=Strict",
-    "Priority=High",
-    "Max-Age=0"
-  ];
-
-  if (shouldUseSecureCookies()) {
-    cookieOptions.push("Secure");
-  }
-
-  res.setHeader("Set-Cookie", cookieOptions.join("; "));
+  res.setHeader("Set-Cookie", getAuthCookieClearHeaders());
 }
 
 export async function auth(req, res, next) {

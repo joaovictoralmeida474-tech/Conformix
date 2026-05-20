@@ -49,6 +49,7 @@ function getSuperAdminEmails() {
   return Array.from(
     new Set(
       [
+        'superadmin@integraxx.local',
         'superadmin@conformix.local',
         String(process.env.BOOTSTRAP_SUPER_ADMIN_EMAIL || '').trim().toLowerCase(),
         ...parseConfiguredEmails(process.env.SUPER_ADMIN_EMAILS)

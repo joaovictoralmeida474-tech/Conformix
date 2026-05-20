@@ -12,6 +12,7 @@ function getSuperAdminAliases() {
   const configured = normalizeEmail(process.env.SUPER_ADMIN_EMAIL);
   return new Set(
     [
+      "superadmin@integraxx.local",
       "superadmin@conformix.local",
       "joaovictoralmeida474@gmail.com",
       configured

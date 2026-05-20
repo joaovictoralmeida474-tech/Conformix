@@ -8,7 +8,7 @@ import {
 } from "../services/supabaseClient";
 import { getDefaultRouteForUser } from "../utils/access";
 import { saveSession } from "../utils/authStorage";
-import integraxtechLogo from "../assets/integraxtech-logo-transparent.png";
+import integraxxLogo from "../assets/integraxx-logo-transparent.png";
 
 export default function Login() {
   const [form, setForm] = useState({
@@ -423,7 +423,7 @@ export default function Login() {
             <div className="login-brand-3d">
               <span className="login-brand-glow-exact" aria-hidden="true" />
               <img
-                src={integraxtechLogo}
+                src={integraxxLogo}
                 alt="Integraxx"
                 className="login-brand-image-exact"
                 width={2048}
@@ -559,7 +559,7 @@ export default function Login() {
                 <div className="login-brand-3d login-brand-3d-mobile">
                   <span className="login-brand-glow-exact" aria-hidden="true" />
                   <img
-                    src={integraxtechLogo}
+                    src={integraxxLogo}
                     alt="Integraxx"
                     className="login-brand-image-mobile-exact"
                     width={2048}

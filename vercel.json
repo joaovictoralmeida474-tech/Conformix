@@ -17,7 +17,7 @@
           "value": "conformix.vercel.app"
         }
       ],
-      "destination": "https://integrax.vercel.app/:path*",
+      "destination": "https://integraxx.vercel.app/:path*",
       "permanent": true
     },
     {
@@ -28,7 +28,29 @@
           "value": "www.conformix.vercel.app"
         }
       ],
-      "destination": "https://integrax.vercel.app/:path*",
+      "destination": "https://integraxx.vercel.app/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "integrax.vercel.app"
+        }
+      ],
+      "destination": "https://integraxx.vercel.app/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.integrax.vercel.app"
+        }
+      ],
+      "destination": "https://integraxx.vercel.app/:path*",
       "permanent": true
     }
   ],

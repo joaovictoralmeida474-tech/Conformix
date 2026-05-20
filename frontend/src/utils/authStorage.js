@@ -1,12 +1,12 @@
 import { clearApiCache } from "../services/apiCache";
 
 const REMEMBER_ME_KEY = "rememberMe";
-const USER_KEY = "integraxUser";
-const TOKEN_KEY = "integraxToken";
-const SESSION_CHANGED_EVENT = "integrax:session-changed";
-const LEGACY_USER_KEY = "conformixUser";
-const LEGACY_TOKEN_KEY = "conformixToken";
-const LEGACY_SESSION_CHANGED_EVENT = "conformix:session-changed";
+const USER_KEY = "integraxxUser";
+const TOKEN_KEY = "integraxxToken";
+const SESSION_CHANGED_EVENT = "integraxx:session-changed";
+const LEGACY_USER_KEYS = ["integraxUser", "conformixUser"];
+const LEGACY_TOKEN_KEYS = ["integraxToken", "conformixToken"];
+const LEGACY_SESSION_EVENTS = ["integrax:session-changed", "conformix:session-changed"];
 let memoryUser = null;
 
 function isBrowser() {
@@ -23,16 +23,13 @@ function readSession(key) {
   return window.sessionStorage.getItem(key);
 }
 
-function readRaw(key) {
+function readRaw(key, legacyKeys = []) {
   const current = readSession(key) ?? readLocal(key);
   if (current !== null) return current;
 
-  if (key === USER_KEY) {
-    return readSession(LEGACY_USER_KEY) ?? readLocal(LEGACY_USER_KEY);
-  }
-
-  if (key === TOKEN_KEY) {
-    return readSession(LEGACY_TOKEN_KEY) ?? readLocal(LEGACY_TOKEN_KEY);
+  for (const legacyKey of legacyKeys) {
+    const legacyValue = readSession(legacyKey) ?? readLocal(legacyKey);
+    if (legacyValue !== null) return legacyValue;
   }
 
   return null;
@@ -47,8 +44,9 @@ function removeRaw(key) {
 }
 
 function removeLegacySessionKeys() {
-  removeRaw(LEGACY_USER_KEY);
-  removeRaw(LEGACY_TOKEN_KEY);
+  for (const key of [...LEGACY_USER_KEYS, ...LEGACY_TOKEN_KEYS]) {
+    removeRaw(key);
+  }
 }
 
 function notifySessionChanged() {
@@ -63,10 +61,10 @@ function notifySessionChanged() {
 }
 
 export function getStoredToken() {
-  // JWT is intentionally kept out of browser storage. The app relies on
-  // the HttpOnly auth cookie issued by the backend.
   removeRaw(TOKEN_KEY);
-  removeRaw(LEGACY_TOKEN_KEY);
+  for (const legacyKey of LEGACY_TOKEN_KEYS) {
+    removeRaw(legacyKey);
+  }
   return null;
 }
 
@@ -75,7 +73,7 @@ export function getStoredUser() {
     return memoryUser;
   }
 
-  const rawUser = readRaw(USER_KEY);
+  const rawUser = readRaw(USER_KEY, LEGACY_USER_KEYS);
 
   if (!rawUser || rawUser === "null" || rawUser === "undefined") {
     return null;
@@ -149,12 +147,16 @@ export function subscribeToStoredUser(callback) {
   };
 
   window.addEventListener(SESSION_CHANGED_EVENT, handleSessionChanged);
-  window.addEventListener(LEGACY_SESSION_CHANGED_EVENT, handleSessionChanged);
+  for (const legacyEvent of LEGACY_SESSION_EVENTS) {
+    window.addEventListener(legacyEvent, handleSessionChanged);
+  }
   window.addEventListener("storage", handleStorage);
 
   return () => {
     window.removeEventListener(SESSION_CHANGED_EVENT, handleSessionChanged);
-    window.removeEventListener(LEGACY_SESSION_CHANGED_EVENT, handleSessionChanged);
+    for (const legacyEvent of LEGACY_SESSION_EVENTS) {
+      window.removeEventListener(legacyEvent, handleSessionChanged);
+    }
     window.removeEventListener("storage", handleStorage);
   };
 }
