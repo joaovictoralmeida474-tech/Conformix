@@ -6,7 +6,9 @@ export default function Layout({ children }) {
   const [themePreset, setThemePreset] = useState("tech-clean");
 
   useEffect(() => {
-    const storedPreset = window.localStorage.getItem("conformix-theme-preset");
+    const storedPreset =
+      window.localStorage.getItem("integrax-theme-preset") ||
+      window.localStorage.getItem("conformix-theme-preset");
     if (storedPreset) {
       setThemePreset(storedPreset);
       document.body.setAttribute("data-theme-preset", storedPreset);
@@ -18,7 +20,7 @@ export default function Layout({ children }) {
 
   useEffect(() => {
     document.body.setAttribute("data-theme-preset", themePreset);
-    window.localStorage.setItem("conformix-theme-preset", themePreset);
+    window.localStorage.setItem("integrax-theme-preset", themePreset);
   }, [themePreset]);
 
   return (

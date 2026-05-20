@@ -6,13 +6,13 @@ DECLARE
 BEGIN
   SELECT "id" INTO platform_company_id
   FROM "Company"
-  WHERE "name" = 'Conformix Platform'
+  WHERE "name" = 'Integrax Platform'
   ORDER BY "id" ASC
   LIMIT 1;
 
   IF platform_company_id IS NULL THEN
     INSERT INTO "Company" ("name")
-    VALUES ('Conformix Platform')
+    VALUES ('Integrax Platform')
     RETURNING "id" INTO platform_company_id;
   END IF;
 

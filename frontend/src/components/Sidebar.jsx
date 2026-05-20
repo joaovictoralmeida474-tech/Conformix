@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { clearSession } from "../utils/authStorage";
-import conformixLogo from "../assets/conformix-logo-v2-transparent.png";
+import integraxLogo from "../assets/integraxtech-logo-transparent.png";
 import { PERMISSIONS, canAccessAdmin, hasPermission } from "../utils/access";
 
 function getInitials(name) {
@@ -13,7 +13,7 @@ function getInitials(name) {
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() || "")
-    .join("") || "CF";
+    .join("") || "IX";
 }
 
 function getRoleLabel(role) {
@@ -68,7 +68,9 @@ export default function Sidebar() {
   }
 
   useEffect(() => {
-    const storedState = window.localStorage.getItem("conformix-sidebar-collapsed");
+    const storedState =
+      window.localStorage.getItem("integrax-sidebar-collapsed") ||
+      window.localStorage.getItem("conformix-sidebar-collapsed");
     if (storedState === "1") {
       setIsCollapsed(true);
     }
@@ -77,11 +79,11 @@ export default function Sidebar() {
   function toggleCollapse() {
     const nextState = !isCollapsed;
     setIsCollapsed(nextState);
-    window.localStorage.setItem("conformix-sidebar-collapsed", nextState ? "1" : "0");
+    window.localStorage.setItem("integrax-sidebar-collapsed", nextState ? "1" : "0");
   }
 
   return (
-    <aside className={`sidebar sidebar--conformix${isCollapsed ? " is-collapsed" : ""}`}>
+    <aside className={`sidebar sidebar--integrax${isCollapsed ? " is-collapsed" : ""}`}>
       <button
         type="button"
         className="sidebar-collapse-toggle"
@@ -93,8 +95,8 @@ export default function Sidebar() {
 
       <div className="sidebar-brand-panel">
         <img
-          src={conformixLogo}
-          alt="Conformix"
+          src={integraxLogo}
+          alt="Integrax"
           className="sidebar-brand-logo"
         />
       </div>
@@ -113,7 +115,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-profile-card">
-        <div className="sidebar-profile-avatar">{getInitials(user?.name || user?.email || "Conformix")}</div>
+        <div className="sidebar-profile-avatar">{getInitials(user?.name || user?.email || "Integrax")}</div>
         <div className="sidebar-profile-copy">
           <strong>{user?.name || user?.email || "Administrador"}</strong>
           <small>{getRoleLabel(user?.role)}</small>

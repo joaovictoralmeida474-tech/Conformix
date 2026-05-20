@@ -1,9 +1,12 @@
 import { clearApiCache } from "../services/apiCache";
 
 const REMEMBER_ME_KEY = "rememberMe";
-const USER_KEY = "conformixUser";
-const TOKEN_KEY = "conformixToken";
-const SESSION_CHANGED_EVENT = "conformix:session-changed";
+const USER_KEY = "integraxUser";
+const TOKEN_KEY = "integraxToken";
+const SESSION_CHANGED_EVENT = "integrax:session-changed";
+const LEGACY_USER_KEY = "conformixUser";
+const LEGACY_TOKEN_KEY = "conformixToken";
+const LEGACY_SESSION_CHANGED_EVENT = "conformix:session-changed";
 let memoryUser = null;
 
 function isBrowser() {
@@ -21,7 +24,18 @@ function readSession(key) {
 }
 
 function readRaw(key) {
-  return readSession(key) ?? readLocal(key);
+  const current = readSession(key) ?? readLocal(key);
+  if (current !== null) return current;
+
+  if (key === USER_KEY) {
+    return readSession(LEGACY_USER_KEY) ?? readLocal(LEGACY_USER_KEY);
+  }
+
+  if (key === TOKEN_KEY) {
+    return readSession(LEGACY_TOKEN_KEY) ?? readLocal(LEGACY_TOKEN_KEY);
+  }
+
+  return null;
 }
 
 function removeRaw(key) {
@@ -32,19 +46,27 @@ function removeRaw(key) {
   }
 }
 
+function removeLegacySessionKeys() {
+  removeRaw(LEGACY_USER_KEY);
+  removeRaw(LEGACY_TOKEN_KEY);
+}
+
 function notifySessionChanged() {
   if (!isBrowser()) return;
-  window.dispatchEvent(new CustomEvent(SESSION_CHANGED_EVENT, {
-    detail: {
-      user: memoryUser
-    }
-  }));
+  window.dispatchEvent(
+    new CustomEvent(SESSION_CHANGED_EVENT, {
+      detail: {
+        user: memoryUser
+      }
+    })
+  );
 }
 
 export function getStoredToken() {
   // JWT is intentionally kept out of browser storage. The app relies on
   // the HttpOnly auth cookie issued by the backend.
   removeRaw(TOKEN_KEY);
+  removeRaw(LEGACY_TOKEN_KEY);
   return null;
 }
 
@@ -64,6 +86,7 @@ export function getStoredUser() {
     return memoryUser && typeof memoryUser === "object" ? memoryUser : null;
   } catch {
     removeRaw(USER_KEY);
+    removeLegacySessionKeys();
     memoryUser = null;
     return null;
   }
@@ -92,6 +115,7 @@ export function saveSession({ user, token, rememberMe }) {
   secondaryStorage.removeItem(REMEMBER_ME_KEY);
   secondaryStorage.removeItem(USER_KEY);
   secondaryStorage.removeItem(TOKEN_KEY);
+  removeLegacySessionKeys();
   memoryUser = user && typeof user === "object" ? user : null;
 
   targetStorage.setItem(REMEMBER_ME_KEY, JSON.stringify(Boolean(rememberMe)));
@@ -107,6 +131,7 @@ export function clearSession() {
   removeRaw(REMEMBER_ME_KEY);
   removeRaw(USER_KEY);
   removeRaw(TOKEN_KEY);
+  removeLegacySessionKeys();
   notifySessionChanged();
 }
 
@@ -124,10 +149,12 @@ export function subscribeToStoredUser(callback) {
   };
 
   window.addEventListener(SESSION_CHANGED_EVENT, handleSessionChanged);
+  window.addEventListener(LEGACY_SESSION_CHANGED_EVENT, handleSessionChanged);
   window.addEventListener("storage", handleStorage);
 
   return () => {
     window.removeEventListener(SESSION_CHANGED_EVENT, handleSessionChanged);
+    window.removeEventListener(LEGACY_SESSION_CHANGED_EVENT, handleSessionChanged);
     window.removeEventListener("storage", handleStorage);
   };
 }

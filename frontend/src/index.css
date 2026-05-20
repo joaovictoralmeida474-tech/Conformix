@@ -4024,7 +4024,7 @@ body.login-theme {
   }
 }
 
-.sidebar--conformix {
+.sidebar--integrax {
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -4041,7 +4041,7 @@ body.login-theme {
   transition: width 0.25s ease, min-width 0.25s ease;
 }
 
-.sidebar--conformix::before {
+.sidebar--integrax::before {
   display: none;
 }
 
@@ -4070,12 +4070,13 @@ body.login-theme {
 .sidebar-brand-logo {
   display: block;
   width: 100%;
-  max-width: 252px;
+  max-width: 220px;
   height: auto;
   margin: 0 auto;
   object-fit: contain;
   object-position: center;
-  filter: drop-shadow(0 0 18px rgba(10, 221, 191, 0.18));
+  filter: none;
+  image-rendering: auto;
 }
 
 .sidebar-brand-copy {
@@ -4088,7 +4089,7 @@ body.login-theme {
   overflow-y: auto;
 }
 
-.sidebar--conformix .nav-list {
+.sidebar--integrax .nav-list {
   display: grid;
   gap: 12px;
   margin: 0;
@@ -4096,7 +4097,7 @@ body.login-theme {
   list-style: none;
 }
 
-.sidebar--conformix .nav-list li + li {
+.sidebar--integrax .nav-list li + li {
   margin-top: 0;
 }
 
@@ -4258,17 +4259,17 @@ body.login-theme {
   font-size: 18px;
 }
 
-.sidebar--conformix.is-collapsed {
+.sidebar--integrax.is-collapsed {
   width: 82px;
   min-width: 82px;
 }
 
-.sidebar--conformix.is-collapsed .sidebar-brand-panel {
+.sidebar--integrax.is-collapsed .sidebar-brand-panel {
   padding-left: 12px;
   padding-right: 12px;
 }
 
-.sidebar--conformix.is-collapsed .sidebar-brand-logo {
+.sidebar--integrax.is-collapsed .sidebar-brand-logo {
   width: 58px;
   height: 58px;
   max-width: 58px;
@@ -4276,13 +4277,13 @@ body.login-theme {
   object-fit: contain;
 }
 
-.sidebar--conformix.is-collapsed .sidebar-brand-copy,
-.sidebar--conformix.is-collapsed .sidebar-menu-link span,
-.sidebar--conformix.is-collapsed .sidebar-profile-copy {
+.sidebar--integrax.is-collapsed .sidebar-brand-copy,
+.sidebar--integrax.is-collapsed .sidebar-menu-link span,
+.sidebar--integrax.is-collapsed .sidebar-profile-copy {
   display: none;
 }
 
-.sidebar--conformix.is-collapsed .sidebar-menu-link {
+.sidebar--integrax.is-collapsed .sidebar-menu-link {
   justify-content: center;
   border-radius: 12px;
   margin: 0 10px;
@@ -4291,11 +4292,11 @@ body.login-theme {
   border-left: 0;
 }
 
-.sidebar--conformix.is-collapsed .sidebar-menu-link i {
+.sidebar--integrax.is-collapsed .sidebar-menu-link i {
   font-size: 21px;
 }
 
-.sidebar--conformix.is-collapsed .sidebar-profile-card {
+.sidebar--integrax.is-collapsed .sidebar-profile-card {
   grid-template-columns: 1fr;
   justify-items: center;
   gap: 10px;
@@ -4303,7 +4304,7 @@ body.login-theme {
 }
 
 @media (max-width: 900px) {
-  .sidebar--conformix {
+  .sidebar--integrax {
     width: 100%;
     min-width: 100%;
     height: auto;

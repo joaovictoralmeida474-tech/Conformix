@@ -173,7 +173,7 @@ async function ensureImportedDepartment(companyId, profile) {
 export async function ensureSupabaseProvisioningScope(profile) {
   if (profile.role === ROLES.SUPER_ADMIN) {
     const client = getSupabaseAdmin();
-    const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim();
+    const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Integrax Platform").trim();
     const existing = throwIfSupabaseError(
       await client.from("Company").select("*").eq("name", companyName).limit(1).maybeSingle(),
       "buscar empresa do super admin"

@@ -1,5 +1,5 @@
 -- =============================================================================
--- CONFORMIX: reset completo de RLS (execute UMA VEZ no SQL Editor do Supabase)
+-- INTEGRAX: reset completo de RLS (execute UMA VEZ no SQL Editor do Supabase)
 -- Corrige: operator does not exist: text = uuid
 -- =============================================================================
 
@@ -129,7 +129,7 @@ BEGIN
   END LOOP;
 END $$;
 
--- 5) Policies CONFORMIX (sem comparar authUserId com auth.uid())
+-- 5) Policies INTEGRAX (sem comparar authUserId com auth.uid())
 CREATE POLICY conformix_company_select ON public."Company"
   FOR SELECT TO authenticated
   USING (public.is_super_admin() OR id = public.auth_company_id());

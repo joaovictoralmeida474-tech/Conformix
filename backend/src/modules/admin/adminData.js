@@ -44,7 +44,7 @@ export function clearAdminDataCache() {
 }
 
 function getSystemCompanyName() {
-  return String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim();
+  return String(process.env.SUPER_ADMIN_COMPANY || "Integrax Platform").trim();
 }
 
 function isSystemCompany(company) {

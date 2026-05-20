@@ -69,15 +69,15 @@ export function getSupabaseAdmin(options = {}) {
   const accessToken = resolveAccessToken(options.accessToken);
   const cacheKey = getClientCacheKey(accessToken);
 
-  if (!globalStore.__conformixSupabaseClients) {
-    globalStore.__conformixSupabaseClients = new Map();
+  if (!globalStore.__integraxSupabaseClients) {
+    globalStore.__integraxSupabaseClients = new Map();
   }
 
-  if (!globalStore.__conformixSupabaseClients.has(cacheKey)) {
-    globalStore.__conformixSupabaseClients.set(cacheKey, createDataClient(accessToken));
+  if (!globalStore.__integraxSupabaseClients.has(cacheKey)) {
+    globalStore.__integraxSupabaseClients.set(cacheKey, createDataClient(accessToken));
   }
 
-  return globalStore.__conformixSupabaseClients.get(cacheKey);
+  return globalStore.__integraxSupabaseClients.get(cacheKey);
 }
 
 export { isSupabaseDataConfigured };

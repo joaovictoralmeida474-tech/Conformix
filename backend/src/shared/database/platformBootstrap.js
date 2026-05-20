@@ -27,7 +27,7 @@ export async function describeDatabaseConnection(timeoutMs = 8000, accessToken =
 
 async function ensureDefaultCompany() {
   const client = getSupabaseAdmin();
-  const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Conformix Platform").trim();
+  const companyName = String(process.env.SUPER_ADMIN_COMPANY || "Integrax Platform").trim();
 
   const existing = throwIfSupabaseError(
     await client.from("Company").select("id,name").eq("name", companyName).limit(1).maybeSingle(),
