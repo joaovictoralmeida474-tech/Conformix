@@ -8,6 +8,7 @@ import {
 } from "../services/supabaseClient";
 import { getDefaultRouteForUser } from "../utils/access";
 import { saveSession } from "../utils/authStorage";
+import integraxtechLogo from "../assets/integraxtech-logo-transparent.png";
 
 export default function Login() {
   const [form, setForm] = useState({
@@ -419,11 +420,18 @@ export default function Login() {
       <div className="login-shell-exact">
         <section className="login-hero-exact anim-fade-slide-right">
           <div className="login-brand-exact">
-            <img
-              src="https://public.readdy.ai/ai/img_res/2a8a687b-b6e7-4f46-80b4-0d3e7b6c5610.png"
-              alt="Conformix"
-              className="login-brand-image-exact"
-            />
+            <div className="login-brand-3d">
+              <img
+                src={integraxtechLogo}
+                alt="Integrax"
+                className="login-brand-image-exact"
+                width={1024}
+                height={341}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+              />
+            </div>
           </div>
 
           <h1 className="login-title-exact">
@@ -547,11 +555,18 @@ export default function Login() {
 
             <div className="login-card-body-exact">
               <div className="login-mobile-brand-exact">
-                <img
-                  src="https://public.readdy.ai/ai/img_res/2a8a687b-b6e7-4f46-80b4-0d3e7b6c5610.png"
-                  alt="Conformix"
-                  className="login-brand-image-mobile-exact"
-                />
+                <div className="login-brand-3d login-brand-3d-mobile">
+                  <img
+                    src={integraxtechLogo}
+                    alt="Integrax"
+                    className="login-brand-image-mobile-exact"
+                    width={1024}
+                    height={341}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </div>
               </div>
 
               <div className="login-form-header-exact">
