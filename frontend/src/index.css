@@ -709,41 +709,66 @@ textarea {
   display: flex;
   flex: 1;
   flex-direction: column;
-  max-width: 520px;
+  max-width: 680px;
   color: #fff;
 }
 
 .login-brand-exact {
   margin-bottom: 34px;
   animation: floatY 4s ease-in-out infinite;
+  perspective: 1100px;
 }
 
 .login-brand-3d {
   position: relative;
   display: block;
   width: 100%;
-  max-width: 520px;
-  transition: transform 0.4s ease;
+  max-width: 680px;
+  transform-style: preserve-3d;
+  transform: perspective(1100px) rotateX(9deg) rotateY(-5deg);
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.login-brand-glow-exact {
+.login-brand-3d::after {
+  content: "";
   position: absolute;
-  inset: 18% 4% -8% 4%;
+  left: 8%;
+  right: 8%;
+  bottom: -6%;
+  height: 28%;
   background: radial-gradient(
     ellipse at center,
-    rgba(13, 216, 255, 0.28) 0%,
-    rgba(0, 230, 180, 0.1) 45%,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(13, 216, 255, 0.12) 35%,
     transparent 72%
   );
-  filter: blur(24px);
-  opacity: 0.65;
+  filter: blur(10px);
+  transform: translateZ(-50px) rotateX(82deg);
+  transform-origin: center top;
   pointer-events: none;
   z-index: 0;
 }
 
+.login-brand-glow-exact {
+  position: absolute;
+  inset: 14% 2% -10% 2%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(13, 216, 255, 0.42) 0%,
+    rgba(0, 230, 180, 0.18) 40%,
+    transparent 72%
+  );
+  filter: blur(28px);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 0;
+  transform: translateZ(-28px);
+}
+
 .login-brand-3d-mobile {
-  max-width: 420px;
+  max-width: 500px;
   margin: 0 auto;
+  transform: perspective(1100px) rotateX(6deg) rotateY(0deg);
 }
 
 .login-brand-tagline-exact {
@@ -772,23 +797,23 @@ textarea {
   z-index: 1;
   display: block;
   width: 100%;
-  max-width: 520px;
+  max-width: 680px;
   height: auto;
   aspect-ratio: 2048 / 682;
   object-fit: contain;
-  transform: none;
+  transform: translateZ(40px);
   filter: none;
   image-rendering: auto;
   -webkit-font-smoothing: subpixel-antialiased;
 }
 
 .login-brand-exact:hover .login-brand-3d {
-  transform: scale(1.01);
+  transform: perspective(1100px) rotateX(3deg) rotateY(0deg) scale(1.02);
 }
 
 .login-brand-exact:hover .login-brand-image-exact {
+  transform: translateZ(48px);
   filter: none;
-  transform: none;
 }
 
 .login-title-exact {
@@ -927,11 +952,11 @@ textarea {
   position: relative;
   z-index: 1;
   display: block;
-  width: min(100%, 420px);
+  width: min(100%, 500px);
   height: auto;
   aspect-ratio: 2048 / 682;
   object-fit: contain;
-  transform: none;
+  transform: translateZ(28px);
   filter: none;
   image-rendering: auto;
 }
@@ -1308,7 +1333,7 @@ body.login-theme {
 }
 
 .login-brand-image-exact {
-  max-width: 420px;
+  max-width: 540px;
 }
 
 .login-title-exact {
@@ -4925,12 +4950,17 @@ body.login-theme .login-brand-exact {
 
 body.login-theme .login-brand-image-exact {
   width: 100%;
-  max-width: 520px;
+  max-width: 680px;
   height: auto;
   aspect-ratio: 2048 / 682;
-  transform: none;
+  transform: translateZ(40px);
   filter: none;
   image-rendering: auto;
+}
+
+body.login-theme .login-brand-3d {
+  max-width: 680px;
+  transform: perspective(1100px) rotateX(9deg) rotateY(-5deg);
 }
 
 body.login-theme .login-title-exact {
