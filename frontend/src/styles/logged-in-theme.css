@@ -1,123 +1,417 @@
 /**
- * Estética da área logada — mesma paleta da tela de login.
- * Escopo: body:not(.login-theme) — não altera login nem comportamento.
+ * INTEGRAXX — Redesign visual total (área logada).
+ * Paleta = login (#020c1b, #00e6b4, #0dd8ff, #1ea0ff)
+ * Escopo: body:not(.login-theme) | Apenas CSS, sem alterar login.
  */
 
-/* —— Fundo e shell —— */
-body:not(.login-theme) .main-shell {
+@keyframes ixGridPulse {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 0.48;
+  }
+}
+
+@keyframes ixOrbDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(12px, -18px, 0) scale(1.08);
+  }
+}
+
+@keyframes ixScanSweep {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes ixNeonPulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 0 0 1px rgba(13, 216, 255, 0.35),
+      0 0 32px rgba(0, 230, 180, 0.18),
+      0 0 64px rgba(13, 216, 255, 0.12);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      0 0 0 1px rgba(0, 230, 180, 0.55),
+      0 0 48px rgba(0, 230, 180, 0.32),
+      0 0 88px rgba(13, 216, 255, 0.22);
+  }
+}
+
+@keyframes ixBorderFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes ixShimmerBtn {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+@keyframes ixHoloSweep {
+  0% {
+    transform: translateX(-60%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(160%);
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════
+   BASE & FUNDO GLOBAL
+   ═══════════════════════════════════════ */
+body:not(.login-theme) {
+  --ix-cyan: #00e6b4;
+  --ix-cyan-hi: #0dd8ff;
+  --ix-blue: #1ea0ff;
+  --ix-deep: #020c1b;
+  --ix-mid: #071426;
+  --ix-alt: #05101d;
+  --ix-glass: rgba(6, 22, 44, 0.72);
+  --ix-glass-border: rgba(13, 216, 255, 0.38);
+  --ix-glow-cyan: 0 0 40px rgba(0, 230, 180, 0.35);
+  --ix-glow-blue: 0 0 56px rgba(13, 216, 255, 0.28);
+
   background:
-    radial-gradient(circle at top left, rgba(13, 216, 255, 0.14), transparent 30%),
-    radial-gradient(circle at 82% 18%, rgba(0, 230, 180, 0.11), transparent 28%),
-    linear-gradient(135deg, var(--login-bg-deep) 0%, var(--login-bg-mid) 46%, var(--login-bg-alt) 100%);
+    radial-gradient(ellipse 120% 80% at 0% -20%, rgba(13, 216, 255, 0.22), transparent 50%),
+    radial-gradient(ellipse 90% 70% at 100% 0%, rgba(0, 230, 180, 0.18), transparent 45%),
+    radial-gradient(ellipse 80% 50% at 50% 110%, rgba(30, 160, 255, 0.14), transparent 50%),
+    linear-gradient(160deg, var(--ix-deep) 0%, var(--ix-mid) 45%, var(--ix-alt) 100%) !important;
+}
+
+body:not(.login-theme) .main-shell {
+  background: transparent !important;
+  isolation: isolate;
 }
 
 body:not(.login-theme) .main-shell::before {
+  opacity: 0.55 !important;
   background:
-    linear-gradient(rgba(13, 216, 255, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(13, 216, 255, 0.12) 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.28;
+    linear-gradient(rgba(13, 216, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 216, 255, 0.18) 1px, transparent 1px) !important;
+  background-size: 36px 36px !important;
+  animation: ixGridPulse 8s ease-in-out infinite !important;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 20%, transparent 78%) !important;
+}
+
+body:not(.login-theme) .main-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(13, 216, 255, 0.03) 2px,
+    rgba(13, 216, 255, 0.03) 4px
+  );
+  opacity: 0.6;
+}
+
+body:not(.login-theme) .app-tech-orb {
+  opacity: 0.85 !important;
+  filter: blur(42px) saturate(180%) !important;
+  animation: ixOrbDrift 18s ease-in-out infinite !important;
+}
+
+body:not(.login-theme) .app-tech-orb-a {
+  width: 340px !important;
+  height: 340px !important;
+  background: radial-gradient(circle, rgba(0, 230, 180, 0.45), transparent 68%) !important;
+}
+
+body:not(.login-theme) .app-tech-orb-b {
+  width: 400px !important;
+  height: 400px !important;
+  background: radial-gradient(circle, rgba(30, 160, 255, 0.4), transparent 70%) !important;
+  animation-delay: -6s !important;
 }
 
 body:not(.login-theme) .main-area {
   background:
-    radial-gradient(circle at top right, rgba(30, 160, 255, 0.1), transparent 26%),
-    radial-gradient(circle at 8% 88%, rgba(0, 230, 180, 0.08), transparent 24%),
-    linear-gradient(180deg, rgba(2, 12, 27, 0.35), rgba(2, 9, 20, 0.55));
+    radial-gradient(circle at 92% 8%, rgba(30, 160, 255, 0.16), transparent 32%),
+    radial-gradient(circle at 4% 92%, rgba(0, 230, 180, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(2, 12, 27, 0.2), rgba(2, 9, 20, 0.65)) !important;
+  box-shadow:
+    inset 0 0 100px rgba(0, 4, 14, 0.7),
+    inset 0 0 180px rgba(0, 230, 180, 0.04) !important;
 }
 
-body:not(.login-theme) .app-tech-orb-a {
-  background: radial-gradient(circle, rgba(0, 230, 180, 0.22), transparent 70%);
+body:not(.login-theme) .app-page-content::before {
+  animation: ixHoloSweep 7s cubic-bezier(0.22, 1, 0.36, 1) infinite !important;
+  opacity: 1 !important;
+  max-height: 320px !important;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(0, 230, 180, 0.15) 38%,
+    rgba(13, 216, 255, 0.22) 50%,
+    rgba(30, 160, 255, 0.12) 62%,
+    transparent 100%
+  ) !important;
 }
 
-body:not(.login-theme) .app-tech-orb-b {
-  background: radial-gradient(circle, rgba(30, 160, 255, 0.2), transparent 72%);
-}
-
-body:not(.login-theme) .app-tech-grid {
-  background:
-    radial-gradient(circle at center, rgba(2, 12, 27, 0) 0%, rgba(2, 12, 27, 0.5) 72%, rgba(2, 12, 27, 0.88) 100%);
-}
-
-/* —— Sidebar —— */
+/* ═══════════════════════════════════════
+   SIDEBAR — painel cyber glass
+   ═══════════════════════════════════════ */
 body:not(.login-theme) .sidebar.sidebar--integraxx {
   background:
-    linear-gradient(180deg, rgba(2, 12, 27, 0.98) 0%, rgba(3, 16, 34, 0.96) 100%),
-    linear-gradient(180deg, rgba(0, 230, 180, 0.04), rgba(13, 216, 255, 0.04));
-  border-right: 1px solid rgba(13, 216, 255, 0.18);
+    linear-gradient(180deg, rgba(2, 14, 32, 0.97) 0%, rgba(3, 18, 40, 0.95) 55%, rgba(2, 10, 26, 0.98) 100%),
+    linear-gradient(90deg, rgba(0, 230, 180, 0.08), transparent 40%) !important;
+  border-right: 1px solid rgba(13, 216, 255, 0.45) !important;
   box-shadow:
-    inset -1px 0 0 rgba(13, 216, 255, 0.08),
-    4px 0 32px rgba(0, 0, 0, 0.35);
+    inset -1px 0 0 rgba(13, 216, 255, 0.25),
+    inset 0 0 60px rgba(0, 230, 180, 0.06),
+    8px 0 48px rgba(0, 0, 0, 0.45),
+    12px 0 80px rgba(13, 216, 255, 0.08) !important;
+  backdrop-filter: blur(24px) saturate(160%) !important;
+}
+
+body:not(.login-theme) .sidebar.sidebar--integraxx::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--ix-cyan-hi) 20%,
+    var(--ix-cyan) 50%,
+    var(--ix-blue) 80%,
+    transparent
+  );
+  box-shadow: 0 0 16px var(--ix-cyan-hi), 0 0 32px rgba(0, 230, 180, 0.4);
+  pointer-events: none;
+  z-index: 2;
 }
 
 body:not(.login-theme) .sidebar-brand-panel {
-  border-bottom-color: rgba(13, 216, 255, 0.16);
+  border-bottom: 1px solid rgba(13, 216, 255, 0.28) !important;
+  background: linear-gradient(180deg, rgba(13, 216, 255, 0.06), transparent) !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx .nav-list {
+  gap: 8px !important;
+  padding: 0 14px !important;
 }
 
 body:not(.login-theme) .sidebar-menu-link {
-  color: #8eb8d8;
+  color: #7eb8dc !important;
+  border-radius: 14px !important;
+  border: 1px solid transparent !important;
+  min-height: 50px !important;
+  transition:
+    color 0.25s ease,
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease !important;
 }
 
 body:not(.login-theme) .sidebar-menu-link:hover {
-  color: #d4f0ff;
-  background: rgba(13, 216, 255, 0.08);
+  color: #e8f8ff !important;
+  background: rgba(13, 216, 255, 0.1) !important;
+  border-color: rgba(13, 216, 255, 0.2) !important;
+  box-shadow: 0 0 24px rgba(13, 216, 255, 0.1) !important;
+  transform: translateX(0) !important;
 }
 
 body:not(.login-theme) .sidebar-menu-link.active {
-  color: #ffffff;
+  color: #ffffff !important;
+  font-weight: 600 !important;
   background: linear-gradient(
     90deg,
-    rgba(0, 230, 180, 0.16) 0%,
-    rgba(13, 216, 255, 0.08) 55%,
-    rgba(30, 160, 255, 0.06) 100%
-  );
+    rgba(0, 230, 180, 0.22) 0%,
+    rgba(13, 216, 255, 0.14) 50%,
+    rgba(30, 160, 255, 0.1) 100%
+  ) !important;
+  border-color: rgba(0, 230, 180, 0.45) !important;
   box-shadow:
-    inset 0 0 0 1px rgba(13, 216, 255, 0.14),
-    0 0 20px rgba(0, 230, 180, 0.08);
+    inset 0 0 0 1px rgba(13, 216, 255, 0.2),
+    0 0 28px rgba(0, 230, 180, 0.2),
+    0 0 48px rgba(13, 216, 255, 0.1) !important;
+  transform: translateX(0) !important;
 }
 
 body:not(.login-theme) .sidebar-menu-link.active::before {
-  background: linear-gradient(180deg, var(--login-cyan) 0%, var(--login-cyan-bright) 100%);
-  box-shadow: 0 0 14px rgba(13, 216, 255, 0.55);
+  width: 5px !important;
+  height: 36px !important;
+  box-shadow: 0 0 20px rgba(0, 230, 180, 0.9), 0 0 36px rgba(13, 216, 255, 0.6) !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link.active::after {
+  display: block !important;
+  opacity: 1 !important;
+  transform: translateY(-50%) scale(1) !important;
+  width: 8px !important;
+  height: 8px !important;
+  box-shadow: 0 0 14px rgba(13, 216, 255, 1), 0 0 28px rgba(0, 230, 180, 0.6) !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link i {
+  font-size: 22px !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link:hover i,
+body:not(.login-theme) .sidebar-menu-link.active i {
+  color: var(--ix-cyan-hi) !important;
+  filter: drop-shadow(0 0 10px rgba(13, 216, 255, 0.9)) drop-shadow(0 0 20px rgba(0, 230, 180, 0.5)) !important;
+  transform: scale(1.08) !important;
 }
 
 body:not(.login-theme) .sidebar-profile-card {
-  border-top-color: rgba(13, 216, 255, 0.16);
+  border-top: 1px solid rgba(13, 216, 255, 0.28) !important;
+  background: linear-gradient(0deg, rgba(13, 216, 255, 0.05), transparent) !important;
 }
 
 body:not(.login-theme) .sidebar-profile-avatar {
-  background: linear-gradient(135deg, var(--login-cyan) 0%, var(--login-blue) 100%);
-  box-shadow: 0 0 20px rgba(13, 216, 255, 0.35);
+  background: linear-gradient(135deg, var(--ix-cyan) 0%, var(--ix-cyan-hi) 45%, var(--ix-blue) 100%) !important;
+  box-shadow: 0 0 28px rgba(13, 216, 255, 0.55), 0 0 48px rgba(0, 230, 180, 0.25) !important;
 }
 
-/* —— Tipografia e legibilidade —— */
+body:not(.login-theme) .sidebar-logout-button {
+  color: #8eb8d8 !important;
+}
+
+body:not(.login-theme) .sidebar-logout-button:hover {
+  color: var(--ix-cyan-hi) !important;
+  text-shadow: 0 0 12px rgba(13, 216, 255, 0.6) !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx .sidebar-collapse-toggle {
+  background: linear-gradient(180deg, #3ee8ff 0%, var(--ix-cyan-hi) 40%, var(--ix-blue) 100%) !important;
+  box-shadow:
+    0 0 0 2px rgba(2, 12, 27, 0.95),
+    0 0 20px rgba(13, 216, 255, 0.7),
+    0 0 40px rgba(0, 230, 180, 0.35) !important;
+}
+
+/* ═══════════════════════════════════════
+   NAVBAR — cabeçalho holográfico
+   ═══════════════════════════════════════ */
+body:not(.login-theme) .navbar {
+  border: 1px solid rgba(13, 216, 255, 0.42) !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(135deg, rgba(0, 230, 180, 0.14) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(8, 32, 62, 0.92), rgba(3, 14, 34, 0.96)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(0, 230, 180, 0.12),
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(13, 216, 255, 0.15),
+    0 0 100px rgba(0, 230, 180, 0.08) !important;
+  backdrop-filter: blur(28px) saturate(170%) !important;
+}
+
+body:not(.login-theme) .navbar::before {
+  width: 4px !important;
+  box-shadow: 0 0 24px rgba(13, 216, 255, 0.8), 0 0 48px rgba(0, 230, 180, 0.4) !important;
+}
+
+body:not(.login-theme) .navbar strong:first-child {
+  font-size: 1.35rem !important;
+  background: linear-gradient(90deg, #ffffff 0%, var(--ix-cyan-hi) 55%, var(--ix-blue) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none !important;
+  filter: drop-shadow(0 0 20px rgba(13, 216, 255, 0.35));
+}
+
+body:not(.login-theme) .navbar-subtitle {
+  color: #a8d8f0 !important;
+}
+
+body:not(.login-theme) .navbar-meta {
+  color: #c8e8ff !important;
+}
+
+body:not(.login-theme) .navbar-meta strong {
+  color: var(--ix-cyan-hi) !important;
+  text-shadow: 0 0 16px rgba(13, 216, 255, 0.4) !important;
+}
+
+/* ═══════════════════════════════════════
+   TÍTULOS DE PÁGINA
+   ═══════════════════════════════════════ */
 body:not(.login-theme) .page-title,
 body:not(.login-theme) .supplier-hero h1,
-body:not(.login-theme) .supplier-dossier-header h1 {
-  color: #f8fdff;
-  text-shadow:
-    0 0 24px rgba(13, 216, 255, 0.2),
-    0 0 48px rgba(0, 230, 180, 0.1);
+body:not(.login-theme) .supplier-dossier-header h1,
+body:not(.login-theme) .admin-hero h1 {
+  font-family: "Oxanium", "Space Grotesk", sans-serif !important;
+  font-size: clamp(1.75rem, 3vw, 2.5rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  background: linear-gradient(92deg, #ffffff 0%, var(--ix-cyan-hi) 45%, var(--ix-blue) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 28px rgba(13, 216, 255, 0.35));
+}
+
+body:not(.login-theme) .page-header::after,
+body:not(.login-theme) .supplier-hero::after,
+body:not(.login-theme) .supplier-dossier-header::after {
+  height: 2px !important;
+  background: linear-gradient(
+    90deg,
+    var(--ix-cyan),
+    var(--ix-cyan-hi),
+    var(--ix-blue),
+    transparent
+  ) !important;
+  box-shadow: 0 0 16px rgba(13, 216, 255, 0.5) !important;
 }
 
 body:not(.login-theme) .page-subtitle,
-body:not(.login-theme) .navbar-subtitle,
-body:not(.login-theme) .supplier-hero p,
-body:not(.login-theme) .dashboard-empty-copy,
-body:not(.login-theme) .empty-state,
-body:not(.login-theme) .supplier-helper-text,
-body:not(.login-theme) .admin-field-hint {
-  color: #9ed8ff;
+body:not(.login-theme) .supplier-hero p {
+  color: #b8e4ff !important;
+  font-size: 1rem !important;
 }
 
 body:not(.login-theme) .dashboard-card-eyebrow,
 body:not(.login-theme) .supplier-hero-kicker,
 body:not(.login-theme) .helper-label {
-  color: var(--login-cyan-bright);
-  letter-spacing: 0.06em;
+  color: var(--ix-cyan-hi) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2em !important;
+  text-shadow: 0 0 12px rgba(13, 216, 255, 0.35) !important;
 }
 
-/* —— Cartões e painéis (reforço glass, paleta login) —— */
+/* ═══════════════════════════════════════
+   CARDS — superfície neon + cantos tech
+   ═══════════════════════════════════════ */
 body:not(.login-theme) .navbar,
 body:not(.login-theme) .dashboard-panel,
 body:not(.login-theme) .dashboard-stat-card,
@@ -134,65 +428,164 @@ body:not(.login-theme) .info-strip,
 body:not(.login-theme) .rnc-treatment-panel,
 body:not(.login-theme) .admin-hero,
 body:not(.login-theme) .admin-table-card,
-body:not(.login-theme) .admin-activity-item,
-body:not(.login-theme) .admin-setting-card,
-body:not(.login-theme) .admin-permission-item {
-  border-color: rgba(13, 216, 255, 0.2) !important;
+body:not(.login-theme) .page-card,
+body:not(.login-theme) .panel,
+body:not(.login-theme) .hero-card,
+body:not(.login-theme) .stat-card,
+body:not(.login-theme) .app-page-content [class*="-panel"],
+body:not(.login-theme) .app-page-content [class*="-card"]:not(.login-card):not([class*="login-"]),
+body:not(.login-theme) .app-page-content [class*="-hero"],
+body:not(.login-theme) .app-page-content [class*="-shell"] {
+  border: 1px solid var(--ix-glass-border) !important;
+  border-radius: 22px !important;
   background:
-    linear-gradient(135deg, rgba(0, 230, 180, 0.06), transparent 52%),
-    var(--app-surface) !important;
+    linear-gradient(145deg, rgba(0, 230, 180, 0.1) 0%, transparent 38%),
+    linear-gradient(220deg, rgba(30, 160, 255, 0.08) 0%, transparent 45%),
+    linear-gradient(180deg, rgba(8, 28, 54, 0.9), rgba(3, 12, 30, 0.95)) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 20px 50px rgba(0, 2, 12, 0.5),
-    0 0 0 1px rgba(13, 216, 255, 0.1),
-    0 0 40px rgba(0, 230, 180, 0.06) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 230, 180, 0.08),
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 0 48px rgba(13, 216, 255, 0.1),
+    0 0 80px rgba(0, 230, 180, 0.06) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
 }
 
-body:not(.login-theme) .navbar::before {
-  background: linear-gradient(180deg, var(--login-cyan), var(--login-cyan-bright), var(--login-blue));
-  box-shadow: 0 0 20px rgba(13, 216, 255, 0.45);
+/* Barra superior neon nos stat cards */
+body:not(.login-theme) .dashboard-stat-card::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 12px !important;
+  right: 12px !important;
+  height: 3px !important;
+  border-radius: 0 0 6px 6px !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ix-cyan),
+    var(--ix-cyan-hi),
+    var(--ix-blue),
+    transparent
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: ixBorderFlow 4s linear infinite !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: none !important;
 }
 
-/* —— Tabelas —— */
+body:not(.login-theme) .dashboard-stat-card {
+  animation: ixNeonPulse 4s ease-in-out infinite !important;
+  padding: 20px 22px !important;
+  min-height: 120px !important;
+}
+
+body:not(.login-theme) .dashboard-stat-card strong {
+  background: linear-gradient(135deg, #ffffff 10%, var(--ix-cyan-hi) 55%, var(--ix-blue) 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 24px rgba(13, 216, 255, 0.4)) !important;
+  font-family: "Oxanium", "Space Grotesk", sans-serif !important;
+  font-size: clamp(2.2rem, 3.5vw, 3.6rem) !important;
+}
+
+body:not(.login-theme) .dashboard-stat-card p {
+  color: var(--ix-cyan) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 0 12px rgba(0, 230, 180, 0.35) !important;
+}
+
+body:not(.login-theme) .dashboard-panel h3,
+body:not(.login-theme) .panel-heading h3 {
+  color: #f0f9ff !important;
+  font-family: "Space Grotesk", sans-serif !important;
+  text-shadow: 0 0 16px rgba(13, 216, 255, 0.2) !important;
+}
+
+body:not(.login-theme) .dashboard-chart-wrap {
+  border: 1px solid rgba(13, 216, 255, 0.28) !important;
+  background:
+    linear-gradient(180deg, rgba(4, 20, 42, 0.95), rgba(2, 10, 28, 0.9)) !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 40px rgba(13, 216, 255, 0.04) !important;
+}
+
+body:not(.login-theme) .dashboard-top-grid {
+  gap: 18px !important;
+}
+
+body:not(.login-theme) .dashboard-main-grid,
+body:not(.login-theme) .dashboard-shell,
+body:not(.login-theme) .page-grid {
+  gap: 20px !important;
+}
+
+/* Hover cartões — lift + glow intenso */
+body:not(.login-theme) .dashboard-stat-card:hover,
+body:not(.login-theme) .dashboard-panel:hover,
+body:not(.login-theme) .table-card:hover,
+body:not(.login-theme) .supplier-list-card:hover,
+body:not(.login-theme) .supplier-form-panel:hover,
+body:not(.login-theme) .admin-hero:hover,
+body:not(.login-theme) .app-page-content [class*="-card"]:hover:not([class*="login-"]) {
+  transform: translateY(-6px) scale(1.01) !important;
+  border-color: rgba(0, 230, 180, 0.55) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 0 1px rgba(0, 230, 180, 0.25),
+    0 36px 80px rgba(0, 0, 0, 0.6),
+    0 0 64px rgba(0, 230, 180, 0.22),
+    0 0 100px rgba(13, 216, 255, 0.15) !important;
+}
+
+/* ═══════════════════════════════════════
+   TABELAS
+   ═══════════════════════════════════════ */
 body:not(.login-theme) .table-card th,
 body:not(.login-theme) .supplier-table th,
 body:not(.login-theme) .dashboard-table th,
 body:not(.login-theme) .admin-table-card th {
-  color: var(--login-cyan-bright);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  background: rgba(0, 230, 180, 0.08);
-  border-bottom: 1px solid rgba(13, 216, 255, 0.2);
+  padding: 14px 16px !important;
+  color: var(--ix-cyan-hi) !important;
+  font-family: "Oxanium", sans-serif !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  background: linear-gradient(180deg, rgba(0, 230, 180, 0.16), rgba(13, 216, 255, 0.08)) !important;
+  border-bottom: 2px solid rgba(13, 216, 255, 0.35) !important;
+  text-shadow: 0 0 12px rgba(13, 216, 255, 0.3) !important;
 }
 
 body:not(.login-theme) .table-card td,
 body:not(.login-theme) .supplier-table td,
-body:not(.login-theme) .dashboard-table td,
-body:not(.login-theme) .admin-table-card td {
-  color: #e8f4ff;
-  border-color: rgba(13, 216, 255, 0.1);
+body:not(.login-theme) .dashboard-table td {
+  padding: 14px 16px !important;
+  color: #e4f4ff !important;
+  border-color: rgba(13, 216, 255, 0.12) !important;
 }
 
 body:not(.login-theme) .table-card tbody tr:nth-child(even),
-body:not(.login-theme) .supplier-table tbody tr:nth-child(even),
-body:not(.login-theme) .dashboard-table tbody tr:nth-child(even) {
-  background: rgba(13, 216, 255, 0.03);
+body:not(.login-theme) .supplier-table tbody tr:nth-child(even) {
+  background: rgba(13, 216, 255, 0.05) !important;
 }
 
 body:not(.login-theme) .table-card tbody tr:hover,
-body:not(.login-theme) .supplier-table tbody tr:hover,
-body:not(.login-theme) .dashboard-table tbody tr:hover {
-  background: rgba(0, 230, 180, 0.08);
+body:not(.login-theme) .supplier-table tbody tr:hover {
+  background: rgba(0, 230, 180, 0.12) !important;
+  box-shadow: inset 0 0 24px rgba(13, 216, 255, 0.06) !important;
 }
 
-body:not(.login-theme) .table-card td strong,
-body:not(.login-theme) .supplier-table td strong {
-  color: #ffffff;
+body:not(.login-theme) .table-card td strong {
+  color: #ffffff !important;
 }
 
-/* —— Formulários —— */
+/* ═══════════════════════════════════════
+   FORMULÁRIOS
+   ═══════════════════════════════════════ */
 body:not(.login-theme) .supplier-filter-input,
 body:not(.login-theme) .supplier-filter-select,
 body:not(.login-theme) .supplier-form-input,
@@ -204,193 +597,223 @@ body:not(.login-theme) .textarea,
 body:not(.login-theme) .admin-form-field input,
 body:not(.login-theme) .admin-form-field select,
 body:not(.login-theme) .admin-form-field textarea {
-  border: 1px solid rgba(13, 216, 255, 0.22);
-  background: rgba(4, 16, 34, 0.92);
-  color: #f0f9ff;
-  border-radius: 12px;
-}
-
-body:not(.login-theme) .supplier-filter-input::placeholder,
-body:not(.login-theme) .supplier-form-input::placeholder,
-body:not(.login-theme) .input::placeholder,
-body:not(.login-theme) .textarea::placeholder {
-  color: #6d9eb8;
+  border: 1px solid rgba(13, 216, 255, 0.32) !important;
+  background: rgba(2, 12, 28, 0.92) !important;
+  color: #f4fbff !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35) !important;
 }
 
 body:not(.login-theme) .supplier-filter-input:focus,
-body:not(.login-theme) .supplier-filter-select:focus,
 body:not(.login-theme) .supplier-form-input:focus,
-body:not(.login-theme) .supplier-form-textarea:focus,
-body:not(.login-theme) .category-form-textarea:focus,
 body:not(.login-theme) .input:focus,
 body:not(.login-theme) .select:focus,
 body:not(.login-theme) .textarea:focus,
-body:not(.login-theme) .admin-form-field input:focus,
-body:not(.login-theme) .admin-form-field select:focus,
-body:not(.login-theme) .admin-form-field textarea:focus {
-  border-color: rgba(0, 230, 180, 0.55);
+body:not(.login-theme) .admin-form-field input:focus {
+  border-color: var(--ix-cyan) !important;
   box-shadow:
-    0 0 0 3px rgba(0, 230, 180, 0.12),
-    0 0 24px rgba(13, 216, 255, 0.12);
-  outline: none;
+    inset 0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 3px rgba(0, 230, 180, 0.18),
+    0 0 32px rgba(13, 216, 255, 0.2) !important;
+  outline: none !important;
 }
 
-/* —— Botões primários (gradiente login) —— */
+/* ═══════════════════════════════════════
+   BOTÕES
+   ═══════════════════════════════════════ */
 body:not(.login-theme) .button,
 body:not(.login-theme) .supplier-save-button,
 body:not(.login-theme) .supplier-toolbar-button-primary {
-  border: 1px solid rgba(0, 230, 180, 0.35);
-  background: linear-gradient(90deg, var(--login-cyan) 0%, var(--login-cyan-bright) 48%, var(--login-blue) 100%);
-  color: #021018;
-  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background: linear-gradient(
+    110deg,
+    var(--ix-cyan) 0%,
+    var(--ix-cyan-hi) 35%,
+    var(--ix-blue) 70%,
+    var(--ix-cyan-hi) 100%
+  ) !important;
+  background-size: 200% auto !important;
+  color: #021018 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  font-size: 0.82rem !important;
+  border-radius: 14px !important;
   box-shadow:
-    0 12px 32px rgba(13, 216, 255, 0.2),
-    0 0 24px rgba(0, 230, 180, 0.15);
+    0 14px 36px rgba(13, 216, 255, 0.35),
+    0 0 40px rgba(0, 230, 180, 0.25) !important;
+  animation: ixShimmerBtn 5s linear infinite !important;
 }
 
 body:not(.login-theme) .button:hover,
-body:not(.login-theme) .supplier-save-button:hover,
-body:not(.login-theme) .supplier-toolbar-button-primary:hover {
+body:not(.login-theme) .supplier-save-button:hover {
+  transform: translateY(-3px) !important;
   box-shadow:
-    0 16px 40px rgba(13, 216, 255, 0.28),
-    0 0 32px rgba(0, 230, 180, 0.22);
+    0 20px 48px rgba(13, 216, 255, 0.45),
+    0 0 56px rgba(0, 230, 180, 0.35) !important;
 }
 
 body:not(.login-theme) .ghost-button,
 body:not(.login-theme) .supplier-cancel-button,
 body:not(.login-theme) .supplier-filter-button,
 body:not(.login-theme) .supplier-row-button,
-body:not(.login-theme) .supplier-toolbar-button-muted,
-body:not(.login-theme) .supplier-doc-download {
-  border: 1px solid rgba(13, 216, 255, 0.22);
-  background: rgba(4, 18, 36, 0.88);
-  color: #d8f0ff;
+body:not(.login-theme) .supplier-toolbar-button-muted {
+  border: 1px solid rgba(13, 216, 255, 0.35) !important;
+  background: rgba(3, 16, 36, 0.9) !important;
+  color: #d8f4ff !important;
+  border-radius: 14px !important;
 }
 
 body:not(.login-theme) .ghost-button:hover,
-body:not(.login-theme) .supplier-cancel-button:hover,
-body:not(.login-theme) .supplier-filter-button:hover,
-body:not(.login-theme) .supplier-row-button:hover {
-  border-color: rgba(0, 230, 180, 0.35);
-  background: rgba(8, 32, 58, 0.92);
-  color: #ffffff;
+body:not(.login-theme) .supplier-filter-button:hover {
+  border-color: var(--ix-cyan) !important;
+  background: rgba(0, 230, 180, 0.12) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 28px rgba(13, 216, 255, 0.2) !important;
 }
 
-/* —— Badges e status —— */
+/* ═══════════════════════════════════════
+   BADGES & ALERTAS
+   ═══════════════════════════════════════ */
 body:not(.login-theme) .badge,
-body:not(.login-theme) .supplier-pill,
 body:not(.login-theme) .status-pill,
 body:not(.login-theme) .status-tag,
+body:not(.login-theme) .supplier-pill,
 body:not(.login-theme) .supplier-status-badge {
-  border: 1px solid rgba(0, 230, 180, 0.28);
-  background: linear-gradient(90deg, rgba(0, 230, 180, 0.14), rgba(13, 216, 255, 0.1));
-  color: #c8fff4;
+  border: 1px solid rgba(0, 230, 180, 0.4) !important;
+  background: linear-gradient(90deg, rgba(0, 230, 180, 0.2), rgba(13, 216, 255, 0.12)) !important;
+  color: #d4fff8 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 20px rgba(0, 230, 180, 0.15) !important;
 }
 
-body:not(.login-theme) .status-pill.review,
 body:not(.login-theme) .status-pill.blocked,
-body:not(.login-theme) .status-pill.aberta,
-body:not(.login-theme) .status-pill.open,
 body:not(.login-theme) .status-tag.blocked,
-body:not(.login-theme) .status-tag.aberta,
 body:not(.login-theme) .supplier-status-badge-blocked {
-  border-color: rgba(255, 116, 138, 0.35);
-  background: linear-gradient(90deg, rgba(255, 89, 123, 0.16), rgba(255, 142, 87, 0.12));
-  color: #ffd8df;
+  border-color: rgba(255, 100, 130, 0.5) !important;
+  background: linear-gradient(90deg, rgba(255, 70, 100, 0.25), rgba(255, 140, 80, 0.15)) !important;
+  color: #ffe0e8 !important;
+  box-shadow: 0 0 20px rgba(255, 80, 120, 0.2) !important;
 }
 
-/* —— Admin —— */
+body:not(.login-theme) .alert-card,
+body:not(.login-theme) .info-strip {
+  border-left: 4px solid var(--ix-cyan-hi) !important;
+  box-shadow: inset 4px 0 24px rgba(13, 216, 255, 0.08) !important;
+}
+
+body:not(.login-theme) .dashboard-alert-item strong {
+  color: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════
+   ADMIN
+   ═══════════════════════════════════════ */
+body:not(.login-theme) .admin-tab-link {
+  border: 1px solid rgba(13, 216, 255, 0.25) !important;
+  background: rgba(3, 14, 32, 0.85) !important;
+  color: #8eb8d8 !important;
+}
+
 body:not(.login-theme) .admin-tab-link.active,
 body:not(.login-theme) .admin-tab-link:hover {
-  border-color: rgba(0, 230, 180, 0.35);
-  background: linear-gradient(135deg, rgba(0, 230, 180, 0.12), rgba(13, 216, 255, 0.08));
-  color: #ffffff;
-  box-shadow: 0 0 20px rgba(13, 216, 255, 0.12);
+  border-color: rgba(0, 230, 180, 0.5) !important;
+  background: linear-gradient(135deg, rgba(0, 230, 180, 0.18), rgba(13, 216, 255, 0.1)) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 32px rgba(13, 216, 255, 0.2) !important;
+}
+
+body:not(.login-theme) .admin-activity-item,
+body:not(.login-theme) .admin-setting-card,
+body:not(.login-theme) .admin-permission-item {
+  border: 1px solid rgba(13, 216, 255, 0.2) !important;
+  background: rgba(4, 18, 38, 0.85) !important;
+  border-radius: 18px !important;
 }
 
 body:not(.login-theme) .admin-permission-chip.is-selected {
-  border-color: rgba(0, 230, 180, 0.4);
-  background: linear-gradient(135deg, rgba(0, 230, 180, 0.12), rgba(13, 216, 255, 0.06));
+  border-color: rgba(0, 230, 180, 0.55) !important;
+  background: linear-gradient(135deg, rgba(0, 230, 180, 0.15), rgba(13, 216, 255, 0.08)) !important;
+  box-shadow: 0 0 24px rgba(0, 230, 180, 0.15) !important;
 }
 
 body:not(.login-theme) .admin-modal-overlay,
 body:not(.login-theme) .rnc-modal-overlay {
-  background: rgba(2, 12, 27, 0.82);
-  backdrop-filter: blur(14px);
+  background: rgba(2, 8, 20, 0.88) !important;
+  backdrop-filter: blur(20px) saturate(140%) !important;
 }
 
 body:not(.login-theme) .admin-modal-card,
 body:not(.login-theme) .rnc-modal-panel {
-  border: 1px solid rgba(13, 216, 255, 0.22) !important;
+  border: 1px solid rgba(13, 216, 255, 0.4) !important;
   background:
-    linear-gradient(135deg, rgba(0, 230, 180, 0.06), transparent 48%),
-    linear-gradient(180deg, rgba(7, 28, 52, 0.96), rgba(4, 14, 32, 0.98)) !important;
+    linear-gradient(160deg, rgba(0, 230, 180, 0.1), transparent 40%),
+    linear-gradient(180deg, rgba(7, 28, 56, 0.98), rgba(2, 10, 26, 0.99)) !important;
   box-shadow:
-    0 32px 80px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(13, 216, 255, 0.12),
-    0 0 60px rgba(0, 230, 180, 0.08) !important;
+    0 40px 100px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(0, 230, 180, 0.15),
+    0 0 80px rgba(13, 216, 255, 0.15) !important;
 }
 
-/* —— Gráficos e blocos internos —— */
-body:not(.login-theme) .dashboard-chart-wrap,
-body:not(.login-theme) .supplier-document-card,
-body:not(.login-theme) .dashboard-chart-card {
-  border: 1px solid rgba(13, 216, 255, 0.16);
-  background: rgba(4, 16, 34, 0.75);
-  border-radius: 16px;
-}
-
-body:not(.login-theme) .dashboard-stat-card strong {
-  color: #ffffff;
-  text-shadow: 0 0 20px rgba(13, 216, 255, 0.25);
-}
-
-body:not(.login-theme) .dashboard-stat-card p {
-  color: #7ef0dd;
-}
-
-/* —— Alertas e feedback —— */
-body:not(.login-theme) .alert-card,
-body:not(.login-theme) .info-strip {
-  border-left: 3px solid var(--login-cyan-bright);
+/* ═══════════════════════════════════════
+   MISC — texto, loading, scrollbar
+   ═══════════════════════════════════════ */
+body:not(.login-theme) p,
+body:not(.login-theme) li,
+body:not(.login-theme) label,
+body:not(.login-theme) .helper-text,
+body:not(.login-theme) .empty-state {
+  color: #b0d4ec !important;
 }
 
 body:not(.login-theme) .route-loading {
-  color: var(--login-cyan-bright);
-}
-
-/* —— Preset selector —— */
-body:not(.login-theme) .theme-preset-control span {
-  color: var(--login-cyan-bright);
+  color: var(--ix-cyan-hi) !important;
+  font-family: "Oxanium", sans-serif !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 0 24px rgba(13, 216, 255, 0.5) !important;
 }
 
 body:not(.login-theme) .theme-preset-control select {
-  border-color: rgba(13, 216, 255, 0.35);
-  background: rgba(4, 16, 34, 0.92);
-  color: #f0f9ff;
+  border: 1px solid rgba(13, 216, 255, 0.4) !important;
+  background: rgba(2, 12, 28, 0.95) !important;
+  color: var(--ix-cyan-hi) !important;
+  font-weight: 600 !important;
 }
 
-body:not(.login-theme) .theme-preset-control select:focus {
-  border-color: rgba(0, 230, 180, 0.6);
-  box-shadow: 0 0 0 3px rgba(0, 230, 180, 0.15);
-}
-
-/* —— Collapsed sidebar: ícones centralizados, sem deslocar —— */
+/* Sidebar recolhida */
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link,
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link:hover,
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active {
-  transform: none;
+  transform: none !important;
 }
 
-/* —— Links de navegação legado (não sidebar integraxx) —— */
-body:not(.login-theme) .nav-link:not(.sidebar-menu-link):hover,
-body:not(.login-theme) .nav-link:not(.sidebar-menu-link).active {
-  border-color: rgba(0, 230, 180, 0.34);
-  background: linear-gradient(90deg, rgba(0, 230, 180, 0.12), rgba(30, 160, 255, 0.12));
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active::after {
+  right: 8px !important;
+}
+
+/* Presets — intensificar cyber */
+body:not(.login-theme)[data-theme-preset="cyber-neon"] .main-shell::before,
+body:not(.login-theme)[data-theme-preset="ultra-futuristic"] .main-shell::before {
+  opacity: 0.65 !important;
+}
+
+body:not(.login-theme)[data-theme-preset="ultra-futuristic"] .dashboard-stat-card {
+  animation: ixNeonPulse 2.5s ease-in-out infinite !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body:not(.login-theme) .app-page-content > * {
+  body:not(.login-theme) .main-shell::before,
+  body:not(.login-theme) .app-tech-orb,
+  body:not(.login-theme) .app-page-content::before,
+  body:not(.login-theme) .dashboard-stat-card,
+  body:not(.login-theme) .dashboard-stat-card::before,
+  body:not(.login-theme) .button {
     animation: none !important;
+  }
+
+  body:not(.login-theme) .dashboard-stat-card:hover,
+  body:not(.login-theme) .table-card:hover {
+    transform: none !important;
   }
 }
