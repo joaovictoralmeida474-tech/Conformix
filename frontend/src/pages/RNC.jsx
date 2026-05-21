@@ -4,6 +4,13 @@ import { api } from "../services/api";
 import { cachedGet } from "../services/cachedApi";
 import { PERMISSIONS, hasPermission } from "../utils/access";
 
+const FIELD_LIMITS = {
+  description: 2000,
+  cause: 2000,
+  correctiveAction: 2000,
+  responsible: 120
+};
+
 const initialForm = {
   status: "ABERTA",
   description: "",
@@ -127,6 +134,7 @@ export default function RNC() {
               <textarea
                 className="supplier-form-textarea"
                 value={form.description}
+                maxLength={FIELD_LIMITS.description}
                 onChange={(event) => setForm({ ...form, description: event.target.value })}
               />
             </div>
@@ -136,6 +144,7 @@ export default function RNC() {
               <textarea
                 className="supplier-form-textarea"
                 value={form.cause}
+                maxLength={FIELD_LIMITS.cause}
                 onChange={(event) => setForm({ ...form, cause: event.target.value })}
               />
             </div>
@@ -145,6 +154,7 @@ export default function RNC() {
               <textarea
                 className="supplier-form-textarea"
                 value={form.correctiveAction}
+                maxLength={FIELD_LIMITS.correctiveAction}
                 onChange={(event) => setForm({ ...form, correctiveAction: event.target.value })}
               />
             </div>
@@ -155,6 +165,7 @@ export default function RNC() {
                 <input
                   className="supplier-form-input"
                   value={form.responsible}
+                  maxLength={FIELD_LIMITS.responsible}
                   onChange={(event) => setForm({ ...form, responsible: event.target.value })}
                 />
               </div>

@@ -4,6 +4,14 @@ import { api } from "../services/api";
 import { cachedGet } from "../services/cachedApi";
 import { ROLES, normalizeRole } from "../utils/access";
 
+const FIELD_LIMITS = {
+  name: 120,
+  slug: 80,
+  description: 500,
+  questions: 8000,
+  documents: 3000
+};
+
 const initialForm = {
   name: "",
   slug: "",
@@ -203,6 +211,7 @@ export default function Categories() {
                 <input
                   className="supplier-form-input"
                   value={form.name}
+                  maxLength={FIELD_LIMITS.name}
                   onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                 />
               </div>
@@ -212,6 +221,7 @@ export default function Categories() {
                   className="supplier-form-input"
                   placeholder="Ex.: alimentacao"
                   value={form.slug}
+                  maxLength={FIELD_LIMITS.slug}
                   onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))}
                 />
                 <p className="supplier-helper-text">
@@ -225,6 +235,7 @@ export default function Categories() {
               <input
                 className="supplier-form-input"
                 value={form.description}
+                maxLength={FIELD_LIMITS.description}
                 onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
               />
             </div>
@@ -235,6 +246,7 @@ export default function Categories() {
                 className="category-form-textarea"
                 placeholder="Escreva uma pergunta por linha"
                 value={questionText}
+                maxLength={FIELD_LIMITS.questions}
                 onChange={(event) => setQuestionText(event.target.value)}
               />
               <p className="supplier-helper-text">
@@ -248,6 +260,7 @@ export default function Categories() {
                 className="category-form-textarea"
                 placeholder="Escreva um documento por linha"
                 value={documentText}
+                maxLength={FIELD_LIMITS.documents}
                 onChange={(event) => setDocumentText(event.target.value)}
               />
               <p className="supplier-helper-text">
