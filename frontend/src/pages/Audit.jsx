@@ -34,6 +34,20 @@ function hasActiveFilters(filters) {
   return Object.values(filters).some((value) => String(value || "").trim());
 }
 
+function formatDateFilterInput(raw) {
+  const digits = String(raw || "").replace(/\D/g, "").slice(0, 8);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  if (digits.length <= 4) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
 export default function Audit() {
   const [items, setItems] = useState([]);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
@@ -105,7 +119,8 @@ export default function Audit() {
   }, [page, total, filtersActive]);
 
   function updateFilter(key, value) {
-    setFilters((current) => ({ ...current, [key]: value }));
+    const nextValue = key === "date" ? formatDateFilterInput(value) : value;
+    setFilters((current) => ({ ...current, [key]: nextValue }));
   }
 
   function clearFilters() {
@@ -137,16 +152,88 @@ export default function Audit() {
       </header>
 
       <section className="table-card audit-table-card">
-        <div className="audit-toolbar">
-          <p className="audit-search-hint">{rangeLabel}</p>
-          <button
-            type="button"
-            className="supplier-filter-button audit-clear-filters-button"
-            onClick={clearFilters}
-            disabled={!filtersActive && !hasActiveFilters(filters)}
-          >
-            Limpar filtros
-          </button>
+        <div className="audit-filters-panel">
+          <div className="audit-filters-head">
+            <div>
+              <h2 className="audit-filters-title">Filtros do historico</h2>
+              <p className="audit-filters-subtitle">Preencha uma ou mais colunas para refinar a lista.</p>
+            </div>
+            <button
+              type="button"
+              className="supplier-filter-button audit-clear-filters-button"
+              onClick={clearFilters}
+              disabled={!filtersActive && !hasActiveFilters(filters)}
+            >
+              Limpar filtros
+            </button>
+          </div>
+
+          <div className="audit-filters-grid">
+            <label className="audit-filter-field">
+              <span className="audit-filter-label">Data</span>
+              <input
+                className="audit-column-filter audit-column-filter--date"
+                type="text"
+                inputMode="numeric"
+                placeholder="__/__/____"
+                value={filters.date}
+                onChange={(event) => updateFilter("date", event.target.value)}
+                maxLength={10}
+                autoComplete="off"
+                aria-label="Filtrar por data no formato dia, mes e ano"
+              />
+            </label>
+
+            <label className="audit-filter-field">
+              <span className="audit-filter-label">Usuario</span>
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="E-mail ou nome"
+                value={filters.user}
+                onChange={(event) => updateFilter("user", event.target.value)}
+                aria-label="Filtrar por usuario"
+              />
+            </label>
+
+            <label className="audit-filter-field">
+              <span className="audit-filter-label">Acao</span>
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Tipo de acao"
+                value={filters.action}
+                onChange={(event) => updateFilter("action", event.target.value)}
+                aria-label="Filtrar por acao"
+              />
+            </label>
+
+            <label className="audit-filter-field">
+              <span className="audit-filter-label">Entidade</span>
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Modulo ou registro"
+                value={filters.entity}
+                onChange={(event) => updateFilter("entity", event.target.value)}
+                aria-label="Filtrar por entidade"
+              />
+            </label>
+
+            <label className="audit-filter-field">
+              <span className="audit-filter-label">Detalhes</span>
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Descricao do evento"
+                value={filters.details}
+                onChange={(event) => updateFilter("details", event.target.value)}
+                aria-label="Filtrar por detalhes"
+              />
+            </label>
+          </div>
+
+          <p className="audit-filters-meta">{rangeLabel}</p>
         </div>
 
         <div className="audit-table-wrap">
@@ -158,58 +245,6 @@ export default function Audit() {
                 <th>Acao</th>
                 <th>Entidade</th>
                 <th>Detalhes</th>
-              </tr>
-              <tr className="audit-filter-row">
-                <th>
-                  <input
-                    className="audit-column-filter"
-                    type="search"
-                    placeholder="Filtrar data"
-                    value={filters.date}
-                    onChange={(event) => updateFilter("date", event.target.value)}
-                    aria-label="Filtrar por data"
-                  />
-                </th>
-                <th>
-                  <input
-                    className="audit-column-filter"
-                    type="search"
-                    placeholder="Filtrar usuario"
-                    value={filters.user}
-                    onChange={(event) => updateFilter("user", event.target.value)}
-                    aria-label="Filtrar por usuario"
-                  />
-                </th>
-                <th>
-                  <input
-                    className="audit-column-filter"
-                    type="search"
-                    placeholder="Filtrar acao"
-                    value={filters.action}
-                    onChange={(event) => updateFilter("action", event.target.value)}
-                    aria-label="Filtrar por acao"
-                  />
-                </th>
-                <th>
-                  <input
-                    className="audit-column-filter"
-                    type="search"
-                    placeholder="Filtrar entidade"
-                    value={filters.entity}
-                    onChange={(event) => updateFilter("entity", event.target.value)}
-                    aria-label="Filtrar por entidade"
-                  />
-                </th>
-                <th>
-                  <input
-                    className="audit-column-filter"
-                    type="search"
-                    placeholder="Filtrar detalhes"
-                    value={filters.details}
-                    onChange={(event) => updateFilter("details", event.target.value)}
-                    aria-label="Filtrar por detalhes"
-                  />
-                </th>
               </tr>
             </thead>
             <tbody>

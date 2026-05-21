@@ -3007,18 +3007,57 @@ body.login-theme {
   gap: 0;
 }
 
-.audit-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 16px;
-  padding: 14px 18px 12px;
+.audit-filters-panel {
+  padding: 18px 18px 14px;
   border-bottom: 1px solid rgba(68, 91, 131, 0.22);
+  background: linear-gradient(180deg, rgba(8, 22, 42, 0.55), rgba(6, 16, 34, 0.2));
 }
 
-.audit-search-hint {
+.audit-filters-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.audit-filters-title {
   margin: 0;
+  color: #eef5ff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.audit-filters-subtitle {
+  margin: 4px 0 0;
+  color: #8aa4be;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.audit-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.audit-filter-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.audit-filter-label {
+  color: #8eb8d8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.audit-filters-meta {
+  margin: 12px 0 0;
   color: #8aa4be;
   font-size: 12px;
 }
@@ -3032,20 +3071,14 @@ body.login-theme {
   overflow-x: auto;
 }
 
-.audit-table thead tr:first-child th {
-  padding-bottom: 10px;
-}
-
-.audit-filter-row th {
-  padding: 0 8px 12px;
-  vertical-align: top;
-  font-weight: 500;
+.audit-table thead th {
+  padding: 14px 12px 12px;
 }
 
 .audit-column-filter {
   width: 100%;
-  min-width: 108px;
-  padding: 8px 10px;
+  min-width: 0;
+  padding: 10px 12px;
   border: 1px solid rgba(61, 99, 162, 0.34);
   border-radius: 10px;
   background: rgba(6, 16, 34, 0.72);
@@ -3066,6 +3099,24 @@ body.login-theme {
 .audit-column-filter:focus {
   border-color: rgba(13, 216, 255, 0.45);
   box-shadow: 0 0 0 3px rgba(13, 216, 255, 0.12);
+}
+
+.audit-column-filter--date {
+  text-align: center;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .audit-filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .audit-filters-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .table-pagination {
