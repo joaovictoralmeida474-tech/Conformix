@@ -1281,11 +1281,6 @@ export default function Suppliers() {
               </div>
             </div>
 
-            <div className="supplier-form-field supplier-form-field-full">
-              <label>Justificativa de reativacao</label>
-              <textarea className="supplier-form-textarea" value={supplierForm.reactivationJustification} onChange={(event) => handleSupplierFieldChange("reactivationJustification", event.target.value)} />
-            </div>
-
             <div className="supplier-form-actions">
               <button className="supplier-save-button" type="button" onClick={saveSupplier} disabled={savingSupplier}>
                 {savingSupplier ? "Salvando..." : editingId ? "Salvar alteracoes" : "Salvar fornecedor"}
