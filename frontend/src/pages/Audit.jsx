@@ -30,8 +30,31 @@ function buildPageNumbers(currentPage, totalPages) {
   return result;
 }
 
+function normalizeFilters(filters) {
+  return {
+    date: String(filters.date || "").trim(),
+    user: String(filters.user || "").trim(),
+    action: String(filters.action || "").trim(),
+    entity: String(filters.entity || "").trim(),
+    details: String(filters.details || "").trim()
+  };
+}
+
 function hasActiveFilters(filters) {
-  return Object.values(filters).some((value) => String(value || "").trim());
+  const normalized = normalizeFilters(filters);
+  return Object.values(normalized).some(Boolean);
+}
+
+function filtersAreEqual(left, right) {
+  const a = normalizeFilters(left);
+  const b = normalizeFilters(right);
+  return (
+    a.date === b.date &&
+    a.user === b.user &&
+    a.action === b.action &&
+    a.entity === b.entity &&
+    a.details === b.details
+  );
 }
 
 function formatDateFilterInput(raw) {
@@ -51,32 +74,33 @@ function formatDateFilterInput(raw) {
 export default function Audit() {
   const [items, setItems] = useState([]);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
+  const [queryFilters, setQueryFilters] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const filtersActive = useMemo(() => hasActiveFilters(appliedFilters), [appliedFilters]);
+  const filtersActive = useMemo(() => hasActiveFilters(queryFilters), [queryFilters]);
 
   const loadAudit = useCallback(async (nextPage, activeFilters) => {
     setLoading(true);
     setError("");
 
     try {
+      const normalized = normalizeFilters(activeFilters);
       const params = {
         page: nextPage,
         pageSize: PAGE_SIZE
       };
 
-      if (activeFilters.date) params.filterDate = activeFilters.date;
-      if (activeFilters.user) params.filterUser = activeFilters.user;
-      if (activeFilters.action) params.filterAction = activeFilters.action;
-      if (activeFilters.entity) params.filterEntity = activeFilters.entity;
-      if (activeFilters.details) params.filterDetails = activeFilters.details;
+      if (normalized.date) params.filterDate = normalized.date;
+      if (normalized.user) params.filterUser = normalized.user;
+      if (normalized.action) params.filterAction = normalized.action;
+      if (normalized.entity) params.filterEntity = normalized.entity;
+      if (normalized.details) params.filterDetails = normalized.details;
 
-      const response = await cachedGet("/audit", { params });
+      const response = await cachedGet("/audit", { params }, { force: true });
       const payload = response.data || {};
 
       setItems(Array.isArray(payload.items) ? payload.items : []);
@@ -94,17 +118,25 @@ export default function Audit() {
   }, []);
 
   useEffect(() => {
+    const normalized = normalizeFilters(filters);
+    const delay = hasActiveFilters(normalized) ? 350 : 0;
+
     const timer = window.setTimeout(() => {
-      setAppliedFilters(filters);
+      setQueryFilters((current) => {
+        if (filtersAreEqual(current, normalized)) {
+          return current;
+        }
+        return normalized;
+      });
       setPage(1);
-    }, 350);
+    }, delay);
 
     return () => window.clearTimeout(timer);
   }, [filters]);
 
   useEffect(() => {
-    loadAudit(page, appliedFilters);
-  }, [loadAudit, page, appliedFilters]);
+    loadAudit(page, queryFilters);
+  }, [loadAudit, page, queryFilters]);
 
   const pageNumbers = useMemo(() => buildPageNumbers(page, totalPages), [page, totalPages]);
 
@@ -124,8 +156,8 @@ export default function Audit() {
   }
 
   function clearFilters() {
-    setFilters(EMPTY_FILTERS);
-    setAppliedFilters(EMPTY_FILTERS);
+    setFilters({ ...EMPTY_FILTERS });
+    setQueryFilters({ ...EMPTY_FILTERS });
     setPage(1);
   }
 
