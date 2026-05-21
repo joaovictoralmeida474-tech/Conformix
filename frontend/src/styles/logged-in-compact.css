@@ -1,0 +1,50 @@
+/**
+ * Escala compacta — área logada (~10% menor).
+ * Login (body.login-theme) permanece inalterado.
+ */
+
+body:not(.login-theme) .main-shell {
+  zoom: 0.9;
+}
+
+@supports not (zoom: 0.9) {
+  html:has(body:not(.login-theme)) {
+    font-size: 14px;
+  }
+
+  body:not(.login-theme) .sidebar.sidebar--integraxx {
+    width: 234px !important;
+    min-width: 234px !important;
+  }
+
+  body:not(.login-theme) .sidebar.sidebar--integraxx.is-collapsed {
+    width: 80px !important;
+    min-width: 80px !important;
+  }
+
+  body:not(.login-theme) .main-area {
+    padding: 20px !important;
+  }
+
+  body:not(.login-theme) .supplier-form-input,
+  body:not(.login-theme) .supplier-filter-input,
+  body:not(.login-theme) .supplier-filter-select {
+    min-height: 44px !important;
+  }
+
+  body:not(.login-theme) .page-title,
+  body:not(.login-theme) .supplier-hero h1,
+  body:not(.login-theme) .supplier-dossier-header h1,
+  body:not(.login-theme) .admin-hero h1 {
+    font-size: clamp(1.55rem, 2.6vw, 2.15rem) !important;
+  }
+
+  body:not(.login-theme) .navbar strong:first-child {
+    font-size: 1.2rem !important;
+  }
+
+  body:not(.login-theme) .page-subtitle,
+  body:not(.login-theme) .supplier-hero p {
+    font-size: 0.9rem !important;
+  }
+}
