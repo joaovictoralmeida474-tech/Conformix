@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
+import CharLimitedField from "../components/CharLimitedField";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
 import { cachedGet } from "../services/cachedApi";
 import { PERMISSIONS, hasPermission } from "../utils/access";
 
 const FIELD_LIMITS = {
-  description: 2000,
-  cause: 2000,
-  correctiveAction: 2000,
-  responsible: 120
+  description: 100,
+  cause: 100,
+  correctiveAction: 100,
+  responsible: 30
 };
 
 const initialForm = {
@@ -129,46 +130,43 @@ export default function RNC() {
           </div>
 
           <div className="supplier-form-grid">
-            <div className="supplier-form-field supplier-form-field-full">
-              <label>Descricao</label>
-              <textarea
-                className="supplier-form-textarea"
-                value={form.description}
-                maxLength={FIELD_LIMITS.description}
-                onChange={(event) => setForm({ ...form, description: event.target.value })}
-              />
-            </div>
+            <CharLimitedField
+              label="Descricao"
+              as="textarea"
+              className="supplier-form-textarea"
+              value={form.description}
+              maxLength={FIELD_LIMITS.description}
+              fullWidth
+              onChange={(event) => setForm({ ...form, description: event.target.value })}
+            />
 
-            <div className="supplier-form-field supplier-form-field-full">
-              <label>Causa raiz</label>
-              <textarea
-                className="supplier-form-textarea"
-                value={form.cause}
-                maxLength={FIELD_LIMITS.cause}
-                onChange={(event) => setForm({ ...form, cause: event.target.value })}
-              />
-            </div>
+            <CharLimitedField
+              label="Causa raiz"
+              as="textarea"
+              className="supplier-form-textarea"
+              value={form.cause}
+              maxLength={FIELD_LIMITS.cause}
+              fullWidth
+              onChange={(event) => setForm({ ...form, cause: event.target.value })}
+            />
 
-            <div className="supplier-form-field supplier-form-field-full">
-              <label>Acao corretiva</label>
-              <textarea
-                className="supplier-form-textarea"
-                value={form.correctiveAction}
-                maxLength={FIELD_LIMITS.correctiveAction}
-                onChange={(event) => setForm({ ...form, correctiveAction: event.target.value })}
-              />
-            </div>
+            <CharLimitedField
+              label="Acao corretiva"
+              as="textarea"
+              className="supplier-form-textarea"
+              value={form.correctiveAction}
+              maxLength={FIELD_LIMITS.correctiveAction}
+              fullWidth
+              onChange={(event) => setForm({ ...form, correctiveAction: event.target.value })}
+            />
 
             <div className="supplier-form-two-columns">
-              <div className="supplier-form-field">
-                <label>Responsavel</label>
-                <input
-                  className="supplier-form-input"
-                  value={form.responsible}
-                  maxLength={FIELD_LIMITS.responsible}
-                  onChange={(event) => setForm({ ...form, responsible: event.target.value })}
-                />
-              </div>
+              <CharLimitedField
+                label="Responsavel"
+                value={form.responsible}
+                maxLength={FIELD_LIMITS.responsible}
+                onChange={(event) => setForm({ ...form, responsible: event.target.value })}
+              />
               <div className="supplier-form-field">
                 <label>Prazo</label>
                 <input

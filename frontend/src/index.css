@@ -3707,6 +3707,61 @@ body.login-theme {
   grid-column: 1 / -1;
 }
 
+.supplier-form-field-limited .field-char-counter-wrap {
+  position: relative;
+}
+
+.supplier-form-field-limited .field-char-counter-wrap .supplier-form-input,
+.supplier-form-field-limited .field-char-counter-wrap .supplier-form-textarea,
+.supplier-form-field-limited .field-char-counter-wrap .category-form-textarea {
+  padding-right: 6.25rem;
+}
+
+.supplier-form-field-limited .field-char-counter-wrap input.supplier-form-input {
+  padding-bottom: 14px;
+}
+
+.supplier-form-field-limited .field-char-counter-wrap .supplier-form-textarea,
+.supplier-form-field-limited .field-char-counter-wrap .category-form-textarea {
+  padding-bottom: 2rem;
+}
+
+.supplier-form-field-limited .field-char-counter-wrap input.supplier-form-input + .field-char-counter {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+
+.field-char-counter {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(4, 14, 28, 0.82);
+  border: 1px solid rgba(13, 216, 255, 0.22);
+  color: #8eb8d8;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.field-char-counter.is-low {
+  color: #ffd27a;
+  border-color: rgba(255, 196, 92, 0.45);
+}
+
+.field-char-counter.is-limit {
+  color: #ff9aaa;
+  border-color: rgba(255, 120, 140, 0.5);
+  background: rgba(48, 10, 18, 0.88);
+}
+
 .supplier-helper-text {
   margin: 0;
   color: #7d93b3;

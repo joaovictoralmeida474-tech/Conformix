@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
+import CharLimitedField from "../components/CharLimitedField";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
 import { cachedGet } from "../services/cachedApi";
 import { ROLES, normalizeRole } from "../utils/access";
 
 const FIELD_LIMITS = {
-  name: 120,
+  name: 50,
   slug: 80,
-  description: 500,
-  questions: 8000,
-  documents: 3000
+  description: 100,
+  questions: 100,
+  documents: 100
 };
 
 const initialForm = {
@@ -206,67 +207,53 @@ export default function Categories() {
                   </select>
                 </div>
               ) : null}
-              <div className="supplier-form-field">
-                <label>Nome da categoria</label>
-                <input
-                  className="supplier-form-input"
-                  value={form.name}
-                  maxLength={FIELD_LIMITS.name}
-                  onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                />
-              </div>
-              <div className="supplier-form-field">
-                <label>Codigo interno</label>
-                <input
-                  className="supplier-form-input"
-                  placeholder="Ex.: alimentacao"
-                  value={form.slug}
-                  maxLength={FIELD_LIMITS.slug}
-                  onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))}
-                />
-                <p className="supplier-helper-text">
-                  Se deixar em branco, o sistema gera o codigo automaticamente.
-                </p>
-              </div>
-            </div>
-
-            <div className="supplier-form-field supplier-form-field-full">
-              <label>Descricao</label>
-              <input
-                className="supplier-form-input"
-                value={form.description}
-                maxLength={FIELD_LIMITS.description}
-                onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+              <CharLimitedField
+                label="Nome da categoria"
+                value={form.name}
+                maxLength={FIELD_LIMITS.name}
+                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              />
+              <CharLimitedField
+                label="Codigo interno"
+                value={form.slug}
+                maxLength={FIELD_LIMITS.slug}
+                placeholder="Ex.: alimentacao"
+                helperText="Se deixar em branco, o sistema gera o codigo automaticamente."
+                onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))}
               />
             </div>
 
-            <div className="supplier-form-field supplier-form-field-full">
-              <label>Perguntas da avaliacao</label>
-              <textarea
-                className="category-form-textarea"
-                placeholder="Escreva uma pergunta por linha"
-                value={questionText}
-                maxLength={FIELD_LIMITS.questions}
-                onChange={(event) => setQuestionText(event.target.value)}
-              />
-              <p className="supplier-helper-text">
-                Exemplo: Qualidade da entrega, cumprimento de prazo, atendimento da equipe.
-              </p>
-            </div>
+            <CharLimitedField
+              label="Descricao"
+              value={form.description}
+              maxLength={FIELD_LIMITS.description}
+              fullWidth
+              onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+            />
 
-            <div className="supplier-form-field supplier-form-field-full">
-              <label>Documentos obrigatorios</label>
-              <textarea
-                className="category-form-textarea"
-                placeholder="Escreva um documento por linha"
-                value={documentText}
-                maxLength={FIELD_LIMITS.documents}
-                onChange={(event) => setDocumentText(event.target.value)}
-              />
-              <p className="supplier-helper-text">
-                Esses documentos aparecerao automaticamente no cadastro do fornecedor, cada um com campo separado para PDF e vencimento.
-              </p>
-            </div>
+            <CharLimitedField
+              label="Perguntas da avaliacao"
+              as="textarea"
+              className="category-form-textarea"
+              placeholder="Escreva uma pergunta por linha"
+              value={questionText}
+              maxLength={FIELD_LIMITS.questions}
+              fullWidth
+              helperText="Exemplo: Qualidade da entrega, cumprimento de prazo, atendimento da equipe."
+              onChange={(event) => setQuestionText(event.target.value)}
+            />
+
+            <CharLimitedField
+              label="Documentos obrigatorios"
+              as="textarea"
+              className="category-form-textarea"
+              placeholder="Escreva um documento por linha"
+              value={documentText}
+              maxLength={FIELD_LIMITS.documents}
+              fullWidth
+              helperText="Esses documentos aparecerao automaticamente no cadastro do fornecedor, cada um com campo separado para PDF e vencimento."
+              onChange={(event) => setDocumentText(event.target.value)}
+            />
 
             <label className="category-active-toggle">
               <input
