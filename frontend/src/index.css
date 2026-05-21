@@ -4379,10 +4379,12 @@ body.login-theme {
 .sidebar-menu-link {
   position: relative;
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0;
+  gap: 12px;
   min-height: 48px;
-  padding: 0 14px 0 16px;
+  padding: 0 28px 0 16px;
   border: 0;
   border-radius: 12px;
   color: #6f8fb8;
@@ -4415,13 +4417,15 @@ body.login-theme {
 
 .sidebar-menu-link::after {
   content: "";
-  flex-shrink: 0;
+  position: absolute;
+  right: 14px;
+  top: 50%;
   width: 7px;
   height: 7px;
   border-radius: 999px;
   background: #2ee8ff;
   box-shadow: 0 0 10px rgba(46, 232, 255, 0.85);
-  transform: scale(0);
+  transform: translateY(-50%) scale(0);
   opacity: 0;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
@@ -4433,20 +4437,12 @@ body.login-theme {
 }
 
 .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link {
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
+  gap: 12px;
   min-height: 50px;
-  padding: 0 14px 0 16px;
-}
-
-.sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link::after {
-  position: static;
-  margin-left: auto;
-  align-self: center;
-  transform: scale(0);
-}
-
-.sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.active::after {
-  transform: scale(1);
+  padding: 0 28px 0 16px;
 }
 
 .sidebar-menu-link i {
@@ -4469,21 +4465,22 @@ body.login-theme {
 }
 
 .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link i {
+  flex: 0 0 24px;
   width: 24px;
   min-width: 24px;
   height: 24px;
-  margin-right: 14px;
+  margin: 0;
   font-size: 22px;
   transform: none;
   filter: none;
 }
 
 .sidebar-menu-link span {
-  display: flex;
-  align-items: center;
-  flex: 1;
+  display: inline-block;
+  flex: 1 1 auto;
   min-width: 0;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .sidebar-menu-link:hover {
@@ -4508,7 +4505,7 @@ body.login-theme {
 }
 
 .sidebar-menu-link.active::after {
-  transform: scale(1);
+  transform: translateY(-50%) scale(1);
   opacity: 1;
 }
 
