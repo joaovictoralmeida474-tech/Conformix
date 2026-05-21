@@ -1,15 +1,33 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CharLimitedField from "../components/CharLimitedField";
+import ListFiltersPanel, { ListFilterField } from "../components/ListFiltersPanel";
+import TablePagination from "../components/TablePagination";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
 import { cachedGet } from "../services/cachedApi";
 import { PERMISSIONS, hasPermission } from "../utils/access";
+import {
+  buildRangeLabel,
+  formatDateBr,
+  formatDateFilterInput,
+  hasActiveFilterValues,
+  matchesText,
+  paginateItems
+} from "../utils/listTableHelpers";
 
 const FIELD_LIMITS = {
   description: 100,
   cause: 100,
   correctiveAction: 100,
   responsible: 30
+};
+
+const EMPTY_FILTERS = {
+  supplier: "",
+  description: "",
+  responsible: "",
+  deadline: "",
+  status: ""
 };
 
 const initialForm = {
@@ -22,6 +40,63 @@ const initialForm = {
   treatmentDate: "",
   supplierStatusAction: ""
 };
+
+function normalizeRncFilters(filters) {
+  return {
+    supplier: String(filters.supplier || "").trim(),
+    description: String(filters.description || "").trim(),
+    responsible: String(filters.responsible || "").trim(),
+    deadline: String(filters.deadline || "").trim(),
+    status: String(filters.status || "").trim()
+  };
+}
+
+function rncFiltersAreEqual(left, right) {
+  const a = normalizeRncFilters(left);
+  const b = normalizeRncFilters(right);
+  return (
+    a.supplier === b.supplier &&
+    a.description === b.description &&
+    a.responsible === b.responsible &&
+    a.deadline === b.deadline &&
+    a.status === b.status
+  );
+}
+
+function filterRncItems(items, filters) {
+  const activeFilters = normalizeRncFilters(filters);
+
+  return items.filter((item) => {
+    if (activeFilters.supplier) {
+      const supplierLabel = item.supplier?.name || "";
+      const rncLabel = `RNC #${item.id}`;
+      if (!matchesText(supplierLabel, activeFilters.supplier) && !matchesText(rncLabel, activeFilters.supplier)) {
+        return false;
+      }
+    }
+
+    if (activeFilters.description && !matchesText(item.description, activeFilters.description)) {
+      return false;
+    }
+
+    if (activeFilters.responsible && !matchesText(item.responsible, activeFilters.responsible)) {
+      return false;
+    }
+
+    if (activeFilters.deadline && !matchesText(formatDateBr(item.deadline), activeFilters.deadline)) {
+      return false;
+    }
+
+    if (activeFilters.status) {
+      const statusLabel = formatStatus(item.status);
+      if (!matchesText(statusLabel, activeFilters.status) && !matchesText(item.status, activeFilters.status)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleDateString("pt-BR") : "-";
@@ -45,6 +120,9 @@ export default function RNC() {
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [form, setForm] = useState(initialForm);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [queryFilters, setQueryFilters] = useState(EMPTY_FILTERS);
+  const [page, setPage] = useState(1);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -91,6 +169,59 @@ export default function RNC() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    const normalized = normalizeRncFilters(filters);
+    const delay = hasActiveFilterValues(normalized) ? 350 : 0;
+
+    const timer = window.setTimeout(() => {
+      setQueryFilters((current) => {
+        if (rncFiltersAreEqual(current, normalized)) {
+          return current;
+        }
+        return normalized;
+      });
+      setPage(1);
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [filters]);
+
+  const filtersActive = useMemo(() => hasActiveFilterValues(queryFilters), [queryFilters]);
+
+  const filteredItems = useMemo(() => filterRncItems(items, queryFilters), [items, queryFilters]);
+
+  const paginatedItems = useMemo(() => paginateItems(filteredItems, page), [filteredItems, page]);
+
+  useEffect(() => {
+    if (paginatedItems.page !== page) {
+      setPage(paginatedItems.page);
+    }
+  }, [page, paginatedItems.page]);
+
+  const rangeLabel = useMemo(
+    () => buildRangeLabel(paginatedItems.page, paginatedItems.total, undefined, filtersActive),
+    [paginatedItems.page, paginatedItems.total, filtersActive]
+  );
+
+  function updateFilter(key, value) {
+    const nextValue = key === "deadline" ? formatDateFilterInput(value) : value;
+    setFilters((current) => ({ ...current, [key]: nextValue }));
+  }
+
+  function clearFilters() {
+    setFilters({ ...EMPTY_FILTERS });
+    setQueryFilters({ ...EMPTY_FILTERS });
+    setPage(1);
+  }
+
+  function goToPage(nextPage) {
+    if (nextPage < 1 || nextPage > paginatedItems.totalPages || nextPage === paginatedItems.page) {
+      return;
+    }
+
+    setPage(nextPage);
+  }
 
   return (
     <div className="rnc-shell">
@@ -225,6 +356,73 @@ export default function RNC() {
         </section>
       ) : (
         <section className="supplier-list-card">
+          <ListFiltersPanel
+            title="Filtros das RNCs"
+            subtitle="Preencha uma ou mais colunas para refinar a lista."
+            meta={rangeLabel}
+            filtersActive={filtersActive}
+            hasDraftFilters={hasActiveFilterValues(filters)}
+            onClear={clearFilters}
+          >
+            <ListFilterField label="Fornecedor">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Nome ou numero da RNC"
+                value={filters.supplier}
+                onChange={(event) => updateFilter("supplier", event.target.value)}
+                aria-label="Filtrar por fornecedor"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Descricao">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Descricao da RNC"
+                value={filters.description}
+                onChange={(event) => updateFilter("description", event.target.value)}
+                aria-label="Filtrar por descricao"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Responsavel">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Nome do responsavel"
+                value={filters.responsible}
+                onChange={(event) => updateFilter("responsible", event.target.value)}
+                aria-label="Filtrar por responsavel"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Prazo">
+              <input
+                className="audit-column-filter audit-column-filter--date"
+                type="text"
+                inputMode="numeric"
+                placeholder="__/__/____"
+                value={filters.deadline}
+                onChange={(event) => updateFilter("deadline", event.target.value)}
+                maxLength={10}
+                autoComplete="off"
+                aria-label="Filtrar por prazo no formato dia, mes e ano"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Status">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Aberto, tratamento ou fechado"
+                value={filters.status}
+                onChange={(event) => updateFilter("status", event.target.value)}
+                aria-label="Filtrar por status"
+              />
+            </ListFilterField>
+          </ListFiltersPanel>
+
           <div className="supplier-table-wrap">
             <table className="supplier-table">
               <thead>
@@ -238,8 +436,8 @@ export default function RNC() {
                 </tr>
               </thead>
               <tbody>
-                {items.length ? (
-                  items.map((item) => (
+                {paginatedItems.items.length ? (
+                  paginatedItems.items.map((item) => (
                     <tr key={item.id}>
                       <td>
                         <strong>{item.supplier?.name || "-"}</strong>
@@ -269,13 +467,23 @@ export default function RNC() {
                 ) : (
                   <tr>
                     <td colSpan="6" className="dashboard-empty-copy">
-                      Nenhuma RNC encontrada.
+                      {filtersActive
+                        ? "Nenhuma RNC encontrada para os filtros aplicados."
+                        : "Nenhuma RNC encontrada."}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          <TablePagination
+            page={paginatedItems.page}
+            totalPages={paginatedItems.totalPages}
+            loading={false}
+            onPageChange={goToPage}
+            ariaLabel="Paginacao das RNCs"
+          />
         </section>
       )}
     </div>

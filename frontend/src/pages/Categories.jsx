@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import CharLimitedField from "../components/CharLimitedField";
+import ListFiltersPanel, { ListFilterField } from "../components/ListFiltersPanel";
+import TablePagination from "../components/TablePagination";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
 import { cachedGet } from "../services/cachedApi";
 import { ROLES, normalizeRole } from "../utils/access";
+import {
+  buildRangeLabel,
+  hasActiveFilterValues,
+  matchesText,
+  paginateItems
+} from "../utils/listTableHelpers";
 
 const FIELD_LIMITS = {
   name: 50,
@@ -11,6 +19,15 @@ const FIELD_LIMITS = {
   description: 100,
   questions: 100,
   documents: 100
+};
+
+const EMPTY_FILTERS = {
+  category: "",
+  slug: "",
+  description: "",
+  questions: "",
+  documents: "",
+  status: ""
 };
 
 const initialForm = {
@@ -22,6 +39,79 @@ const initialForm = {
   documents: [],
   active: true
 };
+
+function normalizeCategoryFilters(filters) {
+  return {
+    category: String(filters.category || "").trim(),
+    slug: String(filters.slug || "").trim(),
+    description: String(filters.description || "").trim(),
+    questions: String(filters.questions || "").trim(),
+    documents: String(filters.documents || "").trim(),
+    status: String(filters.status || "").trim()
+  };
+}
+
+function categoryFiltersAreEqual(left, right) {
+  const a = normalizeCategoryFilters(left);
+  const b = normalizeCategoryFilters(right);
+  return (
+    a.category === b.category &&
+    a.slug === b.slug &&
+    a.description === b.description &&
+    a.questions === b.questions &&
+    a.documents === b.documents &&
+    a.status === b.status
+  );
+}
+
+function filterCategories(items, filters) {
+  const activeFilters = normalizeCategoryFilters(filters);
+
+  return items.filter((category) => {
+    if (activeFilters.category && !matchesText(category.name, activeFilters.category)) {
+      return false;
+    }
+
+    if (activeFilters.slug && !matchesText(category.slug, activeFilters.slug)) {
+      return false;
+    }
+
+    if (activeFilters.description && !matchesText(category.description, activeFilters.description)) {
+      return false;
+    }
+
+    if (activeFilters.questions) {
+      const questionsText = (category.questions || []).map((item) => item.prompt).join(" ");
+      const questionsCount = String((category.questions || []).length);
+      if (
+        !matchesText(questionsText, activeFilters.questions) &&
+        !matchesText(questionsCount, activeFilters.questions)
+      ) {
+        return false;
+      }
+    }
+
+    if (activeFilters.documents) {
+      const documentsText = (category.documents || []).map((item) => item.name).join(" ");
+      const documentsCount = String((category.documents || []).length);
+      if (
+        !matchesText(documentsText, activeFilters.documents) &&
+        !matchesText(documentsCount, activeFilters.documents)
+      ) {
+        return false;
+      }
+    }
+
+    if (activeFilters.status) {
+      const statusLabel = category.active ? "ativa" : "inativa";
+      if (!matchesText(statusLabel, activeFilters.status)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
 
 function parseLines(value) {
   return String(value || "")
@@ -44,6 +134,9 @@ export default function Categories() {
   const [documentText, setDocumentText] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [activePanel, setActivePanel] = useState("list");
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [queryFilters, setQueryFilters] = useState(EMPTY_FILTERS);
+  const [page, setPage] = useState(1);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -152,18 +245,67 @@ export default function Categories() {
     loadCompanies().catch(() => null);
   }, [role]);
 
-  const visibleCategories = useMemo(() => {
-    if (role !== ROLES.SUPER_ADMIN) {
-      return categories;
+  useEffect(() => {
+    const normalized = normalizeCategoryFilters(filters);
+    const delay = hasActiveFilterValues(normalized) ? 350 : 0;
+
+    const timer = window.setTimeout(() => {
+      setQueryFilters((current) => {
+        if (categoryFiltersAreEqual(current, normalized)) {
+          return current;
+        }
+        return normalized;
+      });
+      setPage(1);
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [filters]);
+
+  const filtersActive = useMemo(() => hasActiveFilterValues(queryFilters), [queryFilters]);
+
+  const filteredCategories = useMemo(
+    () => filterCategories(categories, queryFilters),
+    [categories, queryFilters]
+  );
+
+  const paginatedCategories = useMemo(
+    () => paginateItems(filteredCategories, page),
+    [filteredCategories, page]
+  );
+
+  useEffect(() => {
+    if (paginatedCategories.page !== page) {
+      setPage(paginatedCategories.page);
+    }
+  }, [page, paginatedCategories.page]);
+
+  const rangeLabel = useMemo(
+    () => buildRangeLabel(paginatedCategories.page, paginatedCategories.total, undefined, filtersActive),
+    [paginatedCategories.page, paginatedCategories.total, filtersActive]
+  );
+
+  function updateFilter(key, value) {
+    setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function clearFilters() {
+    setFilters({ ...EMPTY_FILTERS });
+    setQueryFilters({ ...EMPTY_FILTERS });
+    setPage(1);
+  }
+
+  function goToPage(nextPage) {
+    if (
+      nextPage < 1 ||
+      nextPage > paginatedCategories.totalPages ||
+      nextPage === paginatedCategories.page
+    ) {
+      return;
     }
 
-    const selectedCompanyId = Number(form.companyId || 0);
-    if (!selectedCompanyId) {
-      return categories;
-    }
-
-    return categories.filter((item) => Number(item.companyId) === selectedCompanyId);
-  }, [categories, form.companyId, role]);
+    setPage(nextPage);
+  }
 
   if (activePanel === "form") {
     return (
@@ -295,6 +437,82 @@ export default function Categories() {
       </header>
 
       <section className="supplier-list-card">
+        <ListFiltersPanel
+          title="Filtros das categorias"
+          subtitle="Preencha uma ou mais colunas para refinar a lista."
+          meta={rangeLabel}
+          filtersActive={filtersActive}
+          hasDraftFilters={hasActiveFilterValues(filters)}
+          onClear={clearFilters}
+          gridClassName="audit-filters-grid audit-filters-grid--6"
+        >
+            <ListFilterField label="Categoria">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Nome da categoria"
+                value={filters.category}
+                onChange={(event) => updateFilter("category", event.target.value)}
+                aria-label="Filtrar por categoria"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Codigo">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Codigo interno"
+                value={filters.slug}
+                onChange={(event) => updateFilter("slug", event.target.value)}
+                aria-label="Filtrar por codigo"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Descricao">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Descricao da categoria"
+                value={filters.description}
+                onChange={(event) => updateFilter("description", event.target.value)}
+                aria-label="Filtrar por descricao"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Perguntas">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Texto ou quantidade"
+                value={filters.questions}
+                onChange={(event) => updateFilter("questions", event.target.value)}
+                aria-label="Filtrar por perguntas"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Documentos">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Texto ou quantidade"
+                value={filters.documents}
+                onChange={(event) => updateFilter("documents", event.target.value)}
+                aria-label="Filtrar por documentos"
+              />
+            </ListFilterField>
+
+            <ListFilterField label="Status">
+              <input
+                className="audit-column-filter"
+                type="search"
+                placeholder="Ativa ou inativa"
+                value={filters.status}
+                onChange={(event) => updateFilter("status", event.target.value)}
+                aria-label="Filtrar por status"
+              />
+            </ListFilterField>
+        </ListFiltersPanel>
+
         <div className="supplier-table-wrap">
           <table className="supplier-table">
             <thead>
@@ -308,8 +526,8 @@ export default function Categories() {
               </tr>
             </thead>
             <tbody>
-              {visibleCategories.length ? (
-                visibleCategories.map((category) => (
+              {paginatedCategories.items.length ? (
+                paginatedCategories.items.map((category) => (
                   <tr key={category.id}>
                     <td>
                       <strong>{category.name}</strong>
@@ -338,13 +556,23 @@ export default function Categories() {
               ) : (
                 <tr>
                   <td colSpan="6" className="dashboard-empty-copy">
-                    Nenhuma categoria cadastrada.
+                    {filtersActive
+                      ? "Nenhuma categoria encontrada para os filtros aplicados."
+                      : "Nenhuma categoria cadastrada."}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          page={paginatedCategories.page}
+          totalPages={paginatedCategories.totalPages}
+          loading={false}
+          onPageChange={goToPage}
+          ariaLabel="Paginacao das categorias"
+        />
       </section>
 
       {error ? <p className="error-text">{error}</p> : null}
