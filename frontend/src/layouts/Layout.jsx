@@ -1,28 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 
 export default function Layout({ children }) {
-  const [themePreset, setThemePreset] = useState("tech-clean");
-
   useEffect(() => {
-    const storedPreset =
-      window.localStorage.getItem("integraxx-theme-preset") ||
-      window.localStorage.getItem("integrax-theme-preset") ||
-      window.localStorage.getItem("conformix-theme-preset");
-    if (storedPreset) {
-      setThemePreset(storedPreset);
-      document.body.setAttribute("data-theme-preset", storedPreset);
-      return;
-    }
-
     document.body.setAttribute("data-theme-preset", "tech-clean");
+    window.localStorage.setItem("integraxx-theme-preset", "tech-clean");
   }, []);
-
-  useEffect(() => {
-    document.body.setAttribute("data-theme-preset", themePreset);
-    window.localStorage.setItem("integraxx-theme-preset", themePreset);
-  }, [themePreset]);
 
   return (
     <div className="main-shell">
@@ -32,7 +16,7 @@ export default function Layout({ children }) {
       <Sidebar />
       <div className="main-area">
         <div className="app-content-shell">
-          <Navbar themePreset={themePreset} onThemeChange={setThemePreset} />
+          <Navbar />
           <main className="app-page-content">{children}</main>
         </div>
       </div>

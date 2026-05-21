@@ -1,37 +1,16 @@
-import { useStoredUser } from "../hooks/useStoredUser";
+import { useLocation } from "react-router-dom";
+import { getPageHeading } from "../utils/pageHeadings";
 
-export default function Navbar({ themePreset = "tech-clean", onThemeChange }) {
-  const user = useStoredUser();
-  const today = new Date().toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric"
-  });
+export default function Navbar() {
+  const { pathname } = useLocation();
+  const { title, description } = getPageHeading(pathname);
 
   return (
-    <div className="navbar">
-      <div>
-        <strong>Painel de Fornecedores</strong>
-        <div className="navbar-subtitle">
-          Visao operacional e auditoravel do programa de homologacao
-        </div>
+    <header className="navbar app-page-navbar" aria-label="Contexto da página">
+      <div className="app-page-navbar-copy">
+        <h1 className="app-page-navbar-title">{title}</h1>
+        <p className="app-page-navbar-description">{description}</p>
       </div>
-      <div className="navbar-meta">
-        <label className="theme-preset-control" htmlFor="theme-preset-select">
-          <span>Preset visual</span>
-          <select
-            id="theme-preset-select"
-            value={themePreset}
-            onChange={(event) => onThemeChange?.(event.target.value)}
-          >
-            <option value="tech-clean">Tech Clean</option>
-            <option value="cyber-neon">Cyber Neon</option>
-            <option value="ultra-futuristic">Ultra Futuristic</option>
-          </select>
-        </label>
-        <span>{today}</span>
-        <strong>{user?.name || user?.email || "Visitante"}</strong>
-      </div>
-    </div>
+    </header>
   );
 }

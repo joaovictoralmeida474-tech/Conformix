@@ -802,6 +802,146 @@ body:not(.login-theme)[data-theme-preset="ultra-futuristic"] .dashboard-stat-car
   animation: ixNeonPulse 2.5s ease-in-out infinite !important;
 }
 
+/* ═══════════════════════════════════════
+   TECH CLEAN — tom LED suave (site inteiro)
+   ═══════════════════════════════════════ */
+body:not(.login-theme)[data-theme-preset="tech-clean"] .main-shell::before {
+  opacity: 0.24 !important;
+  animation: ixGridPulse 14s ease-in-out infinite !important;
+}
+
+body:not(.login-theme)[data-theme-preset="tech-clean"] .app-tech-orb {
+  opacity: 0.42 !important;
+  filter: blur(48px) saturate(130%) !important;
+}
+
+body:not(.login-theme)[data-theme-preset="tech-clean"] .app-page-content::before {
+  display: none !important;
+}
+
+body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-stat-card {
+  animation: none !important;
+}
+
+body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-stat-card::before {
+  animation: none !important;
+  opacity: 0.85 !important;
+}
+
+body:not(.login-theme)[data-theme-preset="tech-clean"] .button,
+body:not(.login-theme)[data-theme-preset="tech-clean"] .supplier-save-button {
+  animation: none !important;
+}
+
+body:not(.login-theme)[data-theme-preset="tech-clean"] .navbar,
+body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-panel,
+body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-stat-card,
+body:not(.login-theme)[data-theme-preset="tech-clean"] .table-card,
+body:not(.login-theme)[data-theme-preset="tech-clean"] .supplier-list-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 0 1px rgba(13, 216, 255, 0.14),
+    0 16px 40px rgba(0, 0, 0, 0.42),
+    0 0 28px rgba(13, 216, 255, 0.06) !important;
+}
+
+/* ═══════════════════════════════════════
+   NAVBAR — título da janela (simples)
+   ═══════════════════════════════════════ */
+body:not(.login-theme) .app-page-navbar.navbar {
+  display: block !important;
+  padding: 20px 24px !important;
+  margin-bottom: 4px !important;
+  border: 1px solid rgba(13, 216, 255, 0.32) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(180deg, rgba(6, 24, 46, 0.88), rgba(3, 14, 32, 0.94)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 1px rgba(0, 230, 180, 0.08),
+    0 0 24px rgba(13, 216, 255, 0.08) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+}
+
+body:not(.login-theme) .app-page-navbar::before {
+  width: 3px !important;
+  opacity: 0.9 !important;
+  box-shadow: 0 0 12px rgba(13, 216, 255, 0.45) !important;
+}
+
+body:not(.login-theme) .app-page-navbar-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+body:not(.login-theme) .app-page-navbar-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: "Space Grotesk", "Inter", sans-serif !important;
+  font-size: clamp(1.65rem, 2.4vw, 2.15rem) !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.02em !important;
+  color: #f4fbff !important;
+  background: none !important;
+  -webkit-text-fill-color: #f4fbff !important;
+  filter: none !important;
+  text-shadow: 0 0 20px rgba(13, 216, 255, 0.18) !important;
+}
+
+body:not(.login-theme) .app-page-navbar-description {
+  margin: 0 !important;
+  max-width: 52ch;
+  font-size: 0.88rem !important;
+  line-height: 1.5 !important;
+  color: #8eb8d8 !important;
+  font-weight: 400 !important;
+}
+
+body:not(.login-theme) .navbar-meta,
+body:not(.login-theme) .theme-preset-control {
+  display: none !important;
+}
+
+body:not(.login-theme) .navbar strong:first-child,
+body:not(.login-theme) .navbar-subtitle {
+  display: none !important;
+}
+
+/* Esconde cabeçalhos duplicados nas páginas — contexto fica no navbar */
+body:not(.login-theme) .page-header,
+body:not(.login-theme) .admin-hero {
+  display: none !important;
+}
+
+body:not(.login-theme) .supplier-shell > .supplier-hero > div:first-child,
+body:not(.login-theme) .category-shell > .supplier-hero > div:first-child,
+body:not(.login-theme) .rnc-shell > .supplier-hero {
+  display: none !important;
+}
+
+body:not(.login-theme) .supplier-shell > .supplier-hero,
+body:not(.login-theme) .category-shell > .supplier-hero {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  animation: none !important;
+}
+
+body:not(.login-theme) .supplier-shell > .supplier-hero::before,
+body:not(.login-theme) .category-shell > .supplier-hero::before {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   body:not(.login-theme) .main-shell::before,
   body:not(.login-theme) .app-tech-orb,
