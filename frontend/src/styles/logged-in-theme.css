@@ -254,9 +254,41 @@ body:not(.login-theme) .sidebar--integraxx .nav-list {
   padding: 0 14px !important;
 }
 
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.nav-link,
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.nav-link:hover,
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.nav-link.active {
+  transform: none !important;
+}
+
 body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link {
-  gap: 20px !important;
-  padding: 0 16px 0 20px !important;
+  align-items: center !important;
+  padding: 0 14px 0 16px !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link i {
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  margin-right: 14px !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link:hover i,
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.active i {
+  transform: none !important;
+  filter: none !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link::after {
+  position: static !important;
+  margin-left: auto !important;
+  align-self: center !important;
+  transform: scale(0) !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.active::after {
+  transform: scale(1) !important;
 }
 
 body:not(.login-theme) .sidebar-menu-link {
@@ -304,9 +336,7 @@ body:not(.login-theme) .sidebar-menu-link.active::before {
 }
 
 body:not(.login-theme) .sidebar-menu-link.active::after {
-  display: block !important;
   opacity: 1 !important;
-  transform: translateY(-50%) scale(1) !important;
   width: 8px !important;
   height: 8px !important;
   box-shadow: 0 0 14px rgba(13, 216, 255, 1), 0 0 28px rgba(0, 230, 180, 0.6) !important;
@@ -316,11 +346,9 @@ body:not(.login-theme) .sidebar-menu-link i {
   font-size: 22px !important;
 }
 
-body:not(.login-theme) .sidebar-menu-link:hover i,
-body:not(.login-theme) .sidebar-menu-link.active i {
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link:hover i,
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.active i {
   color: var(--ix-cyan-hi) !important;
-  filter: drop-shadow(0 0 10px rgba(13, 216, 255, 0.9)) drop-shadow(0 0 20px rgba(0, 230, 180, 0.5)) !important;
-  transform: scale(1.08) !important;
 }
 
 body:not(.login-theme) .sidebar-profile-card {
