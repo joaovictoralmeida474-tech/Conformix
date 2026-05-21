@@ -2779,7 +2779,7 @@ body.login-theme {
 .dashboard-panel,
 .dashboard-stat-card {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(61, 99, 162, 0.34);
   border-radius: 22px;
   background:
@@ -2796,12 +2796,23 @@ body.login-theme {
 }
 
 .dashboard-card-eyebrow {
-  display: inline-block;
-  color: #7f96bb;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  max-width: 100%;
+  margin: 0 0 10px;
+  padding: 6px 14px;
+  border: 1px solid rgba(13, 216, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(4, 18, 36, 0.88);
+  color: #7edaf4;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: normal;
+  overflow: visible;
 }
 
 .dashboard-stat-card strong {
@@ -2825,10 +2836,11 @@ body.login-theme {
 }
 
 .dashboard-panel h3 {
-  margin: 4px 0 0;
+  margin: 0;
   color: #edf4ff;
   font-size: 18px;
   font-weight: 700;
+  line-height: 1.35;
 }
 
 .dashboard-panel-heading {
@@ -2837,6 +2849,13 @@ body.login-theme {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.dashboard-panel-heading > div,
+.dashboard-panel > div:first-child {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
 }
 
 .dashboard-chart-panel {
@@ -4650,6 +4669,7 @@ body:not(.login-theme) .supplier-dossier-header,
 body:not(.login-theme) .dashboard-stat-card,
 body:not(.login-theme) .dashboard-chart-card,
 body:not(.login-theme) .dashboard-panel,
+body:not(.login-theme) .dashboard-table-panel,
 body:not(.login-theme) .supplier-list-card,
 body:not(.login-theme) .supplier-form-panel,
 body:not(.login-theme) .supplier-dossier-metric,
@@ -4679,6 +4699,13 @@ body:not(.login-theme) .app-page-content [class*="-shell"] {
     transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.42s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body:not(.login-theme) .dashboard-panel,
+body:not(.login-theme) .dashboard-stat-card,
+body:not(.login-theme) .dashboard-chart-card,
+body:not(.login-theme) .dashboard-table-panel {
+  overflow: visible !important;
 }
 
 body:not(.login-theme) .supplier-form-panel,
