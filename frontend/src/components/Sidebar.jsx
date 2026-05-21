@@ -103,8 +103,8 @@ export default function Sidebar() {
               src={integraxxXMark}
               alt="Integraxx"
               className="sidebar-brand-logo sidebar-brand-logo--icon"
-              width={47}
-              height={73}
+              width={79}
+              height={97}
               decoding="async"
             />
           </div>
@@ -140,25 +140,45 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-profile-card">
-        <div className="sidebar-profile-main">
-          <div className="sidebar-profile-avatar" aria-hidden="true">
-            {getInitials(user?.name || user?.email || "Integraxx")}
+        {isCollapsed ? (
+          <>
+            <div className="sidebar-profile-main">
+              <div className="sidebar-profile-avatar" aria-hidden="true">
+                {getInitials(user?.name || user?.email || "Integraxx")}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="sidebar-logout-button"
+              onClick={logout}
+              aria-label="Sair"
+              title="Sair"
+            >
+              <i className="ri-logout-box-r-line" aria-hidden="true" />
+            </button>
+          </>
+        ) : (
+          <div className="sidebar-profile-row">
+            <button
+              type="button"
+              className="sidebar-logout-button sidebar-logout-button--leading"
+              onClick={logout}
+              aria-label="Sair"
+              title="Sair"
+            >
+              <i className="ri-logout-box-r-line" aria-hidden="true" />
+            </button>
+            <div className="sidebar-profile-main">
+              <div className="sidebar-profile-avatar" aria-hidden="true">
+                {getInitials(user?.name || user?.email || "Integraxx")}
+              </div>
+              <div className="sidebar-profile-copy">
+                <strong>{user?.name || user?.email || "Administrador"}</strong>
+                <small>{getRoleLabel(user?.role)}</small>
+              </div>
+            </div>
           </div>
-          <div className="sidebar-profile-copy">
-            <strong>{user?.name || user?.email || "Administrador"}</strong>
-            <small>{getRoleLabel(user?.role)}</small>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="sidebar-logout-button"
-          onClick={logout}
-          aria-label="Sair"
-          title="Sair"
-        >
-          <i className="ri-logout-box-r-line" aria-hidden="true" />
-          <span>Sair</span>
-        </button>
+        )}
       </div>
     </aside>
   );

@@ -884,38 +884,82 @@ body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-nav .nav-list {
   gap: 8px !important;
 }
 
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link:hover,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active {
-  transform: none !important;
-  border-radius: 12px !important;
-  min-height: 48px !important;
-  width: 48px !important;
-  min-width: 48px !important;
-  max-width: 48px !important;
-  padding: 0 !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link::before,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link::after {
-  display: none !important;
-  opacity: 0 !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link i {
-  transform: none !important;
-  filter: none !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active i {
-  color: #ffffff !important;
-  filter: none !important;
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-brand-panel {
+  overflow: visible !important;
 }
 
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-brand-logo--icon {
-  height: 62px !important;
-  max-width: 62px !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 58px !important;
   filter: drop-shadow(0 4px 14px rgba(13, 216, 255, 0.22)) !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link,
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link:hover,
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  transform: none !important;
+  border-radius: 12px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  height: 48px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 0 !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active {
+  background: rgba(13, 216, 255, 0.14) !important;
+  border: 1px solid rgba(13, 216, 255, 0.42) !important;
+  box-shadow: none !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link::before,
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link::after,
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active::before,
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active::after {
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link i {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin: 0 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link:hover i,
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active i {
+  color: #ffffff !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+body:not(.login-theme) .sidebar-logout-button--leading {
+  border: 1px solid rgba(13, 216, 255, 0.22) !important;
+  background: rgba(6, 20, 40, 0.65) !important;
+}
+
+body:not(.login-theme) .sidebar-logout-button--leading:hover {
+  border-color: rgba(13, 216, 255, 0.45) !important;
+  background: rgba(13, 216, 255, 0.12) !important;
+  color: var(--ix-cyan-hi) !important;
+  text-shadow: none !important;
 }
 
 /* Presets — intensificar cyber */
