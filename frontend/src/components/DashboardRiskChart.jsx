@@ -4,118 +4,120 @@ import {
   CategoryScale,
   Chart as ChartJS,
   LinearScale,
+  LineElement,
+  PointElement,
+  BarController,
+  LineController,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Chart } from "react-chartjs-2";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  BarController,
+  LineController,
+  Tooltip,
+  Legend,
+  Filler
+);
 
+const TOP_N = 10;
 const axisFont = { family: "'Inter', sans-serif", size: 11, weight: "500" };
 
-function truncateLabel(name, max = 26) {
-  if (!name || name.length <= max) return name;
+function shortName(name, max = 12) {
+  if (!name) return "—";
+  if (name.length <= max) return name;
   return `${name.slice(0, max - 1)}…`;
 }
 
-function scoreColor(value) {
-  const score = Number(value) || 0;
-  if (score >= 80) return "rgba(0, 230, 180, 0.9)";
-  if (score >= 60) return "rgba(13, 216, 255, 0.88)";
-  if (score >= 40) return "rgba(30, 160, 255, 0.82)";
-  return "rgba(90, 120, 165, 0.75)";
+function prepareRows(labels, scores, risks) {
+  return labels
+    .map((name, index) => ({
+      name,
+      score: Number(scores[index]) || 0,
+      risk: Number(risks[index]) || 0
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, TOP_N);
 }
-
-function riskColor(value) {
-  const risk = Number(value) || 0;
-  if (risk >= 60) return "rgba(255, 107, 129, 0.88)";
-  if (risk >= 40) return "rgba(255, 171, 87, 0.88)";
-  return "rgba(130, 165, 200, 0.55)";
-}
-
-const barRadius = { topRight: 5, bottomRight: 5, topLeft: 0, bottomLeft: 0 };
 
 export default function DashboardRiskChart({ labels, scores, risks }) {
-  const chartHeight = useMemo(() => {
-    const rows = Math.max(labels.length, 1);
-    return Math.min(520, Math.max(260, rows * 34 + 88));
-  }, [labels.length]);
+  const chartData = useMemo(() => {
+    const rows = prepareRows(labels, scores, risks);
+    return {
+      rows,
+      labels: rows.map((row) => shortName(row.name)),
+      fullNames: rows.map((row) => row.name),
+      scores: rows.map((row) => row.score),
+      risks: rows.map((row) => row.risk)
+    };
+  }, [labels, scores, risks]);
 
-  const displayLabels = useMemo(
-    () => labels.map((name) => truncateLabel(name)),
-    [labels]
-  );
-
-  const scoreValues = useMemo(
-    () => scores.map((value) => Number(value) || 0),
-    [scores]
-  );
-
-  const riskValues = useMemo(
-    () => risks.map((value) => Number(value) || 0),
-    [risks]
-  );
-
-  if (!labels.length) {
+  if (!chartData.rows.length) {
     return <p className="dashboard-chart-empty">Sem dados para exibir no grafico.</p>;
   }
 
   return (
-    <div className="dashboard-risk-chart" style={{ height: chartHeight }}>
-      <Bar
+    <div className="dashboard-risk-chart">
+      <Chart
+        type="bar"
         data={{
-          labels: displayLabels,
+          labels: chartData.labels,
           datasets: [
             {
-              label: "Nota",
-              data: scoreValues,
-              backgroundColor: scoreValues.map(scoreColor),
-              borderRadius: barRadius,
-              borderSkipped: false,
-              barThickness: 11,
-              maxBarThickness: 12,
-              order: 1
+              type: "line",
+              label: "Indice de risco",
+              data: chartData.risks,
+              borderColor: "#ff9a6b",
+              backgroundColor: "rgba(255, 154, 107, 0.14)",
+              borderWidth: 2,
+              pointBackgroundColor: "#ff9a6b",
+              pointBorderColor: "#0a1628",
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              tension: 0.35,
+              fill: true,
+              order: 0
             },
             {
-              label: "Risco",
-              data: riskValues,
-              backgroundColor: riskValues.map(riskColor),
-              borderRadius: barRadius,
+              type: "bar",
+              label: "Nota",
+              data: chartData.scores,
+              backgroundColor: "rgba(13, 216, 255, 0.82)",
+              hoverBackgroundColor: "rgba(0, 230, 180, 0.95)",
+              borderRadius: 8,
               borderSkipped: false,
-              barThickness: 11,
-              maxBarThickness: 12,
-              order: 2
+              maxBarThickness: 36,
+              order: 1
             }
           ]
         }}
         options={{
-          indexAxis: "y",
           maintainAspectRatio: false,
           responsive: true,
-          layout: { padding: { top: 6, right: 14, bottom: 2, left: 2 } },
-          datasets: {
-            bar: {
-              categoryPercentage: 0.72,
-              barPercentage: 0.82
-            }
-          },
+          interaction: { mode: "index", intersect: false },
+          layout: { padding: { top: 8, right: 8, bottom: 0, left: 0 } },
           plugins: {
             legend: {
-              position: "bottom",
-              align: "center",
+              position: "top",
+              align: "end",
               labels: {
-                color: "#9eb8d0",
+                color: "#a8c4dc",
                 usePointStyle: true,
-                pointStyle: "rectRounded",
-                boxWidth: 10,
-                boxHeight: 10,
-                padding: 18,
+                padding: 14,
                 font: { ...axisFont, size: 11 }
               }
             },
             tooltip: {
               backgroundColor: "rgba(6, 18, 38, 0.96)",
-              borderColor: "rgba(13, 216, 255, 0.3)",
+              borderColor: "rgba(13, 216, 255, 0.28)",
               borderWidth: 1,
               padding: 12,
               cornerRadius: 8,
@@ -124,49 +126,36 @@ export default function DashboardRiskChart({ labels, scores, risks }) {
               titleFont: { ...axisFont, size: 12, weight: "600" },
               bodyFont: axisFont,
               callbacks: {
-                title: (items) => labels[items[0]?.dataIndex] || "Fornecedor",
-                label: (ctx) => {
-                  const value = ctx.parsed.x ?? 0;
-                  return `${ctx.dataset.label}: ${value}`;
-                },
-                afterBody: (items) => {
-                  if (!items.length) return [];
-                  const index = items[0].dataIndex;
-                  const score = scoreValues[index];
-                  const risk = riskValues[index];
-                  if (items.length === 1) {
-                    const missing = items[0].dataset.label === "Nota" ? `Risco: ${risk}` : `Nota: ${score}`;
-                    return [missing];
-                  }
-                  return [];
-                }
+                title: (items) => chartData.fullNames[items[0]?.dataIndex] || "",
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}`
               }
             }
           },
           scales: {
             x: {
+              ticks: {
+                color: "#9eb4cc",
+                font: { ...axisFont, size: 10, weight: "600" },
+                maxRotation: 40,
+                minRotation: 40,
+                autoSkip: false
+              },
+              grid: { display: false },
+              border: { display: false }
+            },
+            y: {
               min: 0,
               max: 100,
               ticks: {
                 color: "#6d8aa8",
-                stepSize: 20,
+                stepSize: 25,
                 font: axisFont,
-                callback: (value) => `${value}`
+                callback: (value) => value
               },
               grid: {
-                color: "rgba(55, 85, 130, 0.18)",
-                drawTicks: false
+                color: "rgba(55, 85, 130, 0.16)",
+                drawBorder: false
               },
-              border: { display: false }
-            },
-            y: {
-              ticks: {
-                color: "#c8d8ea",
-                font: { ...axisFont, size: 10, weight: "600" },
-                autoSkip: false,
-                padding: 6
-              },
-              grid: { display: false },
               border: { display: false }
             }
           }

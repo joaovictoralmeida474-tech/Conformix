@@ -2864,23 +2864,20 @@ body.login-theme {
 }
 
 .dashboard-chart-panel {
-  min-height: 360px;
+  min-height: 380px;
 }
 
 .dashboard-chart-wrap {
-  min-height: 280px;
-  max-height: 420px;
-  padding: 12px 14px 8px;
-  border: 1px solid rgba(55, 100, 150, 0.2);
+  height: 300px;
+  padding: 10px 12px 6px;
+  border: 1px solid rgba(55, 100, 150, 0.18);
   border-radius: 14px;
-  background: rgba(6, 16, 34, 0.45);
-  overflow-y: auto;
-  overflow-x: hidden;
+  background: rgba(5, 14, 30, 0.4);
 }
 
 .dashboard-risk-chart {
   width: 100%;
-  min-height: 240px;
+  height: 100%;
 }
 
 .dashboard-chart-empty {

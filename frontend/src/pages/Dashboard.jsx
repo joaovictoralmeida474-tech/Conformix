@@ -76,7 +76,7 @@ export default function Dashboard() {
             </Suspense>
           </div>
           <p className="dashboard-footnote">
-            Ate 20 fornecedores sao exibidos para manter o painel leve e legivel.
+            Top 10 fornecedores por nota — barras (desempenho) e linha (risco).
           </p>
         </div>
 
