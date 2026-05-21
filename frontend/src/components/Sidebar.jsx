@@ -96,8 +96,28 @@ export default function Sidebar() {
         <i className={isCollapsed ? "ri-arrow-right-s-line" : "ri-arrow-left-s-line"} aria-hidden="true" />
       </button>
 
-      {!isCollapsed ? (
-        <div className="sidebar-brand-panel">
+      <div
+        className={`sidebar-brand-panel${isCollapsed ? " sidebar-brand-panel--collapsed" : ""}`}
+      >
+        {isCollapsed ? (
+          <NavLink
+            to={links[0]?.to || "/dashboard"}
+            className={({ isActive }) =>
+              `sidebar-brand-home${isActive ? " is-active" : ""}`
+            }
+            title="Integraxx"
+            aria-label="Integraxx - inicio"
+          >
+            <img
+              src={integraxxXMark}
+              alt="Integraxx"
+              className="sidebar-brand-logo sidebar-brand-logo--collapsed"
+              width={90}
+              height={113}
+              decoding="async"
+            />
+          </NavLink>
+        ) : (
           <img
             src={integraxxSidebarLogo}
             alt="Integraxx"
@@ -106,27 +126,10 @@ export default function Sidebar() {
             height={171}
             decoding="async"
           />
-        </div>
-      ) : null}
+        )}
+      </div>
 
       <nav className="sidebar-nav" aria-label="Menu principal">
-        {isCollapsed ? (
-          <NavLink
-            to={links[0]?.to || "/dashboard"}
-            className="sidebar-collapsed-logo-link"
-            title="Integraxx"
-            aria-label="Integraxx - inicio"
-          >
-            <img
-              src={integraxxXMark}
-              alt=""
-              className="sidebar-collapsed-logo-img"
-              width={95}
-              height={109}
-              decoding="async"
-            />
-          </NavLink>
-        ) : null}
         <ul className="nav-list">
           {links.map((link) => (
             <li key={link.to}>

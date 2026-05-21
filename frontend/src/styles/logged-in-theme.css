@@ -220,9 +220,27 @@ body:not(.login-theme) .sidebar-brand-panel {
   background: linear-gradient(180deg, rgba(13, 216, 255, 0.06), transparent) !important;
 }
 
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-brand-panel {
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-brand-panel,
+body:not(.login-theme) .sidebar-brand-panel--collapsed {
   background: transparent !important;
   border-bottom-color: rgba(46, 88, 130, 0.22) !important;
+  box-shadow: none !important;
+}
+
+body:not(.login-theme) .sidebar-brand-home,
+body:not(.login-theme) .sidebar-brand-home:hover,
+body:not(.login-theme) .sidebar-brand-home.is-active,
+body:not(.login-theme) .sidebar-brand-home.active {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body:not(.login-theme) .sidebar-brand-logo--collapsed {
+  height: 54px !important;
+  max-width: 70px !important;
+  filter: drop-shadow(0 2px 12px rgba(13, 216, 255, 0.15)) !important;
 }
 
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-profile-card {
@@ -882,17 +900,6 @@ body:not(.login-theme) .theme-preset-control select {
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-nav .nav-list {
   padding: 0 !important;
   gap: 8px !important;
-}
-
-body:not(.login-theme) .sidebar-collapsed-logo-link {
-  margin: 6px auto 14px !important;
-}
-
-body:not(.login-theme) .sidebar-collapsed-logo-img {
-  height: 48px !important;
-  max-width: 48px !important;
-  width: auto !important;
-  filter: drop-shadow(0 2px 10px rgba(13, 216, 255, 0.18)) !important;
 }
 
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-nav {
