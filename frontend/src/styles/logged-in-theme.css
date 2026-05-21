@@ -254,6 +254,11 @@ body:not(.login-theme) .sidebar--integraxx .nav-list {
   padding: 0 14px !important;
 }
 
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link {
+  gap: 20px !important;
+  padding: 0 16px 0 20px !important;
+}
+
 body:not(.login-theme) .sidebar-menu-link {
   color: #7eb8dc !important;
   border-radius: 14px !important;
