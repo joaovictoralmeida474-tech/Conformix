@@ -96,19 +96,8 @@ export default function Sidebar() {
         <i className={isCollapsed ? "ri-arrow-right-s-line" : "ri-arrow-left-s-line"} aria-hidden="true" />
       </button>
 
-      <div className="sidebar-brand-panel">
-        {isCollapsed ? (
-          <div className="sidebar-brand-icon-wrap">
-            <img
-              src={integraxxXMark}
-              alt="Integraxx"
-              className="sidebar-brand-logo sidebar-brand-logo--icon"
-              width={79}
-              height={97}
-              decoding="async"
-            />
-          </div>
-        ) : (
+      {!isCollapsed ? (
+        <div className="sidebar-brand-panel">
           <img
             src={integraxxSidebarLogo}
             alt="Integraxx"
@@ -117,10 +106,27 @@ export default function Sidebar() {
             height={171}
             decoding="async"
           />
-        )}
-      </div>
+        </div>
+      ) : null}
 
       <nav className="sidebar-nav" aria-label="Menu principal">
+        {isCollapsed ? (
+          <NavLink
+            to={links[0]?.to || "/dashboard"}
+            className="sidebar-collapsed-logo-link"
+            title="Integraxx"
+            aria-label="Integraxx - inicio"
+          >
+            <img
+              src={integraxxXMark}
+              alt=""
+              className="sidebar-collapsed-logo-img"
+              width={95}
+              height={109}
+              decoding="async"
+            />
+          </NavLink>
+        ) : null}
         <ul className="nav-list">
           {links.map((link) => (
             <li key={link.to}>
@@ -140,45 +146,27 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-profile-card">
-        {isCollapsed ? (
-          <>
-            <div className="sidebar-profile-main">
-              <div className="sidebar-profile-avatar" aria-hidden="true">
-                {getInitials(user?.name || user?.email || "Integraxx")}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="sidebar-logout-button"
-              onClick={logout}
-              aria-label="Sair"
-              title="Sair"
-            >
-              <i className="ri-logout-box-r-line" aria-hidden="true" />
-            </button>
-          </>
-        ) : (
-          <div className="sidebar-profile-row">
-            <button
-              type="button"
-              className="sidebar-logout-button sidebar-logout-button--leading"
-              onClick={logout}
-              aria-label="Sair"
-              title="Sair"
-            >
-              <i className="ri-logout-box-r-line" aria-hidden="true" />
-            </button>
-            <div className="sidebar-profile-main">
-              <div className="sidebar-profile-avatar" aria-hidden="true">
-                {getInitials(user?.name || user?.email || "Integraxx")}
-              </div>
-              <div className="sidebar-profile-copy">
-                <strong>{user?.name || user?.email || "Administrador"}</strong>
-                <small>{getRoleLabel(user?.role)}</small>
-              </div>
-            </div>
+        <div className="sidebar-profile-main">
+          <div className="sidebar-profile-avatar" aria-hidden="true">
+            {getInitials(user?.name || user?.email || "Integraxx")}
           </div>
-        )}
+          {!isCollapsed ? (
+            <div className="sidebar-profile-copy">
+              <strong>{user?.name || user?.email || "Administrador"}</strong>
+              <small>{getRoleLabel(user?.role)}</small>
+            </div>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className="sidebar-logout-button"
+          onClick={logout}
+          aria-label="Sair"
+          title="Sair"
+        >
+          <i className="ri-logout-box-r-line" aria-hidden="true" />
+          {!isCollapsed ? <span>Sair</span> : null}
+        </button>
       </div>
     </aside>
   );
