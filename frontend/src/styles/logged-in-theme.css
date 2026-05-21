@@ -400,65 +400,74 @@ body:not(.login-theme) .supplier-hero p {
   font-size: 1rem !important;
 }
 
-body:not(.login-theme) .dashboard-card-eyebrow,
 body:not(.login-theme) .supplier-hero-kicker,
 body:not(.login-theme) .helper-label {
   color: var(--ix-cyan-hi) !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em !important;
-  line-height: 1.4 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  line-height: 1.5 !important;
   text-shadow: none !important;
 }
 
-/* Rótulos dos cards (eyebrow) — sem cortar letras */
+/* Cabeçalhos dos cards — estilo limpo (barra lateral, sem pílula) */
 body:not(.login-theme) .dashboard-card-eyebrow {
-  display: inline-flex !important;
-  align-items: center !important;
-  align-self: flex-start !important;
-  max-width: calc(100% - 4px) !important;
-  margin: 0 2px 10px !important;
-  padding: 7px 16px !important;
-  border: 1px solid rgba(13, 216, 255, 0.38) !important;
-  border-radius: 999px !important;
-  background: rgba(3, 16, 34, 0.92) !important;
-  font-size: 0.7rem !important;
-  line-height: 1.45 !important;
-  letter-spacing: 0.05em !important;
-  white-space: normal !important;
+  display: block !important;
+  margin: 0 0 6px !important;
+  padding: 0 0 0 11px !important;
+  border: 0 !important;
+  border-left: 3px solid var(--ix-cyan-hi) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: #8ecae8 !important;
+  text-shadow: none !important;
   overflow: visible !important;
-  position: relative !important;
-  z-index: 2 !important;
-  box-sizing: border-box !important;
+  box-shadow: none !important;
 }
 
-body:not(.login-theme) .dashboard-panel,
-body:not(.login-theme) .dashboard-stat-card,
-body:not(.login-theme) .dashboard-chart-card,
-body:not(.login-theme) .dashboard-panel.dashboard-table-panel {
-  overflow: visible !important;
-}
-
-body:not(.login-theme) .dashboard-chart-wrap,
-body:not(.login-theme) .dashboard-table-wrap {
-  overflow: auto;
-  border-radius: 18px;
+body:not(.login-theme) .dashboard-panel-heading {
+  margin-bottom: 16px !important;
+  padding-bottom: 14px !important;
+  border-bottom: 1px solid rgba(13, 216, 255, 0.14) !important;
 }
 
 body:not(.login-theme) .dashboard-panel-heading > div,
 body:not(.login-theme) .dashboard-panel > div:first-child,
 body:not(.login-theme) .dashboard-mini-panel > div:first-child {
   display: grid !important;
-  gap: 10px !important;
+  gap: 6px !important;
   min-width: 0 !important;
-  padding-top: 2px !important;
+  padding: 0 !important;
 }
 
 body:not(.login-theme) .dashboard-panel h3,
-body:not(.login-theme) .dashboard-mini-panel h3 {
+body:not(.login-theme) .dashboard-mini-panel h3,
+body:not(.login-theme) .dashboard-panel-heading h3 {
   margin: 0 !important;
-  padding: 0 !important;
-  line-height: 1.35 !important;
+  padding: 3px 0 0 !important;
+  color: #f4fbff !important;
+  font-family: "Space Grotesk", "Inter", sans-serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0.01em !important;
   overflow: visible !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #f4fbff !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+body:not(.login-theme) .dashboard-chart-wrap,
+body:not(.login-theme) .dashboard-table-wrap {
+  overflow: auto;
+  border-radius: 18px;
 }
 
 /* ═══════════════════════════════════════
@@ -504,61 +513,43 @@ body:not(.login-theme) .app-page-content [class*="-shell"] {
   backdrop-filter: blur(20px) saturate(150%) !important;
 }
 
-/* Barra superior neon nos stat cards */
+/* Cards de KPI — visual estável, sem pulso */
 body:not(.login-theme) .dashboard-stat-card::before {
-  content: "" !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 12px !important;
-  right: 12px !important;
-  height: 3px !important;
-  border-radius: 0 0 6px 6px !important;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--ix-cyan),
-    var(--ix-cyan-hi),
-    var(--ix-blue),
-    transparent
-  ) !important;
-  background-size: 200% 100% !important;
-  animation: ixBorderFlow 4s linear infinite !important;
-  opacity: 1 !important;
-  transform: none !important;
-  pointer-events: none !important;
+  display: none !important;
 }
 
 body:not(.login-theme) .dashboard-stat-card {
-  animation: ixNeonPulse 4s ease-in-out infinite !important;
-  padding: 26px 22px 20px !important;
-  min-height: 120px !important;
-}
-
-body:not(.login-theme) .dashboard-stat-card .dashboard-card-eyebrow {
-  margin-top: 2px !important;
+  animation: none !important;
+  padding: 18px 20px !important;
+  min-height: 108px !important;
 }
 
 body:not(.login-theme) .dashboard-stat-card strong {
-  background: linear-gradient(135deg, #ffffff 10%, var(--ix-cyan-hi) 55%, var(--ix-blue) 100%) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  filter: drop-shadow(0 0 24px rgba(13, 216, 255, 0.4)) !important;
-  font-family: "Oxanium", "Space Grotesk", sans-serif !important;
-  font-size: clamp(2.2rem, 3.5vw, 3.6rem) !important;
+  display: block !important;
+  margin-top: 10px !important;
+  color: #ffffff !important;
+  font-family: "Space Grotesk", sans-serif !important;
+  font-size: clamp(1.85rem, 2.6vw, 2.75rem) !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  filter: none !important;
+  text-shadow: none !important;
 }
 
 body:not(.login-theme) .dashboard-stat-card p {
-  color: var(--ix-cyan) !important;
-  font-weight: 600 !important;
-  text-shadow: 0 0 12px rgba(0, 230, 180, 0.35) !important;
+  color: #7eb8dc !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
 }
 
-body:not(.login-theme) .dashboard-panel h3,
 body:not(.login-theme) .panel-heading h3 {
-  color: #f0f9ff !important;
+  color: #f4fbff !important;
   font-family: "Space Grotesk", sans-serif !important;
-  text-shadow: 0 0 16px rgba(13, 216, 255, 0.2) !important;
+  text-shadow: none !important;
 }
 
 body:not(.login-theme) .dashboard-chart-wrap {
@@ -587,14 +578,13 @@ body:not(.login-theme) .supplier-list-card:hover,
 body:not(.login-theme) .supplier-form-panel:hover,
 body:not(.login-theme) .admin-hero:hover,
 body:not(.login-theme) .app-page-content [class*="-card"]:hover:not([class*="login-"]) {
-  transform: translateY(-6px) scale(1.01) !important;
-  border-color: rgba(0, 230, 180, 0.55) !important;
+  transform: translateY(-2px) !important;
+  border-color: rgba(13, 216, 255, 0.32) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 0 1px rgba(0, 230, 180, 0.25),
-    0 36px 80px rgba(0, 0, 0, 0.6),
-    0 0 64px rgba(0, 230, 180, 0.22),
-    0 0 100px rgba(13, 216, 255, 0.15) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(13, 216, 255, 0.12),
+    0 20px 48px rgba(0, 0, 0, 0.45),
+    0 0 32px rgba(13, 216, 255, 0.08) !important;
 }
 
 /* ═══════════════════════════════════════
@@ -902,8 +892,7 @@ body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-stat-card {
 }
 
 body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-stat-card::before {
-  animation: none !important;
-  opacity: 0.85 !important;
+  display: none !important;
 }
 
 body:not(.login-theme)[data-theme-preset="tech-clean"] .button,
