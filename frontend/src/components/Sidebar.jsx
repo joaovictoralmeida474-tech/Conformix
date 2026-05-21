@@ -4,6 +4,7 @@ import { api } from "../services/api";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { clearSession } from "../utils/authStorage";
 import integraxxSidebarLogo from "../assets/integraxx-sidebar-logo-transparent.png";
+import integraxxLogoX from "../assets/integraxx-logo-x-only.png";
 import { PERMISSIONS, canAccessAdmin, hasPermission } from "../utils/access";
 
 function getInitials(name) {
@@ -96,13 +97,15 @@ export default function Sidebar() {
       </button>
 
       <div className="sidebar-brand-panel">
-        <img
-          src={integraxxSidebarLogo}
-          alt="Integraxx"
-          className="sidebar-brand-logo"
-          width={512}
-          height={171}
-        />
+        <div className={`sidebar-brand-logo-shell${isCollapsed ? " is-collapsed" : ""}`}>
+          <img
+            src={isCollapsed ? integraxxLogoX : integraxxSidebarLogo}
+            alt="Integraxx"
+            className={`sidebar-brand-logo${isCollapsed ? " sidebar-brand-logo--x" : ""}`}
+            width={isCollapsed ? 1024 : 512}
+            height={isCollapsed ? 341 : 171}
+          />
+        </div>
       </div>
 
       <nav className="sidebar-nav" aria-label="Menu principal">
