@@ -2798,7 +2798,7 @@ body.login-theme {
 .dashboard-card-eyebrow {
   display: block;
   margin: 0 0 8px;
-  padding: 2px 4px 2px 14px;
+  padding: 0 0 0 11px;
   border: 0;
   border-left: 3px solid #0dd8ff;
   border-radius: 0;
@@ -2806,7 +2806,7 @@ body.login-theme {
   color: #8ecae8;
   font-size: 0.72rem;
   font-weight: 600;
-  line-height: 1.55;
+  line-height: 1.5;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   overflow: visible;
@@ -2834,11 +2834,11 @@ body.login-theme {
 
 .dashboard-panel h3 {
   margin: 0;
-  padding: 4px 2px 0 4px;
+  padding: 2px 0 0;
   color: #f4fbff;
   font-size: 1.15rem;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.45;
   overflow: visible;
 }
 
@@ -2859,8 +2859,8 @@ body.login-theme {
   display: grid;
   gap: 6px;
   min-width: 0;
-  padding: 0 2px 0 4px;
-  box-sizing: border-box;
+  padding: 0;
+  overflow: visible;
 }
 
 .dashboard-chart-panel {
@@ -4686,7 +4686,7 @@ body:not(.login-theme) .supplier-form-panel,
 body:not(.login-theme) .supplier-dossier-metric,
 body:not(.login-theme) .supplier-dossier-card,
 body:not(.login-theme) .category-form-panel,
-body:not(.login-theme) .app-page-content [class*="-panel"],
+body:not(.login-theme) .app-page-content [class*="-panel"]:not(.dashboard-panel-heading),
 body:not(.login-theme) .app-page-content [class*="-card"],
 body:not(.login-theme) .app-page-content [class*="-hero"],
 body:not(.login-theme) .app-page-content [class*="-dossier"],
@@ -4712,9 +4712,16 @@ body:not(.login-theme) .app-page-content [class*="-shell"] {
     border-color 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+body:not(.login-theme) .dashboard-panel-heading {
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
 body:not(.login-theme) .dashboard-panel,
-body:not(.login-theme) .dashboard-panel-heading,
-body:not(.login-theme) .dashboard-panel-heading > div,
 body:not(.login-theme) .dashboard-stat-card,
 body:not(.login-theme) .dashboard-chart-card,
 body:not(.login-theme) .dashboard-table-panel {
@@ -4747,7 +4754,7 @@ body:not(.login-theme) .supplier-form-panel:hover,
 body:not(.login-theme) .supplier-dossier-metric:hover,
 body:not(.login-theme) .supplier-dossier-card:hover,
 body:not(.login-theme) .category-form-panel:hover,
-body:not(.login-theme) .app-page-content [class*="-panel"]:hover,
+body:not(.login-theme) .app-page-content [class*="-panel"]:not(.dashboard-panel-heading):hover,
 body:not(.login-theme) .app-page-content [class*="-card"]:hover,
 body:not(.login-theme) .app-page-content [class*="-hero"]:hover,
 body:not(.login-theme) .app-page-content [class*="-dossier"]:hover,
@@ -4886,7 +4893,7 @@ body:not(.login-theme) .app-page-content > * {
   body:not(.login-theme) .supplier-dossier-metric:hover,
   body:not(.login-theme) .supplier-dossier-card:hover,
   body:not(.login-theme) .category-form-panel:hover,
-  body:not(.login-theme) .app-page-content [class*="-panel"]:hover,
+  body:not(.login-theme) .app-page-content [class*="-panel"]:not(.dashboard-panel-heading):hover,
   body:not(.login-theme) .app-page-content [class*="-card"]:hover,
   body:not(.login-theme) .app-page-content [class*="-hero"]:hover,
   body:not(.login-theme) .app-page-content [class*="-dossier"]:hover,

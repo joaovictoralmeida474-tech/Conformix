@@ -413,14 +413,14 @@ body:not(.login-theme) .helper-label {
 body:not(.login-theme) .dashboard-card-eyebrow {
   display: block !important;
   margin: 0 0 6px !important;
-  padding: 2px 4px 2px 14px !important;
+  padding: 0 0 0 11px !important;
   border: 0 !important;
   border-left: 3px solid var(--ix-cyan-hi) !important;
   border-radius: 0 !important;
   background: transparent !important;
   font-size: 0.72rem !important;
   font-weight: 600 !important;
-  line-height: 1.55 !important;
+  line-height: 1.5 !important;
   letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
   color: #8ecae8 !important;
@@ -432,7 +432,12 @@ body:not(.login-theme) .dashboard-card-eyebrow {
 body:not(.login-theme) .dashboard-panel-heading {
   margin-bottom: 16px !important;
   padding-bottom: 14px !important;
+  border: 0 !important;
   border-bottom: 1px solid rgba(13, 216, 255, 0.14) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
   overflow: visible !important;
 }
 
@@ -442,13 +447,7 @@ body:not(.login-theme) .dashboard-mini-panel > div:first-child {
   display: grid !important;
   gap: 6px !important;
   min-width: 0 !important;
-  padding: 0 2px 0 4px !important;
-  box-sizing: border-box !important;
-  overflow: visible !important;
-}
-
-body:not(.login-theme) .dashboard-card-eyebrow {
-  padding: 2px 4px 2px 14px !important;
+  padding: 0 !important;
   overflow: visible !important;
 }
 
@@ -456,13 +455,13 @@ body:not(.login-theme) .dashboard-panel h3,
 body:not(.login-theme) .dashboard-mini-panel h3,
 body:not(.login-theme) .dashboard-panel-heading h3 {
   margin: 0 !important;
-  padding: 4px 2px 0 4px !important;
+  padding: 2px 0 0 !important;
   color: #f4fbff !important;
   font-family: "Space Grotesk", "Inter", sans-serif !important;
   font-size: 1.15rem !important;
   font-weight: 600 !important;
-  line-height: 1.5 !important;
-  letter-spacing: 0 !important;
+  line-height: 1.45 !important;
+  letter-spacing: 0.01em !important;
   overflow: visible !important;
   background: none !important;
   -webkit-background-clip: unset !important;
@@ -472,14 +471,7 @@ body:not(.login-theme) .dashboard-panel-heading h3 {
   filter: none !important;
 }
 
-/* Evita corte de letras nos cards do dashboard */
-body:not(.login-theme) .app-page-content {
-  overflow-x: visible !important;
-}
-
 body:not(.login-theme) .dashboard-panel,
-body:not(.login-theme) .dashboard-panel-heading,
-body:not(.login-theme) .dashboard-panel-heading > div,
 body:not(.login-theme) .dashboard-stat-card,
 body:not(.login-theme) .dashboard-chart-card,
 body:not(.login-theme) .dashboard-table-panel {
@@ -515,7 +507,7 @@ body:not(.login-theme) .page-card,
 body:not(.login-theme) .panel,
 body:not(.login-theme) .hero-card,
 body:not(.login-theme) .stat-card,
-body:not(.login-theme) .app-page-content [class*="-panel"],
+body:not(.login-theme) .app-page-content [class*="-panel"]:not(.dashboard-panel-heading),
 body:not(.login-theme) .app-page-content [class*="-card"]:not(.login-card):not([class*="login-"]),
 body:not(.login-theme) .app-page-content [class*="-hero"],
 body:not(.login-theme) .app-page-content [class*="-shell"] {
