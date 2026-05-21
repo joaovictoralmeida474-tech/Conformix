@@ -731,6 +731,28 @@ body:not(.login-theme) .admin-permission-item {
   border-radius: 18px !important;
 }
 
+body:not(.login-theme) .admin-companies-panel {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+body:not(.login-theme) .admin-company-card {
+  border-color: rgba(13, 216, 255, 0.28) !important;
+  transition:
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.28s ease !important;
+}
+
+body:not(.login-theme) .admin-company-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: rgba(0, 230, 180, 0.4) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 48px rgba(0, 0, 0, 0.45),
+    0 0 32px rgba(13, 216, 255, 0.12) !important;
+}
+
 body:not(.login-theme) .admin-permission-chip.is-selected {
   border-color: rgba(0, 230, 180, 0.55) !important;
   background: linear-gradient(135deg, rgba(0, 230, 180, 0.15), rgba(13, 216, 255, 0.08)) !important;

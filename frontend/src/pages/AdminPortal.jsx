@@ -936,33 +936,54 @@ export default function AdminPortal() {
       ) : null}
 
       {!hasActiveEditor && section === "settings" ? (
-        <div className="admin-overview-grid">
-          <section className="table-card admin-table-card">
-            <div className="admin-panel-header">
-              <div>
-                <span className="dashboard-card-eyebrow">Configuracoes globais</span>
-                <h3>Empresas e flags</h3>
-              </div>
-              {role === ROLES.SUPER_ADMIN ? (
-                <button
-                  className="supplier-toolbar-button supplier-toolbar-button-primary"
-                  type="button"
-                  onClick={() => setCompanyModal(true)}
-                >
-                  Nova empresa
-                </button>
-              ) : null}
+        <section className="table-card admin-table-card admin-companies-panel">
+          <div className="admin-panel-header">
+            <div>
+              <span className="dashboard-card-eyebrow">Configuracoes</span>
+              <h3>Empresas</h3>
+              <p className="admin-companies-lead">
+                Cadastre e gerencie as empresas vinculadas a usuarios, departamentos e fornecedores.
+              </p>
             </div>
-            <div className="admin-settings-stack">
+            {role === ROLES.SUPER_ADMIN ? (
+              <button
+                className="supplier-toolbar-button supplier-toolbar-button-primary"
+                type="button"
+                onClick={() => setCompanyModal(true)}
+              >
+                Nova empresa
+              </button>
+            ) : null}
+          </div>
+
+          {(settings?.companies || []).length ? (
+            <div className="admin-companies-grid">
               {(settings?.companies || []).map((item) => (
-                <div key={item.id} className="admin-setting-card">
-                  <strong>{item.name}</strong>
-                  <p>{item._count?.users || 0} usuarios</p>
-                  <span>{item._count?.departments || 0} departamentos</span>
-                  <span>{item._count?.suppliers || 0} fornecedores</span>
-                  <span>{item._count?.categories || 0} categorias</span>
+                <article key={item.id} className="admin-company-card">
+                  <div className="admin-company-card-head">
+                    <strong>{item.name}</strong>
+                    {item.description ? <p>{item.description}</p> : null}
+                  </div>
+                  <div className="admin-company-stats">
+                    <div className="admin-company-stat">
+                      <span>Usuarios</span>
+                      <strong>{item._count?.users || 0}</strong>
+                    </div>
+                    <div className="admin-company-stat">
+                      <span>Departamentos</span>
+                      <strong>{item._count?.departments || 0}</strong>
+                    </div>
+                    <div className="admin-company-stat">
+                      <span>Fornecedores</span>
+                      <strong>{item._count?.suppliers || 0}</strong>
+                    </div>
+                    <div className="admin-company-stat">
+                      <span>Categorias</span>
+                      <strong>{item._count?.categories || 0}</strong>
+                    </div>
+                  </div>
                   {role === ROLES.SUPER_ADMIN ? (
-                    <div className="supplier-form-actions">
+                    <div className="admin-company-actions">
                       <button
                         className="supplier-row-button supplier-row-button-danger"
                         type="button"
@@ -972,28 +993,24 @@ export default function AdminPortal() {
                       </button>
                     </div>
                   ) : null}
-                </div>
+                </article>
               ))}
             </div>
-          </section>
-
-          <section className="table-card admin-table-card">
-            <div className="admin-panel-header">
-              <div>
-                <span className="dashboard-card-eyebrow">Catalogo de permissoes</span>
-                <h3>RBAC pronto para evolucao</h3>
-              </div>
+          ) : (
+            <div className="admin-companies-empty">
+              <p>Nenhuma empresa cadastrada ainda.</p>
+              {role === ROLES.SUPER_ADMIN ? (
+                <button
+                  className="supplier-toolbar-button supplier-toolbar-button-primary"
+                  type="button"
+                  onClick={() => setCompanyModal(true)}
+                >
+                  Cadastrar primeira empresa
+                </button>
+              ) : null}
             </div>
-            <div className="admin-permission-list">
-              {(settings?.permissionCatalog || []).map((item) => (
-                <div key={item.key} className="admin-permission-item">
-                  <strong>{item.key}</strong>
-                  <p>{item.name}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
+          )}
+        </section>
       ) : null}
 
       {userModal ? (

@@ -5485,6 +5485,108 @@ body.login-theme .login-badge-item-exact i {
   padding: 26px;
 }
 
+.admin-companies-panel {
+  width: 100%;
+  max-width: none;
+}
+
+.admin-companies-lead {
+  margin: 8px 0 0;
+  max-width: 56ch;
+  color: #9ed8ff;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.admin-companies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.admin-company-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(13, 216, 255, 0.2);
+  background:
+    linear-gradient(145deg, rgba(0, 230, 180, 0.06), transparent 42%),
+    linear-gradient(180deg, rgba(6, 24, 46, 0.9), rgba(3, 14, 32, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.admin-company-card-head strong {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.15rem;
+  color: #f4fbff;
+}
+
+.admin-company-card-head p {
+  margin: 8px 0 0;
+  color: #8eb8d8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.admin-company-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-company-stat {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(13, 216, 255, 0.14);
+  background: rgba(2, 12, 28, 0.65);
+}
+
+.admin-company-stat span {
+  color: #7eb8dc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-company-stat strong {
+  color: #ffffff;
+  font-family: "Oxanium", "Space Grotesk", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.admin-company-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid rgba(13, 216, 255, 0.12);
+}
+
+.admin-companies-empty {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 48px 24px;
+  border-radius: 20px;
+  border: 1px dashed rgba(13, 216, 255, 0.28);
+  background: rgba(4, 16, 34, 0.55);
+  text-align: center;
+}
+
+.admin-companies-empty p {
+  margin: 0;
+  color: #9ed8ff;
+  font-size: 1rem;
+}
+
 .admin-panel-header,
 .admin-modal-header {
   display: flex;

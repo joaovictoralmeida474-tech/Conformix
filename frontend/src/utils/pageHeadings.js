@@ -42,7 +42,7 @@ const PAGE_HEADINGS = [
   {
     match: (path) => path === "/admin/configuracoes",
     title: "Configurações",
-    description: "Parâmetros gerais e preferências da plataforma"
+    description: "Gestão de empresas cadastradas na plataforma"
   },
   {
     match: (path) => path.startsWith("/admin"),
