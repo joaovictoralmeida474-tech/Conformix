@@ -3,6 +3,14 @@ import { cachedGet } from "../services/cachedApi";
 
 const PAGE_SIZE = 20;
 
+const EMPTY_FILTERS = {
+  date: "",
+  user: "",
+  action: "",
+  entity: "",
+  details: ""
+};
+
 function buildPageNumbers(currentPage, totalPages) {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -22,28 +30,39 @@ function buildPageNumbers(currentPage, totalPages) {
   return result;
 }
 
+function hasActiveFilters(filters) {
+  return Object.values(filters).some((value) => String(value || "").trim());
+}
+
 export default function Audit() {
   const [items, setItems] = useState([]);
-  const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadAudit = useCallback(async (nextPage, term) => {
+  const filtersActive = useMemo(() => hasActiveFilters(appliedFilters), [appliedFilters]);
+
+  const loadAudit = useCallback(async (nextPage, activeFilters) => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await cachedGet("/audit", {
-        params: {
-          page: nextPage,
-          pageSize: PAGE_SIZE,
-          search: term || undefined
-        }
-      });
+      const params = {
+        page: nextPage,
+        pageSize: PAGE_SIZE
+      };
+
+      if (activeFilters.date) params.filterDate = activeFilters.date;
+      if (activeFilters.user) params.filterUser = activeFilters.user;
+      if (activeFilters.action) params.filterAction = activeFilters.action;
+      if (activeFilters.entity) params.filterEntity = activeFilters.entity;
+      if (activeFilters.details) params.filterDetails = activeFilters.details;
+
+      const response = await cachedGet("/audit", { params });
       const payload = response.data || {};
 
       setItems(Array.isArray(payload.items) ? payload.items : []);
@@ -62,28 +81,38 @@ export default function Audit() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setSearchTerm(searchInput.trim());
+      setAppliedFilters(filters);
       setPage(1);
     }, 350);
 
     return () => window.clearTimeout(timer);
-  }, [searchInput]);
+  }, [filters]);
 
   useEffect(() => {
-    loadAudit(page, searchTerm);
-  }, [loadAudit, page, searchTerm]);
+    loadAudit(page, appliedFilters);
+  }, [loadAudit, page, appliedFilters]);
 
   const pageNumbers = useMemo(() => buildPageNumbers(page, totalPages), [page, totalPages]);
 
   const rangeLabel = useMemo(() => {
     if (!total) {
-      return "Nenhum registro";
+      return filtersActive ? "Nenhum registro encontrado" : "Nenhum registro";
     }
 
     const start = (page - 1) * PAGE_SIZE + 1;
     const end = Math.min(page * PAGE_SIZE, total);
     return `Exibindo ${start}-${end} de ${total}`;
-  }, [page, total]);
+  }, [page, total, filtersActive]);
+
+  function updateFilter(key, value) {
+    setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function clearFilters() {
+    setFilters(EMPTY_FILTERS);
+    setAppliedFilters(EMPTY_FILTERS);
+    setPage(1);
+  }
 
   function goToPage(nextPage) {
     if (nextPage < 1 || nextPage > totalPages || nextPage === page) {
@@ -109,22 +138,19 @@ export default function Audit() {
 
       <section className="table-card audit-table-card">
         <div className="audit-toolbar">
-          <label className="audit-search-field">
-            <span className="audit-search-label">Pesquisar</span>
-            <input
-              className="supplier-filter-input audit-search-input"
-              type="search"
-              placeholder="Buscar por data, usuario, acao, entidade ou detalhes..."
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              aria-label="Pesquisar historico de auditoria"
-            />
-          </label>
           <p className="audit-search-hint">{rangeLabel}</p>
+          <button
+            type="button"
+            className="supplier-filter-button audit-clear-filters-button"
+            onClick={clearFilters}
+            disabled={!filtersActive && !hasActiveFilters(filters)}
+          >
+            Limpar filtros
+          </button>
         </div>
 
         <div className="audit-table-wrap">
-          <table>
+          <table className="audit-table">
             <thead>
               <tr>
                 <th>Data</th>
@@ -132,6 +158,58 @@ export default function Audit() {
                 <th>Acao</th>
                 <th>Entidade</th>
                 <th>Detalhes</th>
+              </tr>
+              <tr className="audit-filter-row">
+                <th>
+                  <input
+                    className="audit-column-filter"
+                    type="search"
+                    placeholder="Filtrar data"
+                    value={filters.date}
+                    onChange={(event) => updateFilter("date", event.target.value)}
+                    aria-label="Filtrar por data"
+                  />
+                </th>
+                <th>
+                  <input
+                    className="audit-column-filter"
+                    type="search"
+                    placeholder="Filtrar usuario"
+                    value={filters.user}
+                    onChange={(event) => updateFilter("user", event.target.value)}
+                    aria-label="Filtrar por usuario"
+                  />
+                </th>
+                <th>
+                  <input
+                    className="audit-column-filter"
+                    type="search"
+                    placeholder="Filtrar acao"
+                    value={filters.action}
+                    onChange={(event) => updateFilter("action", event.target.value)}
+                    aria-label="Filtrar por acao"
+                  />
+                </th>
+                <th>
+                  <input
+                    className="audit-column-filter"
+                    type="search"
+                    placeholder="Filtrar entidade"
+                    value={filters.entity}
+                    onChange={(event) => updateFilter("entity", event.target.value)}
+                    aria-label="Filtrar por entidade"
+                  />
+                </th>
+                <th>
+                  <input
+                    className="audit-column-filter"
+                    type="search"
+                    placeholder="Filtrar detalhes"
+                    value={filters.details}
+                    onChange={(event) => updateFilter("details", event.target.value)}
+                    aria-label="Filtrar por detalhes"
+                  />
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -154,7 +232,10 @@ export default function Audit() {
               ) : (
                 <tr>
                   <td colSpan="5" className="empty-state">
-                    {error || (searchTerm ? "Nenhum resultado para esta pesquisa." : "Nenhum evento auditado ainda.")}
+                    {error ||
+                      (filtersActive
+                        ? "Nenhum resultado para os filtros aplicados."
+                        : "Nenhum evento auditado ainda.")}
                   </td>
                 </tr>
               )}

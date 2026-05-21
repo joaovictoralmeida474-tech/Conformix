@@ -33,14 +33,28 @@ export function log(userId, action, meta = {}) {
   });
 }
 
-function normalizeSearchTerm(value) {
+function normalizeFilterTerm(value) {
   return String(value || "")
     .trim()
     .toLowerCase();
 }
 
-function matchesSearch(entry, search) {
-  if (!search) {
+function readColumnFilters(options = {}) {
+  return {
+    date: normalizeFilterTerm(options.filterDate ?? options.date),
+    user: normalizeFilterTerm(options.filterUser ?? options.user),
+    action: normalizeFilterTerm(options.filterAction ?? options.action),
+    entity: normalizeFilterTerm(options.filterEntity ?? options.entity),
+    details: normalizeFilterTerm(options.filterDetails ?? options.details)
+  };
+}
+
+function hasActiveFilters(filters) {
+  return Boolean(filters.date || filters.user || filters.action || filters.entity || filters.details);
+}
+
+function matchesColumnFilters(entry, filters) {
+  if (!hasActiveFilters(filters)) {
     return true;
   }
 
@@ -48,20 +62,32 @@ function matchesSearch(entry, search) {
     ? new Date(entry.createdAt).toLocaleString("pt-BR").toLowerCase()
     : "";
 
-  const haystack = [
-    createdAtLabel,
-    entry.user?.email,
-    entry.user?.name,
-    entry.action,
-    entry.entity,
-    entry.details,
-    entry.entityId != null ? String(entry.entityId) : ""
-  ]
+  const userLabel = [entry.user?.email, entry.user?.name]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
 
-  return haystack.includes(search);
+  if (filters.date && !createdAtLabel.includes(filters.date)) {
+    return false;
+  }
+
+  if (filters.user && !userLabel.includes(filters.user)) {
+    return false;
+  }
+
+  if (filters.action && !(entry.action || "").toLowerCase().includes(filters.action)) {
+    return false;
+  }
+
+  if (filters.entity && !(entry.entity || "").toLowerCase().includes(filters.entity)) {
+    return false;
+  }
+
+  if (filters.details && !(entry.details || "").toLowerCase().includes(filters.details)) {
+    return false;
+  }
+
+  return true;
 }
 
 export async function listByCompany(scope, options = {}) {
@@ -72,7 +98,7 @@ export async function listByCompany(scope, options = {}) {
     Math.max(1, Number.parseInt(options.pageSize, 10) || DEFAULT_PAGE_SIZE)
   );
   const page = Math.max(1, Number.parseInt(options.page, 10) || 1);
-  const search = normalizeSearchTerm(options.search);
+  const columnFilters = readColumnFilters(options);
 
   let userQuery = client.from("User").select(AUDIT_USER_COLUMNS);
 
@@ -110,7 +136,9 @@ export async function listByCompany(scope, options = {}) {
     user: userMap.get(item.userId) || null
   }));
 
-  const filtered = search ? enriched.filter((item) => matchesSearch(item, search)) : enriched;
+  const filtered = hasActiveFilters(columnFilters)
+    ? enriched.filter((item) => matchesColumnFilters(item, columnFilters))
+    : enriched;
   const total = filtered.length;
   const totalPages = total ? Math.ceil(total / pageSize) : 0;
   const safePage = totalPages ? Math.min(page, totalPages) : 1;
