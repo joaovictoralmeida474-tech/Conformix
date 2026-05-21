@@ -8,25 +8,42 @@
 }
 
 body:not(.login-theme) {
-  /* Design tokens — app logado apenas */
-  --app-bg-deep: #020711;
-  --app-bg-mid: #071525;
-  --app-text: #e8f7ff;
-  --app-muted: #93b8d4;
-  --app-cyan: #2ee6d6;
-  --app-blue: #3eb8ff;
-  --app-violet: #8b7cff;
-  --app-glass-edge: rgba(120, 200, 255, 0.14);
-  --app-glass-inset: rgba(255, 255, 255, 0.05);
-  --app-shadow-soft: 0 20px 50px rgba(0, 4, 16, 0.55);
+  /* Paleta alinhada à tela de login */
+  --login-bg-deep: #020c1b;
+  --login-bg-mid: #071426;
+  --login-bg-alt: #05101d;
+  --login-cyan: #00e6b4;
+  --login-cyan-bright: #0dd8ff;
+  --login-blue: #1ea0ff;
+
+  --app-bg-deep: var(--login-bg-deep);
+  --app-bg-mid: var(--login-bg-mid);
+  --app-text: #f4fbff;
+  --app-muted: #9ed8ff;
+  --app-cyan: var(--login-cyan);
+  --app-blue: var(--login-blue);
+  --app-violet: #6b8cff;
+  --app-glass-edge: rgba(13, 216, 255, 0.22);
+  --app-glass-inset: rgba(255, 255, 255, 0.06);
+  --app-shadow-soft: 0 24px 60px rgba(0, 4, 16, 0.55);
+  --app-surface: linear-gradient(
+    180deg,
+    rgba(7, 28, 52, 0.82) 0%,
+    rgba(4, 14, 32, 0.94) 100%
+  );
+  --app-surface-hover: linear-gradient(
+    180deg,
+    rgba(10, 38, 68, 0.88) 0%,
+    rgba(5, 18, 38, 0.96) 100%
+  );
 
   font-synthesis-weight: none;
   text-rendering: optimizeLegibility;
   background:
-    radial-gradient(ellipse 100% 80% at 8% -10%, rgba(46, 230, 214, 0.09), transparent 48%),
-    radial-gradient(ellipse 90% 60% at 92% 0%, rgba(62, 184, 255, 0.1), transparent 45%),
-    radial-gradient(circle at 50% 100%, rgba(139, 124, 255, 0.06), transparent 42%),
-    linear-gradient(168deg, var(--app-bg-deep) 0%, var(--app-bg-mid) 52%, #030b18 100%);
+    radial-gradient(circle at top left, rgba(13, 216, 255, 0.14), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(0, 230, 180, 0.12), transparent 28%),
+    radial-gradient(circle at 50% 100%, rgba(30, 160, 255, 0.08), transparent 42%),
+    linear-gradient(135deg, var(--login-bg-deep) 0%, var(--login-bg-mid) 46%, var(--login-bg-alt) 100%);
   color: var(--app-text);
   font-family:
     "Inter",
