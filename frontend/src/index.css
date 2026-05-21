@@ -4065,18 +4065,22 @@ body.login-theme {
 
 .sidebar-brand-panel {
   flex-shrink: 0;
-  padding: 22px 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  padding: 20px 24px 22px;
   border-bottom: 1px solid rgba(46, 88, 130, 0.2);
 }
 
 .sidebar-brand-logo {
   display: block;
   width: 100%;
-  max-width: 196px;
+  max-width: 168px;
   height: auto;
-  margin: 0;
+  margin: 0 auto;
   object-fit: contain;
-  object-position: left center;
+  object-position: center center;
   filter: none;
   image-rendering: auto;
 }
@@ -4317,22 +4321,22 @@ body.login-theme {
 
 .sidebar-collapse-toggle {
   position: absolute;
-  top: 72px;
-  right: -15px;
-  transform: none;
+  right: -10px;
+  bottom: -10px;
   z-index: 5;
-  width: 30px;
-  height: 30px;
-  border: 1px solid rgba(46, 232, 255, 0.45);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid rgba(2, 8, 18, 0.95);
   border-radius: 999px;
-  background: linear-gradient(180deg, #0b6fd4 0%, #0a5cb0 100%);
+  background: linear-gradient(180deg, #1a8ae8 0%, #0b6fd4 100%);
   color: #ffffff;
   display: grid;
   place-items: center;
   cursor: pointer;
   box-shadow:
-    0 0 0 3px rgba(3, 11, 24, 0.9),
-    0 0 18px rgba(15, 224, 208, 0.45);
+    0 0 0 2px rgba(3, 11, 24, 0.95),
+    0 0 10px rgba(15, 224, 208, 0.28);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
@@ -4340,14 +4344,15 @@ body.login-theme {
 }
 
 .sidebar-collapse-toggle:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
   box-shadow:
-    0 0 0 3px rgba(3, 11, 24, 0.9),
-    0 0 24px rgba(46, 232, 255, 0.6);
+    0 0 0 2px rgba(3, 11, 24, 0.95),
+    0 0 14px rgba(46, 232, 255, 0.45);
 }
 
 .sidebar-collapse-toggle i {
-  font-size: 17px;
+  font-size: 11px;
+  line-height: 1;
   font-weight: 700;
 }
 
@@ -4357,15 +4362,16 @@ body.login-theme {
 }
 
 .sidebar--integraxx.is-collapsed .sidebar-brand-panel {
-  padding: 20px 10px 16px;
+  padding: 18px 12px 20px;
 }
 
 .sidebar--integraxx.is-collapsed .sidebar-brand-logo {
-  width: 44px;
-  max-width: 44px;
-  height: 44px;
-  object-fit: cover;
-  object-position: left center;
+  width: 40px;
+  max-width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  object-fit: contain;
+  object-position: center center;
 }
 
 .sidebar--integraxx.is-collapsed .sidebar-brand-copy,
@@ -4439,7 +4445,7 @@ body.login-theme {
 
   .sidebar-brand-logo {
     max-width: 220px;
-    margin: 0;
+    margin: 0 auto;
   }
 
   .sidebar--integraxx .nav-list {
