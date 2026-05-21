@@ -567,17 +567,18 @@ body:not(.login-theme) .panel-heading h3 {
 }
 
 body:not(.login-theme) .dashboard-chart-wrap {
-  height: 300px !important;
-  padding: 16px 14px 12px !important;
-  border: 1px solid rgba(13, 216, 255, 0.18) !important;
-  background:
-    linear-gradient(180deg, rgba(6, 20, 40, 0.72), rgba(3, 10, 24, 0.55)) !important;
-  border-radius: 16px !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  min-height: 280px !important;
+  max-height: 420px !important;
+  padding: 12px 14px 8px !important;
+  border: 1px solid rgba(13, 216, 255, 0.14) !important;
+  background: rgba(4, 14, 32, 0.5) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  overflow-y: auto !important;
 }
 
 body:not(.login-theme) .dashboard-risk-chart {
-  min-height: 248px !important;
+  min-height: 240px !important;
 }
 
 body:not(.login-theme) .dashboard-top-grid {
