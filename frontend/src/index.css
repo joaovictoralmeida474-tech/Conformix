@@ -4481,11 +4481,12 @@ body.login-theme {
   transform: none !important;
 }
 
+.sidebar-brand-panel--collapsed .sidebar-brand-logo,
 .sidebar-brand-logo--collapsed {
   display: block;
-  width: auto;
-  height: 54px;
-  max-width: 70px;
+  width: auto !important;
+  max-width: 76px !important;
+  height: 58px !important;
   margin: 0 auto;
   object-fit: contain;
   object-position: center center;

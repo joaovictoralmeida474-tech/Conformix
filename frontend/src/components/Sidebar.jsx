@@ -112,8 +112,8 @@ export default function Sidebar() {
               src={integraxxXMark}
               alt="Integraxx"
               className="sidebar-brand-logo sidebar-brand-logo--collapsed"
-              width={90}
-              height={113}
+              width={204}
+              height={169}
               decoding="async"
             />
           </NavLink>

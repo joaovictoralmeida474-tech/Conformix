@@ -237,9 +237,11 @@ body:not(.login-theme) .sidebar-brand-home.active {
   transform: none !important;
 }
 
+body:not(.login-theme) .sidebar-brand-panel--collapsed .sidebar-brand-logo,
 body:not(.login-theme) .sidebar-brand-logo--collapsed {
-  height: 54px !important;
-  max-width: 70px !important;
+  width: auto !important;
+  max-width: 76px !important;
+  height: 58px !important;
   filter: drop-shadow(0 2px 12px rgba(13, 216, 255, 0.15)) !important;
 }
 
