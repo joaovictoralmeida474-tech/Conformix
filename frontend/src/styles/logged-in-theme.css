@@ -220,6 +220,15 @@ body:not(.login-theme) .sidebar-brand-panel {
   background: linear-gradient(180deg, rgba(13, 216, 255, 0.06), transparent) !important;
 }
 
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-brand-panel {
+  background: transparent !important;
+  border-bottom-color: rgba(46, 88, 130, 0.22) !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-profile-card {
+  background: transparent !important;
+}
+
 body:not(.login-theme) .sidebar--integraxx .nav-list {
   gap: 8px !important;
   padding: 0 14px !important;
@@ -869,15 +878,44 @@ body:not(.login-theme) .theme-preset-control select {
   font-weight: 600 !important;
 }
 
-/* Sidebar recolhida */
+/* Sidebar recolhida — alinhamento central, sem decorações extras */
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-nav .nav-list {
+  padding: 0 !important;
+  gap: 8px !important;
+}
+
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link,
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link:hover,
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active {
   transform: none !important;
+  border-radius: 12px !important;
+  min-height: 48px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  padding: 0 !important;
 }
 
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active::after {
-  right: 8px !important;
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link::before,
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link::after {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link i {
+  transform: none !important;
+  filter: none !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active i {
+  color: #ffffff !important;
+  filter: none !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-brand-logo--icon {
+  height: 62px !important;
+  max-width: 62px !important;
+  filter: drop-shadow(0 4px 14px rgba(13, 216, 255, 0.22)) !important;
 }
 
 /* Presets — intensificar cyber */
