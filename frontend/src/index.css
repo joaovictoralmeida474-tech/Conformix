@@ -4319,39 +4319,43 @@ body.login-theme {
   overflow-y: auto;
 }
 
-.sidebar-collapse-toggle {
+.sidebar--integraxx .sidebar-collapse-toggle {
   position: absolute;
-  right: -10px;
-  bottom: -10px;
-  z-index: 5;
-  width: 20px;
-  height: 20px;
+  top: 80px;
+  right: -11px;
+  left: auto;
+  bottom: auto;
+  z-index: 6;
+  width: 22px;
+  height: 22px;
   padding: 0;
-  border: 1px solid rgba(2, 8, 18, 0.95);
+  margin: 0;
+  border: 1px solid rgba(3, 11, 24, 0.9);
   border-radius: 999px;
-  background: linear-gradient(180deg, #1a8ae8 0%, #0b6fd4 100%);
+  background: linear-gradient(180deg, #3dd4ff 0%, #1a9fe8 48%, #0b6fd4 100%);
   color: #ffffff;
   display: grid;
   place-items: center;
   cursor: pointer;
+  transform: translateY(-50%);
   box-shadow:
-    0 0 0 2px rgba(3, 11, 24, 0.95),
-    0 0 10px rgba(15, 224, 208, 0.28);
+    0 0 0 2px rgba(3, 11, 24, 0.92),
+    0 0 16px rgba(46, 232, 255, 0.55);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
     background 0.2s ease;
 }
 
-.sidebar-collapse-toggle:hover {
-  transform: scale(1.08);
+.sidebar--integraxx .sidebar-collapse-toggle:hover {
+  transform: translateY(-50%) scale(1.06);
   box-shadow:
-    0 0 0 2px rgba(3, 11, 24, 0.95),
-    0 0 14px rgba(46, 232, 255, 0.45);
+    0 0 0 2px rgba(3, 11, 24, 0.92),
+    0 0 22px rgba(46, 232, 255, 0.72);
 }
 
-.sidebar-collapse-toggle i {
-  font-size: 11px;
+.sidebar--integraxx .sidebar-collapse-toggle i {
+  font-size: 12px;
   line-height: 1;
   font-weight: 700;
 }

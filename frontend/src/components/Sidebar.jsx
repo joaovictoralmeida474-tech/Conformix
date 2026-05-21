@@ -85,6 +85,16 @@ export default function Sidebar() {
 
   return (
     <aside className={`sidebar sidebar--integraxx${isCollapsed ? " is-collapsed" : ""}`}>
+      <button
+        type="button"
+        className="sidebar-collapse-toggle"
+        onClick={toggleCollapse}
+        aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
+        aria-expanded={!isCollapsed}
+      >
+        <i className={isCollapsed ? "ri-arrow-right-s-line" : "ri-arrow-left-s-line"} aria-hidden="true" />
+      </button>
+
       <div className="sidebar-brand-panel">
         <img
           src={integraxxSidebarLogo}
@@ -93,15 +103,6 @@ export default function Sidebar() {
           width={512}
           height={171}
         />
-        <button
-          type="button"
-          className="sidebar-collapse-toggle"
-          onClick={toggleCollapse}
-          aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-          aria-expanded={!isCollapsed}
-        >
-          <i className={isCollapsed ? "ri-arrow-right-s-line" : "ri-arrow-left-s-line"} aria-hidden="true" />
-        </button>
       </div>
 
       <nav className="sidebar-nav" aria-label="Menu principal">
