@@ -2798,7 +2798,7 @@ body.login-theme {
 .dashboard-card-eyebrow {
   display: block;
   margin: 0 0 8px;
-  padding: 0 0 0 11px;
+  padding: 2px 4px 2px 14px;
   border: 0;
   border-left: 3px solid #0dd8ff;
   border-radius: 0;
@@ -2806,9 +2806,10 @@ body.login-theme {
   color: #8ecae8;
   font-size: 0.72rem;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.55;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  overflow: visible;
 }
 
 .dashboard-stat-card strong {
@@ -2833,11 +2834,11 @@ body.login-theme {
 
 .dashboard-panel h3 {
   margin: 0;
-  padding: 2px 0 0;
+  padding: 4px 2px 0 4px;
   color: #f4fbff;
   font-size: 1.15rem;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.5;
   overflow: visible;
 }
 
@@ -2849,6 +2850,7 @@ body.login-theme {
   margin-bottom: 16px;
   padding-bottom: 14px;
   border-bottom: 1px solid rgba(13, 216, 255, 0.14);
+  overflow: visible;
 }
 
 .dashboard-panel-heading > div,
@@ -2857,7 +2859,8 @@ body.login-theme {
   display: grid;
   gap: 6px;
   min-width: 0;
-  padding: 0;
+  padding: 0 2px 0 4px;
+  box-sizing: border-box;
 }
 
 .dashboard-chart-panel {
@@ -4640,7 +4643,7 @@ body:not(.login-theme) .navbar > div {
 /* Faixa holográfica bem lenta apenas na faixa superior do conteúdo (sem poluir cada card) */
 body:not(.login-theme) .app-page-content {
   position: relative;
-  overflow-x: clip;
+  overflow-x: visible;
 }
 
 body:not(.login-theme) .app-page-content::before {
@@ -4710,6 +4713,8 @@ body:not(.login-theme) .app-page-content [class*="-shell"] {
 }
 
 body:not(.login-theme) .dashboard-panel,
+body:not(.login-theme) .dashboard-panel-heading,
+body:not(.login-theme) .dashboard-panel-heading > div,
 body:not(.login-theme) .dashboard-stat-card,
 body:not(.login-theme) .dashboard-chart-card,
 body:not(.login-theme) .dashboard-table-panel {
