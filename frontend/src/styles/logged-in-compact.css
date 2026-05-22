@@ -3,13 +3,55 @@
  * Login (body.login-theme) permanece inalterado.
  */
 
+:root {
+  --app-compact-zoom: 0.9;
+  --app-viewport-height: 100vh;
+  --app-compact-shell-height: calc(var(--app-viewport-height) / var(--app-compact-zoom));
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --app-viewport-height: 100dvh;
+  }
+}
+
+html:has(body:not(.login-theme)),
+body:not(.login-theme),
+body:not(.login-theme) #root {
+  min-height: var(--app-viewport-height);
+}
+
 body:not(.login-theme) .main-shell {
-  zoom: 0.9;
+  zoom: var(--app-compact-zoom);
+  min-height: var(--app-compact-shell-height);
+  height: var(--app-compact-shell-height);
+}
+
+body:not(.login-theme) .main-area {
+  min-height: var(--app-compact-shell-height);
+  height: var(--app-compact-shell-height);
+}
+
+body:not(.login-theme) .sidebar.sidebar--integraxx {
+  min-height: var(--app-compact-shell-height);
+  height: var(--app-compact-shell-height);
 }
 
 @supports not (zoom: 0.9) {
   html:has(body:not(.login-theme)) {
     font-size: 14px;
+  }
+
+  body:not(.login-theme) .main-shell {
+    zoom: normal;
+    min-height: var(--app-viewport-height);
+    height: 100vh;
+  }
+
+  body:not(.login-theme) .main-area,
+  body:not(.login-theme) .sidebar.sidebar--integraxx {
+    min-height: auto;
+    height: 100vh;
   }
 
   body:not(.login-theme) .sidebar.sidebar--integraxx {
@@ -46,5 +88,14 @@ body:not(.login-theme) .main-shell {
   body:not(.login-theme) .page-subtitle,
   body:not(.login-theme) .supplier-hero p {
     font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 900px) {
+  body:not(.login-theme) .main-shell,
+  body:not(.login-theme) .main-area,
+  body:not(.login-theme) .sidebar.sidebar--integraxx {
+    min-height: var(--app-viewport-height);
+    height: auto;
   }
 }
