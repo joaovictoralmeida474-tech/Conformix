@@ -1,3 +1,4 @@
+import { invalidateDashboardMetricsCache } from "../dashboard/dashboardService.js";
 import { isSuperAdminScope } from "../../shared/auth/dataScope.js";
 import * as repo from "../../shared/database/supabaseRepo.js";
 import { getSupplierIdsForScope } from "../../shared/database/supabaseScope.js";
@@ -10,6 +11,17 @@ function addThirtyDays(baseDate) {
   const deadline = new Date(baseDate);
   deadline.setDate(deadline.getDate() + 30);
   return deadline;
+}
+
+function mapRncForClient(item) {
+  if (!item) {
+    return item;
+  }
+
+  return {
+    ...item,
+    treatmentDate: item.treatedAt ?? item.treatmentDate ?? null
+  };
 }
 
 async function loadRncGraph(rncRow) {
@@ -39,11 +51,11 @@ async function loadRncGraph(rncRow) {
       : null
   ]);
 
-  return {
+  return mapRncForClient({
     ...rncRow,
     supplier,
     evaluation
-  };
+  });
 }
 
 async function listRncRowsForScope(scope) {
@@ -96,11 +108,13 @@ async function loadRncGraphs(rncRows = []) {
   const supplierMap = new Map(suppliers.map((item) => [item.id, item]));
   const evaluationMap = new Map(evaluations.map((item) => [item.id, item]));
 
-  return rncRows.map((item) => ({
-    ...item,
-    supplier: supplierMap.get(item.supplierId) || null,
-    evaluation: evaluationMap.get(item.evaluationId) || null
-  }));
+  return rncRows.map((item) =>
+    mapRncForClient({
+      ...item,
+      supplier: supplierMap.get(item.supplierId) || null,
+      evaluation: evaluationMap.get(item.evaluationId) || null
+    })
+  );
 }
 
 async function findRncInScope(scope, id) {
@@ -126,11 +140,14 @@ export async function list(scope) {
   const items = await listRncRowsForScope(scope);
   const hydrated = await loadRncGraphs(items);
 
-  return hydrated.map((item) =>
-    !item.deadline && item.evaluation?.evaluationDate
-      ? { ...item, deadline: addThirtyDays(item.evaluation.evaluationDate) }
-      : item
-  );
+  return hydrated.map((item) => {
+    const withDeadline =
+      !item.deadline && item.evaluation?.evaluationDate
+        ? { ...item, deadline: addThirtyDays(item.evaluation.evaluationDate) }
+        : item;
+
+    return mapRncForClient(withDeadline);
+  });
 }
 
 export async function update(scope, id, data) {
@@ -140,6 +157,8 @@ export async function update(scope, id, data) {
     throw new Error("RNC nao encontrada");
   }
 
+  const treatmentDateValue = data.treatedAt ?? data.treatmentDate;
+
   await repo.updateRow("RNC", id, {
     status: data.status || existing.status,
     actionPlan: data.actionPlan ?? existing.actionPlan,
@@ -148,7 +167,7 @@ export async function update(scope, id, data) {
     correctiveAction: data.correctiveAction ?? existing.correctiveAction,
     responsible: data.responsible ?? existing.responsible,
     deadline: data.deadline ? new Date(data.deadline) : existing.deadline,
-    treatedAt: data.treatedAt ? new Date(data.treatedAt) : existing.treatedAt
+    treatedAt: treatmentDateValue ? new Date(treatmentDateValue) : existing.treatedAt
   });
 
   if (data.supplierStatusAction) {
@@ -160,6 +179,8 @@ export async function update(scope, id, data) {
           : "BLOQUEADO"
     });
   }
+
+  invalidateDashboardMetricsCache();
 
   return loadRncGraph(await repo.findById("RNC", id));
 }

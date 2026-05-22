@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { cachedGet } from "../services/cachedApi";
 
 const DashboardRiskChart = lazy(() => import("../components/DashboardRiskChart"));
 
 export default function Dashboard() {
+  const location = useLocation();
   const [data, setData] = useState({
     total: 0,
     criticalSuppliers: 0,
@@ -21,8 +23,22 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    cachedGet("/dashboard").then((res) => setData(res.data));
-  }, []);
+    if (location.pathname !== "/dashboard") {
+      return;
+    }
+
+    let cancelled = false;
+
+    cachedGet("/dashboard", {}, { force: true }).then((response) => {
+      if (!cancelled) {
+        setData(response.data);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
 
   const chartLabels = data.labels.slice(0, 20);
   const chartScores = data.scores.slice(0, 20);

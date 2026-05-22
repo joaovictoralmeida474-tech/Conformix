@@ -41,6 +41,10 @@ function setCachedDashboard(cacheKey, data) {
   });
 }
 
+export function invalidateDashboardMetricsCache() {
+  dashboardCache.clear();
+}
+
 function isOverdue(value) {
   return value ? new Date(value).getTime() < Date.now() : false;
 }
