@@ -392,7 +392,24 @@ async function ensureDemoCompany() {
   }
 }
 
+function hasPrismaDatabaseUrl() {
+  return Boolean(
+    String(
+      process.env.SUPABASE_POSTGRES_PRISMA_URL ||
+        process.env.POSTGRES_PRISMA_URL ||
+        process.env.POSTGRES_URL ||
+        ""
+    ).trim()
+  );
+}
+
 export async function seedPlatform() {
+  // Em runtime local/produção o painel usa Supabase REST; seed via Prisma
+  // só faz sentido quando a URL Postgres estiver configurada.
+  if (!hasPrismaDatabaseUrl()) {
+    return;
+  }
+
   await seedPermissions();
 
   if (!isBootstrapSeedEnabled()) {

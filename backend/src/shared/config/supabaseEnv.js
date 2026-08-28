@@ -14,7 +14,14 @@ export function getSupabaseAnonKey() {
 
 /** Opcional: apenas para sincronizar usuarios na API Admin Auth do Supabase. */
 export function getSupabaseServiceRoleKey() {
-  return String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const value = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+
+  // `vercel env pull` pode gravar o placeholder literal "[SENSITIVE]" em vez da chave real.
+  if (!value || value === "[SENSITIVE]" || value.toLowerCase() === "sensitive") {
+    return "";
+  }
+
+  return value;
 }
 
 export function getSupabaseDataKey() {

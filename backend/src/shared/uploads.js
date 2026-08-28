@@ -20,3 +20,7 @@ export function getSupplierUploadsRoot() {
 export function getEvaluationUploadsRoot() {
   return path.join(getRuntimeUploadsBaseDir(), "evaluations");
 }
+
+export function getInvoiceUploadsRoot() {
+  return path.join(getRuntimeUploadsBaseDir(), "invoices");
+}

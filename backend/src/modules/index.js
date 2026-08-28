@@ -5,6 +5,7 @@ import adminRoutes from "./admin/adminRoutes.js";
 import supplierRoutes from "./supplier/supplierRoutes.js";
 import categoryRoutes from "./category/categoryRoutes.js";
 import rncRoutes from "./rnc/rncRoutes.js";
+import nfsRoutes from "./nfs/nfsRoutes.js";
 import dashboardRoutes from "./dashboard/dashboardRoutes.js";
 import auditRoutes from "./audit/auditRoutes.js";
 
@@ -15,6 +16,7 @@ router.use("/admin", adminRoutes);
 router.use("/suppliers", supplierRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/rnc", rncRoutes);
+router.use("/nfs", nfsRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/audit", auditRoutes);
 

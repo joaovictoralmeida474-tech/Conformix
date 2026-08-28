@@ -124,6 +124,13 @@ export function invalidateCacheForMutation(url = "") {
     return;
   }
 
+  if (path.startsWith("/nfs")) {
+    invalidateByUrlPrefix("/nfs");
+    invalidateByUrlPrefix("/dashboard");
+    invalidateByUrlPrefix("/suppliers");
+    return;
+  }
+
   if (path.startsWith("/admin")) {
     invalidateByUrlPrefix("/admin");
     return;

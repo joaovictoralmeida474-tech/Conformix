@@ -6,6 +6,8 @@ import {
   runWithSupabaseAccessToken,
   runWithSupabaseAccessTokenAsync
 } from "../database/supabaseContext.js";
+import { isJwtExpired } from "../database/supabaseStore.js";
+import { refreshSupabaseSession } from "../../modules/auth/supabaseAuthService.js";
 import {
   getAuthCookieClearHeaders,
   getAuthCookieName,
@@ -50,13 +52,15 @@ function extractTokenFromRequest(req) {
 function signAccessToken(user, options = {}) {
   const jwtSecret = getJwtSecret();
   const supabaseAccessToken = String(options.supabaseAccessToken || "").trim();
+  const supabaseRefreshToken = String(options.supabaseRefreshToken || "").trim();
 
   return jwt.sign(
     {
       id: user.id,
       role: normalizeRole(user.role),
       userSnapshot: user,
-      supabaseAccessToken: supabaseAccessToken || undefined
+      supabaseAccessToken: supabaseAccessToken || undefined,
+      supabaseRefreshToken: supabaseRefreshToken || undefined
     },
     jwtSecret,
     {
@@ -66,11 +70,13 @@ function signAccessToken(user, options = {}) {
 }
 
 export function setAuthCookie(res, token, rememberMe = false) {
+  // Lax funciona melhor no desenvolvimento (Vite :5173 → API :3000).
+  const sameSite = process.env.VERCEL === "1" ? "Strict" : "Lax";
   const cookieOptions = [
     `${getAuthCookieName()}=${encodeURIComponent(token)}`,
     "HttpOnly",
     "Path=/",
-    "SameSite=Strict",
+    `SameSite=${sameSite}`,
     "Priority=High"
   ];
 
@@ -98,7 +104,22 @@ export async function auth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, getJwtSecret());
-    const supabaseAccessToken = String(decoded?.supabaseAccessToken || "").trim();
+    let supabaseAccessToken = String(decoded?.supabaseAccessToken || "").trim();
+    let supabaseRefreshToken = String(decoded?.supabaseRefreshToken || "").trim();
+
+    if ((!supabaseAccessToken || isJwtExpired(supabaseAccessToken)) && supabaseRefreshToken) {
+      const refreshed = await refreshSupabaseSession(supabaseRefreshToken);
+
+      if (refreshed?.access_token) {
+        supabaseAccessToken = String(refreshed.access_token).trim();
+        supabaseRefreshToken = String(refreshed.refresh_token || supabaseRefreshToken).trim();
+      } else if (isJwtExpired(supabaseAccessToken)) {
+        supabaseAccessToken = "";
+      }
+    } else if (isJwtExpired(supabaseAccessToken)) {
+      supabaseAccessToken = "";
+    }
+
     const fallbackUser =
       decoded?.userSnapshot && typeof decoded.userSnapshot === "object"
         ? decoded.userSnapshot
@@ -106,13 +127,13 @@ export async function auth(req, res, next) {
 
     let user = null;
 
-      try {
-        user = await runWithSupabaseAccessTokenAsync(supabaseAccessToken, async () =>
-          getUserContextById(decoded.id, {
-            email: fallbackUser?.email || decoded?.userSnapshot?.email
-          })
-        );
-      } catch (error) {
+    try {
+      user = await runWithSupabaseAccessTokenAsync(supabaseAccessToken, async () =>
+        getUserContextById(decoded.id, {
+          email: fallbackUser?.email || decoded?.userSnapshot?.email
+        })
+      );
+    } catch (error) {
       if (!fallbackUser) {
         throw error;
       }
@@ -126,8 +147,23 @@ export async function auth(req, res, next) {
       return res.status(401).json({ error: "Nao autorizado" });
     }
 
+    if (
+      supabaseAccessToken &&
+      supabaseRefreshToken &&
+      (supabaseAccessToken !== decoded?.supabaseAccessToken ||
+        supabaseRefreshToken !== decoded?.supabaseRefreshToken)
+    ) {
+      const rotatedToken = signAccessToken(user, {
+        supabaseAccessToken,
+        supabaseRefreshToken
+      });
+      setAuthCookie(res, rotatedToken, Boolean(req.body?.rememberMe));
+      req.token = rotatedToken;
+    } else {
+      req.token = token;
+    }
+
     req.user = user;
-    req.token = token;
     req.supabaseAccessToken = supabaseAccessToken;
 
     return runWithSupabaseAccessToken(supabaseAccessToken, () => next());

@@ -1,4 +1,5 @@
 import * as authService from "./authService.js";
+import { createSessionFromAccessToken } from "./sessionService.js";
 import { clearAuthCookie, setAuthCookie } from "../../shared/middlewares/auth.js";
 
 function applyNoStore(res) {
@@ -47,6 +48,20 @@ export async function login(req, res) {
   try {
     applyNoStore(res);
     const result = await authService.login(req.body);
+    setAuthCookie(res, result.token, Boolean(req.body?.rememberMe));
+    res.json({ user: result.user });
+  } catch (error) {
+    applyNoStore(res);
+    sendSafeAuthError(res, error);
+  }
+}
+
+export async function session(req, res) {
+  try {
+    applyNoStore(res);
+    const accessToken = req.body?.accessToken || req.body?.access_token;
+    const refreshToken = req.body?.refreshToken || req.body?.refresh_token;
+    const result = await createSessionFromAccessToken(accessToken, refreshToken);
     setAuthCookie(res, result.token, Boolean(req.body?.rememberMe));
     res.json({ user: result.user });
   } catch (error) {

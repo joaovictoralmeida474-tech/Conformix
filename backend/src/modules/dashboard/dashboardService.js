@@ -5,6 +5,7 @@ import { isSuperAdminScope } from "../../shared/auth/dataScope.js";
 const DASHBOARD_SUPPLIER_COLUMNS = "id,name,status,nextReview,supplierType,score,riskIndex,companyId";
 const DASHBOARD_DOCUMENT_COLUMNS = "supplierId,expiresAt";
 const DASHBOARD_RNC_COLUMNS = "id,supplierId,status,deadline,createdAt";
+const DASHBOARD_INVOICE_COLUMNS = "id,status,issueDate,createdAt,netAmount,grossAmount";
 const DASHBOARD_CHART_LIMIT = Number(process.env.DASHBOARD_CHART_LIMIT || 40);
 const DASHBOARD_CACHE_TTL_MS = Number(process.env.DASHBOARD_CACHE_TTL_MS || 60_000);
 
@@ -175,10 +176,23 @@ async function loadDashboardRncs(scope) {
   }));
 }
 
+async function loadDashboardInvoices(scope) {
+  const client = getSupabaseAdmin();
+  let query = client
+    .from("ServiceInvoice")
+    .select(DASHBOARD_INVOICE_COLUMNS)
+    .order("createdAt", { ascending: false });
+
+  query = applyCompanyScope(query, scope);
+
+  return throwIfSupabaseError(await query, "listar notas fiscais do dashboard");
+}
+
 async function buildMetrics(scope) {
-  const [suppliers, openRncs] = await Promise.all([
+  const [suppliers, openRncs, invoices] = await Promise.all([
     loadDashboardSuppliers(scope),
-    loadDashboardRncs(scope)
+    loadDashboardRncs(scope),
+    loadDashboardInvoices(scope)
   ]);
 
   const total = suppliers.length;
@@ -221,6 +235,22 @@ async function buildMetrics(scope) {
       supplier: item.supplier
     }));
 
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const invoicesOfMonth = invoices.filter((item) => {
+    const reference = new Date(item.issueDate || item.createdAt).getTime();
+    return Number.isFinite(reference) && reference >= monthStart;
+  });
+  const invoicesThisMonth = invoicesOfMonth.length;
+  const invoicesAmountThisMonth = Number(
+    invoicesOfMonth
+      .reduce((sum, item) => {
+        const amount = Number(item.netAmount ?? item.grossAmount ?? 0);
+        return sum + (Number.isFinite(amount) ? amount : 0);
+      }, 0)
+      .toFixed(2)
+  );
+
   return {
     total,
     criticalSuppliers,
@@ -232,6 +262,11 @@ async function buildMetrics(scope) {
     alerts,
     openRncs: openRncItems,
     overdueRncs: openRncs.filter((item) => item.deadline && isOverdue(item.deadline) && item.status === "ABERTA"),
+    invoicesThisMonth,
+    invoicesAmountThisMonth,
+    invoicesApproved: invoices.filter((item) => item.status === "APROVADA").length,
+    invoicesInReview: invoices.filter((item) => item.status === "EM_ANALISE").length,
+    invoicesPending: invoices.filter((item) => item.status === "COM_PENDENCIA").length,
     labels: suppliers.slice(0, DASHBOARD_CHART_LIMIT).map((item) => item.name),
     scores: suppliers.slice(0, DASHBOARD_CHART_LIMIT).map((item) => Number(item.score || 0)),
     risks: suppliers.slice(0, DASHBOARD_CHART_LIMIT).map((item) => Number(item.riskIndex || 0))

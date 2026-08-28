@@ -6,11 +6,14 @@ const CATEGORY_DOCUMENT_COLUMNS = "id,categoryId,name,sortOrder,active";
 const SUPPLIER_DOCUMENT_COLUMNS = "id,supplierId,requiredDocumentId,documentName,filename,originalName,expiresAt";
 const RNC_COLUMNS =
   "id,supplierId,evaluationId,status,actionPlan,description,cause,correctiveAction,responsible,deadline,treatedAt,createdAt";
+const SERVICE_INVOICE_COLUMNS =
+  "id,number,series,supplierId,companyId,serviceDescription,observations,status,issueDate,competenceDate,netAmount,grossAmount,discountAmount,pdfFilename,pdfOriginalName,xmlFilename,xmlOriginalName,createdAt";
 const EVALUATION_COLUMNS =
   "id,supplierId,evaluatorId,evaluationDate,invoiceNumber,observations,attachmentFilename,attachmentOriginalName,score,classification,createdAt";
 const EVALUATION_ANSWER_COLUMNS = "id,evaluationId,categoryQuestionId,questionText,score,sortOrder";
 const SUPPLIER_GRAPH_EVALUATION_LIMIT = Number(process.env.SUPPLIER_GRAPH_EVALUATION_LIMIT || 25);
 const SUPPLIER_GRAPH_RNC_LIMIT = Number(process.env.SUPPLIER_GRAPH_RNC_LIMIT || 50);
+const SUPPLIER_GRAPH_INVOICE_LIMIT = Number(process.env.SUPPLIER_GRAPH_INVOICE_LIMIT || 50);
 
 export async function loadCategoryBundle(categoryId) {
   if (!categoryId) {
@@ -55,7 +58,7 @@ export async function loadSupplierGraph(supplierRow) {
   }
 
   const client = getSupabaseAdmin();
-  const [category, documents, rncs, evaluations] = await Promise.all([
+  const [category, documents, rncs, evaluations, serviceInvoices] = await Promise.all([
     loadCategoryBundle(supplierRow.categoryId),
     throwIfSupabaseError(
       await client.from("SupplierDocument").select(SUPPLIER_DOCUMENT_COLUMNS).eq("supplierId", supplierRow.id),
@@ -79,6 +82,15 @@ export async function loadSupplierGraph(supplierRow) {
         .order("id", { ascending: false })
         .limit(SUPPLIER_GRAPH_EVALUATION_LIMIT),
       "listar avaliacoes do fornecedor"
+    ),
+    throwIfSupabaseError(
+      await client
+        .from("ServiceInvoice")
+        .select(SERVICE_INVOICE_COLUMNS)
+        .eq("supplierId", supplierRow.id)
+        .order("issueDate", { ascending: false })
+        .limit(SUPPLIER_GRAPH_INVOICE_LIMIT),
+      "listar notas fiscais do fornecedor"
     )
   ]);
 
@@ -121,6 +133,7 @@ export async function loadSupplierGraph(supplierRow) {
     category,
     documents,
     rncs,
+    serviceInvoices,
     evaluations: evaluations.map((evaluation) => ({
       ...evaluation,
       evaluator: evaluatorMap.get(evaluation.evaluatorId) || null,

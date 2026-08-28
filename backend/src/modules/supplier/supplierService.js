@@ -341,6 +341,24 @@ function serializeSupplier(supplier) {
       }))
     })),
     rncs: supplier.rncs || [],
+    serviceInvoices: (supplier.serviceInvoices || []).map((invoice) => ({
+      id: invoice.id,
+      number: invoice.number,
+      series: invoice.series,
+      serviceDescription: invoice.serviceDescription,
+      status: invoice.status,
+      issueDate: invoice.issueDate,
+      competenceDate: invoice.competenceDate,
+      netAmount: invoice.netAmount,
+      grossAmount: invoice.grossAmount,
+      discountAmount: invoice.discountAmount,
+      observations: invoice.observations,
+      pdfFilename: invoice.pdfFilename,
+      pdfOriginalName: invoice.pdfOriginalName,
+      xmlFilename: invoice.xmlFilename,
+      xmlOriginalName: invoice.xmlOriginalName,
+      createdAt: invoice.createdAt
+    })),
     documents: (supplier.documents || []).map((item) => ({
       id: item.id,
       requiredDocumentId: item.requiredDocumentId,

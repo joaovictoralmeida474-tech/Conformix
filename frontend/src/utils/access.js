@@ -14,6 +14,8 @@ export const PERMISSIONS = {
   CATEGORIES_MANAGE: "categories:manage",
   RNC_VIEW: "rnc:view",
   RNC_MANAGE: "rnc:manage",
+  NFS_VIEW: "nfs:view",
+  NFS_MANAGE: "nfs:manage",
   AUDIT_VIEW: "audit:view",
   ADMIN_ACCESS: "admin:access",
   ADMIN_DASHBOARD_VIEW: "admin:dashboard:view",

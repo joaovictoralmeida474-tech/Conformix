@@ -43,11 +43,17 @@ export default function Sidebar() {
     hasPermission(user, PERMISSIONS.SUPPLIERS_VIEW)
       ? { to: "/suppliers", label: "Fornecedores", icon: "ri-building-2-line" }
       : null,
+    hasPermission(user, PERMISSIONS.SUPPLIERS_EVALUATE)
+      ? { to: "/evaluations", label: "Avaliacoes", icon: "ri-star-line" }
+      : null,
     hasPermission(user, PERMISSIONS.CATEGORIES_VIEW)
       ? { to: "/categories", label: "Categorias", icon: "ri-price-tag-3-line" }
       : null,
     hasPermission(user, PERMISSIONS.RNC_VIEW)
       ? { to: "/rnc", label: "RNC", icon: "ri-alert-line" }
+      : null,
+    hasPermission(user, PERMISSIONS.NFS_VIEW)
+      ? { to: "/nfs", label: "Notas Fiscais", icon: "ri-file-text-line" }
       : null,
     hasPermission(user, PERMISSIONS.AUDIT_VIEW)
       ? { to: "/audit", label: "Auditoria", icon: "ri-file-list-3-line" }

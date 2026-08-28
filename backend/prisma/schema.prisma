@@ -14,13 +14,14 @@ datasource db {
 }
 
 model Company {
-  id          Int          @id @default(autoincrement())
-  name        String
-  users       User[]
-  departments Department[]
-  suppliers   Supplier[]
-  categories  Category[]
-  alerts      Alert[]
+  id               Int              @id @default(autoincrement())
+  name             String
+  users            User[]
+  departments      Department[]
+  suppliers        Supplier[]
+  categories       Category[]
+  alerts           Alert[]
+  serviceInvoices  ServiceInvoice[]
 }
 
 model User {
@@ -38,9 +39,11 @@ model User {
   lastLoginAt     DateTime?
   company         Company          @relation(fields: [companyId], references: [id])
   department      Department?      @relation(fields: [departmentId], references: [id])
-  auditLogs       AuditLog[]
-  evaluations     Evaluation[]
-  userPermissions UserPermission[]
+  auditLogs                 AuditLog[]
+  evaluations               Evaluation[]
+  userPermissions           UserPermission[]
+  serviceInvoicesCreated    ServiceInvoice[] @relation("ServiceInvoiceCreatedBy")
+  serviceInvoicesUpdated    ServiceInvoice[] @relation("ServiceInvoiceUpdatedBy")
 }
 
 model Department {
@@ -159,6 +162,7 @@ model Supplier {
   rncs                      RNC[]
   documents                 SupplierDocument[]
   alerts                    Alert[]
+  serviceInvoices           ServiceInvoice[]
 
   @@unique([companyId, cnpj])
 }
@@ -215,6 +219,47 @@ model RNC {
 
   supplier   Supplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   evaluation Evaluation? @relation(fields: [evaluationId], references: [id], onDelete: SetNull)
+}
+
+model ServiceInvoice {
+  id                 Int       @id @default(autoincrement())
+  number             String
+  series             String?
+  supplierId         Int
+  companyId          Int
+  serviceDescription String?
+  contractReference  String?
+  observations       String?
+  issueDate          DateTime
+  competenceDate     DateTime?
+  grossAmount        Float     @default(0)
+  discountAmount     Float     @default(0)
+  netAmount          Float     @default(0)
+  issAmount          Float?
+  inssAmount         Float?
+  irAmount           Float?
+  pisAmount          Float?
+  cofinsAmount       Float?
+  csllAmount         Float?
+  status             String    @default("EM_ANALISE")
+  pdfFilename        String?
+  pdfOriginalName    String?
+  xmlFilename        String?
+  xmlOriginalName    String?
+  createdById        Int?
+  updatedById        Int?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
+
+  supplier  Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy User?    @relation("ServiceInvoiceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?    @relation("ServiceInvoiceUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([supplierId])
+  @@index([companyId])
+  @@index([status])
+  @@index([issueDate])
 }
 
 model SupplierDocument {

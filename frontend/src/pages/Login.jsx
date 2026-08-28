@@ -276,26 +276,33 @@ export default function Login() {
         throw configError;
       }
 
+      // Credenciais invalidas no Supabase: deixa cair no login da API local.
       if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
-        const invalidError = new Error("invalid_credentials");
-        invalidError.response = { status: 401 };
-        throw invalidError;
+        return null;
       }
 
       throw error;
     }
 
     if (!data?.session?.access_token) {
-      const invalidError = new Error("invalid_credentials");
-      invalidError.response = { status: 401 };
-      throw invalidError;
+      return null;
     }
 
-    return api.post("/auth/session", {
-      accessToken: data.session.access_token,
-      rememberMe,
-      ...getSupabasePayload()
-    });
+    try {
+      return await api.post("/auth/session", {
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token,
+        rememberMe,
+        ...getSupabasePayload()
+      });
+    } catch (sessionError) {
+      // Se a sessao falhar, ainda tenta o endpoint /auth/login.
+      if (sessionError?.response?.status === 401 || sessionError?.response?.status === 404) {
+        return null;
+      }
+
+      throw sessionError;
+    }
   }
 
   async function authenticateWithApi(email, password) {

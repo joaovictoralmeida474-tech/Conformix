@@ -7,8 +7,10 @@ import { PERMISSIONS } from "./utils/access";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
+const Evaluations = lazy(() => import("./pages/Evaluations"));
 const Categories = lazy(() => import("./pages/Categories"));
 const RNC = lazy(() => import("./pages/RNC"));
+const Nfs = lazy(() => import("./pages/Nfs"));
 const Audit = lazy(() => import("./pages/Audit"));
 const AdminPortal = lazy(() => import("./pages/AdminPortal"));
 
@@ -55,6 +57,15 @@ export default function App() {
         />
 
         <Route
+          path="/evaluations"
+          element={
+            <ProtectedPage permissions={[PERMISSIONS.SUPPLIERS_EVALUATE]}>
+              <Evaluations />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
           path="/categories"
           element={
             <ProtectedPage permissions={[PERMISSIONS.CATEGORIES_VIEW]}>
@@ -68,6 +79,15 @@ export default function App() {
           element={
             <ProtectedPage permissions={[PERMISSIONS.RNC_VIEW]}>
               <RNC />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/nfs"
+          element={
+            <ProtectedPage permissions={[PERMISSIONS.NFS_VIEW]}>
+              <Nfs />
             </ProtectedPage>
           }
         />

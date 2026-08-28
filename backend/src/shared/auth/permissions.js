@@ -14,6 +14,8 @@ export const PERMISSIONS = {
   CATEGORIES_MANAGE: "categories:manage",
   RNC_VIEW: "rnc:view",
   RNC_MANAGE: "rnc:manage",
+  NFS_VIEW: "nfs:view",
+  NFS_MANAGE: "nfs:manage",
   AUDIT_VIEW: "audit:view",
   ADMIN_ACCESS: "admin:access",
   ADMIN_DASHBOARD_VIEW: "admin:dashboard:view",
@@ -72,6 +74,16 @@ export const PERMISSION_DEFINITIONS = [
     key: PERMISSIONS.RNC_MANAGE,
     name: "Gerenciar RNCs",
     description: "Permite tratar e atualizar RNCs."
+  },
+  {
+    key: PERMISSIONS.NFS_VIEW,
+    name: "Visualizar notas fiscais",
+    description: "Permite consultar notas fiscais de servicos."
+  },
+  {
+    key: PERMISSIONS.NFS_MANAGE,
+    name: "Gerenciar notas fiscais",
+    description: "Permite cadastrar, editar e anexar documentos em notas fiscais."
   },
   {
     key: PERMISSIONS.AUDIT_VIEW,
@@ -142,6 +154,8 @@ export const ROLE_PERMISSION_MAP = {
     PERMISSIONS.CATEGORIES_MANAGE,
     PERMISSIONS.RNC_VIEW,
     PERMISSIONS.RNC_MANAGE,
+    PERMISSIONS.NFS_VIEW,
+    PERMISSIONS.NFS_MANAGE,
     PERMISSIONS.AUDIT_VIEW,
     PERMISSIONS.ADMIN_ACCESS,
     PERMISSIONS.ADMIN_DASHBOARD_VIEW,
@@ -151,7 +165,8 @@ export const ROLE_PERMISSION_MAP = {
   [ROLES.USER]: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.SUPPLIERS_VIEW,
-    PERMISSIONS.RNC_VIEW
+    PERMISSIONS.RNC_VIEW,
+    PERMISSIONS.NFS_VIEW
   ]
 };
 

@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 import { getPageHeading } from "../utils/pageHeadings";
 
 export default function Navbar() {
@@ -11,6 +12,7 @@ export default function Navbar() {
         <h1 className="app-page-navbar-title">{title}</h1>
         <p className="app-page-navbar-description">{description}</p>
       </div>
+      <ThemeToggle />
     </header>
   );
 }

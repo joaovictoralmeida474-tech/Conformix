@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 
-import { PERMISSION_DEFINITIONS, ROLES, normalizeRole } from "../auth/permissions.js";
+import { PERMISSION_DEFINITIONS, ROLE_PERMISSION_MAP, ROLES, normalizeRole } from "../auth/permissions.js";
 import { isSupabaseDataConfigured } from "../config/supabaseEnv.js";
 import { getSupabaseAdmin, throwIfSupabaseError } from "./supabaseStore.js";
 
@@ -146,6 +146,39 @@ async function seedPermissionsSupabase() {
       }),
       "criar permissao"
     );
+  }
+
+  const permissions = throwIfSupabaseError(
+    await client.from("Permission").select("id,key"),
+    "listar permissoes"
+  );
+  const permissionMap = new Map((permissions || []).map((item) => [item.key, item.id]));
+
+  for (const [role, keys] of Object.entries(ROLE_PERMISSION_MAP)) {
+    for (const permissionKey of keys) {
+      const permissionId = permissionMap.get(permissionKey);
+      if (!permissionId) continue;
+
+      const existingLink = throwIfSupabaseError(
+        await client
+          .from("RolePermission")
+          .select("id")
+          .eq("role", role)
+          .eq("permissionId", permissionId)
+          .maybeSingle(),
+        "buscar role permission"
+      );
+
+      if (existingLink) continue;
+
+      throwIfSupabaseError(
+        await client.from("RolePermission").insert({
+          role,
+          permissionId
+        }),
+        "criar role permission"
+      );
+    }
   }
 }
 

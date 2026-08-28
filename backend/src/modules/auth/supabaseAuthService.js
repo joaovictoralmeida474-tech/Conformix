@@ -60,3 +60,35 @@ export async function signInWithPassword(email, password) {
 
   return response.data;
 }
+
+export async function refreshSupabaseSession(refreshToken) {
+  const token = String(refreshToken || "").trim();
+
+  if (!token) {
+    return null;
+  }
+
+  const { url, anonKey } = getSupabaseConfig();
+
+  try {
+    const response = await axios.post(
+      `${url}/auth/v1/token?grant_type=refresh_token`,
+      {
+        refresh_token: token
+      },
+      {
+        proxy: false,
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    return response.data || null;
+  } catch (error) {
+    console.error("Falha ao renovar sessao Supabase:", error?.response?.data || error?.message || error);
+    return null;
+  }
+}

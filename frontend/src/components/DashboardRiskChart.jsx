@@ -28,7 +28,7 @@ ChartJS.register(
 );
 
 const TOP_N = 10;
-const axisFont = { family: "'Inter', sans-serif", size: 11, weight: "500" };
+const axisFont = { family: "'IBM Plex Sans', 'Segoe UI', sans-serif", size: 10, weight: "500" };
 
 function shortName(name, max = 12) {
   if (!name) return "—";
@@ -74,14 +74,14 @@ export default function DashboardRiskChart({ labels, scores, risks }) {
               type: "line",
               label: "Indice de risco",
               data: chartData.risks,
-              borderColor: "#ff9a6b",
-              backgroundColor: "rgba(255, 154, 107, 0.14)",
+              borderColor: "#1ea0ff",
+              backgroundColor: "rgba(30, 160, 255, 0.14)",
               borderWidth: 2,
-              pointBackgroundColor: "#ff9a6b",
-              pointBorderColor: "#0a1628",
+              pointBackgroundColor: "#1ea0ff",
+              pointBorderColor: "#020c1b",
               pointBorderWidth: 2,
-              pointRadius: 4,
-              pointHoverRadius: 6,
+              pointRadius: 3,
+              pointHoverRadius: 5,
               tension: 0.35,
               fill: true,
               order: 0
@@ -90,11 +90,11 @@ export default function DashboardRiskChart({ labels, scores, risks }) {
               type: "bar",
               label: "Nota",
               data: chartData.scores,
-              backgroundColor: "rgba(13, 216, 255, 0.82)",
-              hoverBackgroundColor: "rgba(0, 230, 180, 0.95)",
-              borderRadius: 8,
+              backgroundColor: "rgba(0, 230, 180, 0.85)",
+              hoverBackgroundColor: "rgba(13, 216, 255, 0.95)",
+              borderRadius: 7,
               borderSkipped: false,
-              maxBarThickness: 36,
+              maxBarThickness: 32,
               order: 1
             }
           ]
@@ -109,21 +109,21 @@ export default function DashboardRiskChart({ labels, scores, risks }) {
               position: "top",
               align: "end",
               labels: {
-                color: "#a8c4dc",
+                color: "#8eb8d0",
                 usePointStyle: true,
-                padding: 14,
-                font: { ...axisFont, size: 11 }
+                padding: 12,
+                font: { ...axisFont, size: 10 }
               }
             },
             tooltip: {
-              backgroundColor: "rgba(6, 18, 38, 0.96)",
-              borderColor: "rgba(13, 216, 255, 0.28)",
+              backgroundColor: "rgba(10, 22, 40, 0.98)",
+              borderColor: "rgba(13, 216, 255, 0.3)",
               borderWidth: 1,
-              padding: 12,
+              padding: 10,
               cornerRadius: 8,
-              titleColor: "#f4fbff",
-              bodyColor: "#c4d8ea",
-              titleFont: { ...axisFont, size: 12, weight: "600" },
+              titleColor: "#e8f4fb",
+              bodyColor: "#8eb8d0",
+              titleFont: { ...axisFont, size: 11, weight: "600" },
               bodyFont: axisFont,
               callbacks: {
                 title: (items) => chartData.fullNames[items[0]?.dataIndex] || "",
@@ -134,8 +134,8 @@ export default function DashboardRiskChart({ labels, scores, risks }) {
           scales: {
             x: {
               ticks: {
-                color: "#9eb4cc",
-                font: { ...axisFont, size: 10, weight: "600" },
+                color: "#8eb8d0",
+                font: { ...axisFont, size: 9, weight: "600" },
                 maxRotation: 40,
                 minRotation: 40,
                 autoSkip: false
@@ -147,13 +147,13 @@ export default function DashboardRiskChart({ labels, scores, risks }) {
               min: 0,
               max: 100,
               ticks: {
-                color: "#6d8aa8",
+                color: "#6a93ad",
                 stepSize: 25,
                 font: axisFont,
                 callback: (value) => value
               },
               grid: {
-                color: "rgba(55, 85, 130, 0.16)",
+                color: "rgba(13, 216, 255, 0.08)",
                 drawBorder: false
               },
               border: { display: false }

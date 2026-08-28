@@ -2,12 +2,17 @@ const PAGE_HEADINGS = [
   {
     match: (path) => path.startsWith("/dashboard"),
     title: "Dashboard",
-    description: "Visão geral e indicadores do programa de homologação"
+    description: "Visão geral dos indicadores essenciais"
   },
   {
     match: (path) => path.startsWith("/suppliers"),
     title: "Fornecedores",
-    description: "Gestão e avaliação de fornecedores cadastrados"
+    description: "Cadastro e gestão dos fornecedores homologados"
+  },
+  {
+    match: (path) => path.startsWith("/evaluations"),
+    title: "Avaliações",
+    description: "Avaliação de desempenho dos fornecedores cadastrados"
   },
   {
     match: (path) => path.startsWith("/categories"),
@@ -18,6 +23,11 @@ const PAGE_HEADINGS = [
     match: (path) => path.startsWith("/rnc"),
     title: "RNC",
     description: "Registro e tratativa de não conformidades"
+  },
+  {
+    match: (path) => path.startsWith("/nfs"),
+    title: "Notas Fiscais",
+    description: "Cadastro e acompanhamento de notas fiscais de serviços"
   },
   {
     match: (path) => path.startsWith("/audit"),

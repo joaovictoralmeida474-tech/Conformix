@@ -10,6 +10,41 @@ import { getSupabaseAccessToken } from "./supabaseContext.js";
 
 const globalStore = globalThis;
 
+function decodeJwtPayload(token = "") {
+  const parts = String(token || "").split(".");
+  if (parts.length < 2) return null;
+
+  try {
+    const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+export function isJwtExpired(token = "", skewSeconds = 30) {
+  const payload = decodeJwtPayload(token);
+  const exp = Number(payload?.exp);
+
+  if (!Number.isFinite(exp)) {
+    return false;
+  }
+
+  return Date.now() >= (exp - skewSeconds) * 1000;
+}
+
+function isJwtExpiredError(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  return message.includes("jwt expired") || message.includes("invalid jwt");
+}
+
+function clearSupabaseClientCache() {
+  if (globalStore.__integraxxSupabaseClients) {
+    globalStore.__integraxxSupabaseClients.clear();
+  }
+}
+
 function createServiceRoleClient() {
   const serviceRoleKey = getSupabaseServiceRoleKey();
 
@@ -24,6 +59,7 @@ function createServiceRoleClient() {
 function createUserClient(accessToken = "") {
   const userToken = String(accessToken || "").trim();
   const anonKey = getSupabaseAnonKey();
+  const bearer = userToken && !isJwtExpired(userToken) ? userToken : anonKey;
 
   return createClient(getSupabaseUrl(), anonKey, {
     auth: {
@@ -32,7 +68,7 @@ function createUserClient(accessToken = "") {
     },
     global: {
       headers: {
-        Authorization: `Bearer ${userToken || anonKey}`
+        Authorization: `Bearer ${bearer}`
       }
     }
   });
@@ -52,11 +88,21 @@ function getClientCacheKey(accessToken = "") {
   }
 
   const userToken = String(accessToken || "").trim();
-  return userToken ? `user:${userToken.slice(0, 24)}` : "anon";
+  if (userToken && !isJwtExpired(userToken)) {
+    return `user:${userToken.slice(0, 24)}`;
+  }
+
+  return "anon";
 }
 
 function resolveAccessToken(explicitToken = "") {
-  return String(explicitToken || getSupabaseAccessToken() || "").trim();
+  const token = String(explicitToken || getSupabaseAccessToken() || "").trim();
+
+  if (!token || isJwtExpired(token)) {
+    return "";
+  }
+
+  return token;
 }
 
 export function getSupabaseAdmin(options = {}) {
@@ -116,6 +162,13 @@ async function probeSupabaseClient(client, timeoutMs) {
       throw schemaError;
     }
 
+    if (isJwtExpiredError(result.error)) {
+      clearSupabaseClientCache();
+      const expiredError = new Error("JWT expired");
+      expiredError.code = "SUPABASE_JWT_EXPIRED";
+      throw expiredError;
+    }
+
     if (isRlsPolicyError(result.error)) {
       return { ok: true, rlsBlocked: true };
     }
@@ -131,7 +184,8 @@ export async function testSupabaseConnection(timeoutMs = 8000, explicitAccessTok
     return { configured: false, connected: false, needsRelogin: false, schemaError: false };
   }
 
-  const accessToken = resolveAccessToken(explicitAccessToken);
+  const rawToken = String(explicitAccessToken || getSupabaseAccessToken() || "").trim();
+  const accessToken = resolveAccessToken(rawToken);
 
   if (getSupabaseServiceRoleKey()) {
     try {
@@ -148,6 +202,10 @@ export async function testSupabaseConnection(timeoutMs = 8000, explicitAccessTok
     }
   }
 
+  if (rawToken && isJwtExpired(rawToken)) {
+    return { configured: true, connected: false, needsRelogin: true, schemaError: false };
+  }
+
   if (!accessToken) {
     return { configured: true, connected: false, needsRelogin: true, schemaError: false };
   }
@@ -162,6 +220,10 @@ export async function testSupabaseConnection(timeoutMs = 8000, explicitAccessTok
       return { configured: true, connected: false, needsRelogin: false, schemaError: true };
     }
 
+    if (error?.code === "SUPABASE_JWT_EXPIRED" || isJwtExpiredError(error)) {
+      return { configured: true, connected: false, needsRelogin: true, schemaError: false };
+    }
+
     return { configured: true, connected: false, needsRelogin: false, schemaError: false };
   }
 }
@@ -174,6 +236,15 @@ export function throwIfSupabaseError(result, label = "operacao") {
       );
       schemaError.code = "SUPABASE_SCHEMA_RLS";
       throw schemaError;
+    }
+
+    if (isJwtExpiredError(result.error)) {
+      clearSupabaseClientCache();
+      const expiredError = new Error(
+        "Sessao do Supabase expirada. Faca logout e login novamente para continuar."
+      );
+      expiredError.code = "SUPABASE_JWT_EXPIRED";
+      throw expiredError;
     }
 
     const error = new Error(result.error.message || `Falha na ${label}`);

@@ -340,12 +340,15 @@ export async function login({ email, password }) {
           }
 
           let supabaseAccessToken = "";
+          let supabaseRefreshToken = "";
 
           try {
             const authResponse = await signInWithSupabase(currentEmail, currentPassword);
             supabaseAccessToken = String(authResponse?.access_token || "").trim();
+            supabaseRefreshToken = String(authResponse?.refresh_token || "").trim();
           } catch {
             supabaseAccessToken = "";
+            supabaseRefreshToken = "";
           }
 
           return runWithSupabaseAccessToken(supabaseAccessToken, async () => {
@@ -363,7 +366,7 @@ export async function login({ email, password }) {
 
             return {
               user: context,
-              token: signAccessToken(context, { supabaseAccessToken })
+              token: signAccessToken(context, { supabaseAccessToken, supabaseRefreshToken })
             };
           });
         }
@@ -376,6 +379,7 @@ export async function login({ email, password }) {
           const authResponse = await signInWithSupabase(currentEmail, currentPassword);
           const supabaseUser = authResponse?.user;
           const supabaseAccessToken = String(authResponse?.access_token || "").trim();
+          const supabaseRefreshToken = String(authResponse?.refresh_token || "").trim();
 
           if (!supabaseUser?.email) {
             continue;
@@ -387,7 +391,7 @@ export async function login({ email, password }) {
 
             return {
               user: fallbackContext,
-              token: signAccessToken(fallbackContext, { supabaseAccessToken })
+              token: signAccessToken(fallbackContext, { supabaseAccessToken, supabaseRefreshToken })
             };
           }
 
@@ -428,7 +432,7 @@ export async function login({ email, password }) {
 
             return {
               user: context,
-              token: signAccessToken(context, { supabaseAccessToken })
+              token: signAccessToken(context, { supabaseAccessToken, supabaseRefreshToken })
             };
           });
         } catch (error) {

@@ -1,229 +1,146 @@
 /**
- * INTEGRAXX — Redesign visual total (área logada).
- * Paleta = login (#020c1b, #00e6b4, #0dd8ff, #1ea0ff)
- * Escopo: body:not(.login-theme) | Apenas CSS, sem alterar login.
+ * INTEGRAXX — Área autenticada com paleta do login (ciano/azul).
+ * Escopo: body:not(.login-theme) | Login NÃO é alterado.
  */
 
-@keyframes ixGridPulse {
-  0%,
-  100% {
-    opacity: 0.22;
-  }
-  50% {
-    opacity: 0.48;
-  }
-}
-
-@keyframes ixOrbDrift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(12px, -18px, 0) scale(1.08);
-  }
-}
-
-@keyframes ixScanSweep {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100vh);
-  }
-}
-
-@keyframes ixNeonPulse {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      0 0 0 1px rgba(13, 216, 255, 0.35),
-      0 0 32px rgba(0, 230, 180, 0.18),
-      0 0 64px rgba(13, 216, 255, 0.12);
-  }
-  50% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.16),
-      0 0 0 1px rgba(0, 230, 180, 0.55),
-      0 0 48px rgba(0, 230, 180, 0.32),
-      0 0 88px rgba(13, 216, 255, 0.22);
-  }
-}
-
-@keyframes ixBorderFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
-}
-
-@keyframes ixShimmerBtn {
-  0% {
-    background-position: 200% center;
-  }
-  100% {
-    background-position: -200% center;
-  }
-}
-
-@keyframes ixHoloSweep {
-  0% {
-    transform: translateX(-60%);
-    opacity: 0;
-  }
-  15% {
-    opacity: 0.85;
-  }
-  100% {
-    transform: translateX(160%);
-    opacity: 0;
-  }
-}
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 
 /* ═══════════════════════════════════════
-   BASE & FUNDO GLOBAL
+   TOKENS — paleta login
+   #00e6b4 | #0dd8ff | #1ea0ff | #020c1b
    ═══════════════════════════════════════ */
 body:not(.login-theme) {
+  --ix-bg: #020c1b;
+  --ix-bg-2: #071426;
+  --ix-panel: #0a1628;
+  --ix-panel-2: #0d1c32;
+  --ix-line: rgba(13, 216, 255, 0.22);
+  --ix-line-soft: rgba(154, 204, 224, 0.12);
+  --ix-ink: #e8f4fb;
+  --ix-muted: #8eb8d0;
   --ix-cyan: #00e6b4;
   --ix-cyan-hi: #0dd8ff;
   --ix-blue: #1ea0ff;
-  --ix-deep: #020c1b;
-  --ix-mid: #071426;
-  --ix-alt: #05101d;
-  --ix-glass: rgba(6, 22, 44, 0.72);
-  --ix-glass-border: rgba(13, 216, 255, 0.38);
-  --ix-glow-cyan: 0 0 40px rgba(0, 230, 180, 0.35);
-  --ix-glow-blue: 0 0 56px rgba(13, 216, 255, 0.28);
+  --ix-danger: #ff7b7b;
+  --ix-shadow: 0 16px 36px rgba(0, 4, 16, 0.4);
+  --ix-shadow-sm: 0 8px 18px rgba(0, 4, 16, 0.28);
+  --ix-radius: 16px;
+  --ix-radius-sm: 11px;
+  --ix-font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --ix-font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
 
+  --app-bg-deep: var(--ix-bg);
+  --app-bg-mid: var(--ix-bg-2);
+  --app-text: var(--ix-ink);
+  --app-muted: var(--ix-muted);
+  --app-cyan: var(--ix-cyan);
+  --app-blue: var(--ix-blue);
+  --app-glass-edge: var(--ix-line);
+  --app-shadow-soft: var(--ix-shadow);
+  --app-surface: var(--ix-panel);
+  --app-surface-hover: var(--ix-panel-2);
+
+  color: var(--ix-ink) !important;
+  font-family: var(--ix-font-body) !important;
+  font-size: 13.5px !important;
+  letter-spacing: 0 !important;
   background:
-    radial-gradient(ellipse 120% 80% at 0% -20%, rgba(13, 216, 255, 0.22), transparent 50%),
-    radial-gradient(ellipse 90% 70% at 100% 0%, rgba(0, 230, 180, 0.18), transparent 45%),
-    radial-gradient(ellipse 80% 50% at 50% 110%, rgba(30, 160, 255, 0.14), transparent 50%),
-    linear-gradient(160deg, var(--ix-deep) 0%, var(--ix-mid) 45%, var(--ix-alt) 100%) !important;
+    radial-gradient(ellipse 80% 50% at 8% -8%, rgba(0, 230, 180, 0.12), transparent 48%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(30, 160, 255, 0.12), transparent 46%),
+    linear-gradient(165deg, #010810 0%, #020e1e 42%, #030f22 100%) !important;
 }
 
-body:not(.login-theme) .main-shell {
+body:not(.login-theme) ::selection {
+  background: rgba(0, 230, 180, 0.28);
+  color: #03111f;
+}
+
+/* Tipografia mais compacta e sem “esticar” */
+body:not(.login-theme) h1,
+body:not(.login-theme) h2,
+body:not(.login-theme) h3,
+body:not(.login-theme) h4,
+body:not(.login-theme) strong,
+body:not(.login-theme) .app-page-navbar-title,
+body:not(.login-theme) .page-title,
+body:not(.login-theme) .dashboard-stat-card strong,
+body:not(.login-theme) .dashboard-panel h3 {
+  letter-spacing: 0 !important;
+  font-stretch: normal !important;
+  transform: none !important;
+}
+
+/* ═══════════════════════════════════════
+   SHELL
+   ═══════════════════════════════════════ */
+body:not(.login-theme) .main-shell,
+body:not(.login-theme) .main-shell--atlas,
+body:not(.login-theme) .main-shell--carbon {
   background: transparent !important;
   isolation: isolate;
 }
 
-body:not(.login-theme) .main-shell::before {
-  opacity: 0.55 !important;
-  background:
-    linear-gradient(rgba(13, 216, 255, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(13, 216, 255, 0.18) 1px, transparent 1px) !important;
-  background-size: 36px 36px !important;
-  animation: ixGridPulse 8s ease-in-out infinite !important;
-  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 20%, transparent 78%) !important;
-}
-
+body:not(.login-theme) .main-shell::before,
 body:not(.login-theme) .main-shell::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(13, 216, 255, 0.03) 2px,
-    rgba(13, 216, 255, 0.03) 4px
-  );
-  opacity: 0.6;
+  content: none !important;
+  display: none !important;
+  animation: none !important;
 }
 
-body:not(.login-theme) .app-tech-orb {
-  opacity: 0.85 !important;
-  filter: blur(42px) saturate(180%) !important;
-  animation: ixOrbDrift 18s ease-in-out infinite !important;
-}
-
-body:not(.login-theme) .app-tech-orb-a {
-  width: 340px !important;
-  height: 340px !important;
-  background: radial-gradient(circle, rgba(0, 230, 180, 0.45), transparent 68%) !important;
-}
-
-body:not(.login-theme) .app-tech-orb-b {
-  width: 400px !important;
-  height: 400px !important;
-  background: radial-gradient(circle, rgba(30, 160, 255, 0.4), transparent 70%) !important;
-  animation-delay: -6s !important;
+body:not(.login-theme) .app-tech-orb,
+body:not(.login-theme) .app-tech-grid {
+  display: none !important;
 }
 
 body:not(.login-theme) .main-area {
   background:
-    radial-gradient(circle at 92% 8%, rgba(30, 160, 255, 0.16), transparent 32%),
-    radial-gradient(circle at 4% 92%, rgba(0, 230, 180, 0.12), transparent 30%),
-    linear-gradient(180deg, rgba(2, 12, 27, 0.2), rgba(2, 9, 20, 0.65)) !important;
-  box-shadow:
-    inset 0 0 100px rgba(0, 4, 14, 0.7),
-    inset 0 0 180px rgba(0, 230, 180, 0.04) !important;
+    linear-gradient(180deg, rgba(13, 216, 255, 0.03), transparent 30%),
+    transparent !important;
+  box-shadow: none !important;
+  scrollbar-color: rgba(13, 216, 255, 0.35) transparent;
+}
+
+body:not(.login-theme) .app-content-shell {
+  gap: 14px !important;
 }
 
 body:not(.login-theme) .app-page-content::before {
-  animation: ixHoloSweep 7s cubic-bezier(0.22, 1, 0.36, 1) infinite !important;
-  opacity: 1 !important;
-  max-height: 320px !important;
-  background: linear-gradient(
-    105deg,
-    transparent 0%,
-    rgba(0, 230, 180, 0.15) 38%,
-    rgba(13, 216, 255, 0.22) 50%,
-    rgba(30, 160, 255, 0.12) 62%,
-    transparent 100%
-  ) !important;
+  content: none !important;
+  display: none !important;
+  animation: none !important;
 }
 
 /* ═══════════════════════════════════════
-   SIDEBAR — painel cyber glass
+   SIDEBAR
    ═══════════════════════════════════════ */
 body:not(.login-theme) .sidebar.sidebar--integraxx {
   background:
-    linear-gradient(180deg, rgba(2, 14, 32, 0.97) 0%, rgba(3, 18, 40, 0.95) 55%, rgba(2, 10, 26, 0.98) 100%),
-    linear-gradient(90deg, rgba(0, 230, 180, 0.08), transparent 40%) !important;
-  border-right: 1px solid rgba(13, 216, 255, 0.45) !important;
-  box-shadow:
-    inset -1px 0 0 rgba(13, 216, 255, 0.25),
-    inset 0 0 60px rgba(0, 230, 180, 0.06),
-    8px 0 48px rgba(0, 0, 0, 0.45),
-    12px 0 80px rgba(13, 216, 255, 0.08) !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
+    linear-gradient(180deg, #010810 0%, #020e1e 55%, #010810 100%) !important;
+  border-right: 1px solid rgba(13, 216, 255, 0.28) !important;
+  box-shadow: 10px 0 32px rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: none !important;
 }
 
 body:not(.login-theme) .sidebar.sidebar--integraxx::after {
   content: "";
   position: absolute;
-  top: 0;
-  right: 0;
-  width: 1px;
-  height: 100%;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    var(--ix-cyan-hi) 20%,
-    var(--ix-cyan) 50%,
-    var(--ix-blue) 80%,
-    transparent
-  );
-  box-shadow: 0 0 16px var(--ix-cyan-hi), 0 0 32px rgba(0, 230, 180, 0.4);
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, #00e6b4 30%, #1ea0ff 70%, transparent);
+  box-shadow: none;
   pointer-events: none;
   z-index: 2;
 }
 
 body:not(.login-theme) .sidebar-brand-panel {
-  border-bottom: 1px solid rgba(13, 216, 255, 0.28) !important;
-  background: linear-gradient(180deg, rgba(13, 216, 255, 0.06), transparent) !important;
+  border-bottom: 1px solid rgba(13, 216, 255, 0.14) !important;
+  background: transparent !important;
 }
 
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-brand-panel,
 body:not(.login-theme) .sidebar-brand-panel--collapsed {
   background: transparent !important;
-  border-bottom-color: rgba(46, 88, 130, 0.22) !important;
+  border-bottom-color: rgba(13, 216, 255, 0.12) !important;
   box-shadow: none !important;
 }
 
@@ -239,332 +156,251 @@ body:not(.login-theme) .sidebar-brand-home.active {
 
 body:not(.login-theme) .sidebar-brand-panel--collapsed .sidebar-brand-logo,
 body:not(.login-theme) .sidebar-brand-logo--collapsed {
-  width: auto !important;
-  max-width: 76px !important;
-  height: 58px !important;
-  filter: drop-shadow(0 2px 12px rgba(13, 216, 255, 0.15)) !important;
+  max-width: 60px !important;
+  height: 46px !important;
+  filter: none !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx .nav-list {
+  gap: 4px !important;
+  padding: 8px 10px !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 0 12px !important;
+  transform: none !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link i {
+  flex: 0 0 18px !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  transform: none !important;
+  filter: none !important;
+  font-size: 1rem !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link span {
+  font-family: var(--ix-font-body) !important;
+  font-size: 0.86rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link {
+  color: rgba(154, 204, 224, 0.78) !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  min-height: 40px !important;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link:hover {
+  color: #ffffff !important;
+  background: rgba(13, 216, 255, 0.08) !important;
+  border-color: rgba(13, 216, 255, 0.18) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link.active {
+  color: #03111f !important;
+  font-weight: 700 !important;
+  background: linear-gradient(110deg, #00e6b4 0%, #1ea0ff 100%) !important;
+  border-color: rgba(0, 230, 180, 0.65) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link.active::before {
+  display: none !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link.active::after,
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link::after {
+  opacity: 0 !important;
+  transform: scale(0) !important;
+}
+
+body:not(.login-theme) .sidebar-menu-link i {
+  font-size: 1rem !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link:hover i {
+  color: var(--ix-cyan-hi) !important;
+}
+
+body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.active i {
+  color: #03111f !important;
+}
+
+body:not(.login-theme) .sidebar-profile-card {
+  border-top: 1px solid rgba(13, 216, 255, 0.14) !important;
+  background: rgba(0, 0, 0, 0.22) !important;
 }
 
 body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-profile-card {
   background: transparent !important;
 }
 
-body:not(.login-theme) .sidebar--integraxx .nav-list {
-  gap: 8px !important;
-  padding: 0 14px !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.nav-link,
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.nav-link:hover,
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.nav-link.active {
-  transform: none !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  gap: 12px !important;
-  padding: 0 28px 0 16px !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link i {
-  flex: 0 0 24px !important;
-  width: 24px !important;
-  min-width: 24px !important;
-  height: 24px !important;
-  margin: 0 !important;
-  transform: none !important;
-  filter: none !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link span {
-  display: inline-block !important;
-  flex: 1 1 auto !important;
-  white-space: nowrap !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link:hover i,
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.active i {
-  transform: none !important;
-  filter: none !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link::after {
-  position: absolute !important;
-  right: 14px !important;
-  top: 50% !important;
-  margin-left: 0 !important;
-  transform: translateY(-50%) scale(0) !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.active::after {
-  transform: translateY(-50%) scale(1) !important;
-}
-
-body:not(.login-theme) .sidebar-menu-link {
-  color: #7eb8dc !important;
-  border-radius: 14px !important;
-  border: 1px solid transparent !important;
-  min-height: 50px !important;
-  transition:
-    color 0.25s ease,
-    background 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.25s ease !important;
-}
-
-body:not(.login-theme) .sidebar-menu-link:hover {
-  color: #e8f8ff !important;
-  background: rgba(13, 216, 255, 0.1) !important;
-  border-color: rgba(13, 216, 255, 0.2) !important;
-  box-shadow: 0 0 24px rgba(13, 216, 255, 0.1) !important;
-  transform: translateX(0) !important;
-}
-
-body:not(.login-theme) .sidebar-menu-link.active {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  background: linear-gradient(
-    90deg,
-    rgba(0, 230, 180, 0.22) 0%,
-    rgba(13, 216, 255, 0.14) 50%,
-    rgba(30, 160, 255, 0.1) 100%
-  ) !important;
-  border-color: rgba(0, 230, 180, 0.45) !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(13, 216, 255, 0.2),
-    0 0 28px rgba(0, 230, 180, 0.2),
-    0 0 48px rgba(13, 216, 255, 0.1) !important;
-  transform: translateX(0) !important;
-}
-
-body:not(.login-theme) .sidebar-menu-link.active::before {
-  width: 5px !important;
-  height: 36px !important;
-  box-shadow: 0 0 20px rgba(0, 230, 180, 0.9), 0 0 36px rgba(13, 216, 255, 0.6) !important;
-}
-
-body:not(.login-theme) .sidebar-menu-link.active::after {
-  opacity: 1 !important;
-  width: 8px !important;
-  height: 8px !important;
-  box-shadow: 0 0 14px rgba(13, 216, 255, 1), 0 0 28px rgba(0, 230, 180, 0.6) !important;
-}
-
-body:not(.login-theme) .sidebar-menu-link i {
-  font-size: 22px !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link:hover i,
-body:not(.login-theme) .sidebar--integraxx:not(.is-collapsed) .sidebar-menu-link.active i {
-  color: var(--ix-cyan-hi) !important;
-}
-
-body:not(.login-theme) .sidebar-profile-card {
-  border-top: 1px solid rgba(13, 216, 255, 0.28) !important;
-  background: linear-gradient(0deg, rgba(13, 216, 255, 0.05), transparent) !important;
-}
-
 body:not(.login-theme) .sidebar-profile-avatar {
-  background: linear-gradient(135deg, var(--ix-cyan) 0%, var(--ix-cyan-hi) 45%, var(--ix-blue) 100%) !important;
-  box-shadow: 0 0 28px rgba(13, 216, 255, 0.55), 0 0 48px rgba(0, 230, 180, 0.25) !important;
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 0.72rem !important;
+  background: linear-gradient(145deg, #00e6b4, #1ea0ff) !important;
+  color: #03111f !important;
+  box-shadow: none !important;
+  font-family: var(--ix-font-body) !important;
+}
+
+body:not(.login-theme) .sidebar-profile-copy strong {
+  color: #f0f9ff !important;
+  font-size: 0.84rem !important;
+  font-family: var(--ix-font-body) !important;
+  letter-spacing: 0 !important;
+}
+
+body:not(.login-theme) .sidebar-profile-copy small {
+  color: rgba(0, 230, 180, 0.8) !important;
+  font-size: 0.72rem !important;
 }
 
 body:not(.login-theme) .sidebar-logout-button {
-  color: #8eb8d8 !important;
+  color: rgba(154, 204, 224, 0.7) !important;
+  font-size: 0.82rem !important;
 }
 
 body:not(.login-theme) .sidebar-logout-button:hover {
-  color: var(--ix-cyan-hi) !important;
-  text-shadow: 0 0 12px rgba(13, 216, 255, 0.6) !important;
+  color: #ff9a9a !important;
+  text-shadow: none !important;
 }
 
 body:not(.login-theme) .sidebar--integraxx .sidebar-collapse-toggle {
-  background: linear-gradient(180deg, #3ee8ff 0%, var(--ix-cyan-hi) 40%, var(--ix-blue) 100%) !important;
-  box-shadow:
-    0 0 0 2px rgba(2, 12, 27, 0.95),
-    0 0 20px rgba(13, 216, 255, 0.7),
-    0 0 40px rgba(0, 230, 180, 0.35) !important;
+  background: linear-gradient(135deg, #00e6b4, #1ea0ff) !important;
+  color: #03111f !important;
+  border: 2px solid #020c1b !important;
+  box-shadow: var(--ix-shadow-sm) !important;
 }
 
 /* ═══════════════════════════════════════
-   NAVBAR — cabeçalho holográfico
+   NAVBAR / TÍTULOS
    ═══════════════════════════════════════ */
-body:not(.login-theme) .navbar {
-  border: 1px solid rgba(13, 216, 255, 0.42) !important;
-  border-radius: 20px !important;
+body:not(.login-theme) .navbar,
+body:not(.login-theme) .app-page-navbar {
+  border: 1px solid var(--ix-line-soft) !important;
+  border-radius: var(--ix-radius) !important;
   background:
-    linear-gradient(135deg, rgba(0, 230, 180, 0.14) 0%, transparent 42%),
-    linear-gradient(180deg, rgba(8, 32, 62, 0.92), rgba(3, 14, 34, 0.96)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(0, 230, 180, 0.12),
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 60px rgba(13, 216, 255, 0.15),
-    0 0 100px rgba(0, 230, 180, 0.08) !important;
-  backdrop-filter: blur(28px) saturate(170%) !important;
+    linear-gradient(180deg, rgba(13, 216, 255, 0.05), transparent),
+    var(--ix-panel) !important;
+  box-shadow: var(--ix-shadow-sm) !important;
+  backdrop-filter: none !important;
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
 }
 
-body:not(.login-theme) .navbar::before {
-  width: 4px !important;
-  box-shadow: 0 0 24px rgba(13, 216, 255, 0.8), 0 0 48px rgba(0, 230, 180, 0.4) !important;
+body:not(.login-theme) .navbar::before,
+body:not(.login-theme) .app-page-navbar::before {
+  width: 100% !important;
+  height: 2px !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+  border-radius: var(--ix-radius) var(--ix-radius) 0 0 !important;
+  background: linear-gradient(90deg, #00e6b4, #1ea0ff, transparent 70%) !important;
+  box-shadow: none !important;
 }
 
-body:not(.login-theme) .navbar strong:first-child {
-  font-size: 1.35rem !important;
-  background: linear-gradient(90deg, #ffffff 0%, var(--ix-cyan-hi) 55%, var(--ix-blue) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none !important;
-  filter: drop-shadow(0 0 20px rgba(13, 216, 255, 0.35));
-}
-
-body:not(.login-theme) .navbar-subtitle {
-  color: #a8d8f0 !important;
-}
-
-body:not(.login-theme) .navbar-meta {
-  color: #c8e8ff !important;
-}
-
-body:not(.login-theme) .navbar-meta strong {
-  color: var(--ix-cyan-hi) !important;
-  text-shadow: 0 0 16px rgba(13, 216, 255, 0.4) !important;
-}
-
-/* ═══════════════════════════════════════
-   TÍTULOS DE PÁGINA
-   ═══════════════════════════════════════ */
+body:not(.login-theme) .app-page-navbar-title,
+body:not(.login-theme) .navbar strong:first-child,
 body:not(.login-theme) .page-title,
 body:not(.login-theme) .supplier-hero h1,
 body:not(.login-theme) .supplier-dossier-header h1,
 body:not(.login-theme) .admin-hero h1 {
-  font-family: "Oxanium", "Space Grotesk", sans-serif !important;
-  font-size: clamp(1.75rem, 3vw, 2.5rem) !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.04em !important;
-  background: linear-gradient(92deg, #ffffff 0%, var(--ix-cyan-hi) 45%, var(--ix-blue) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 28px rgba(13, 216, 255, 0.35));
+  font-family: var(--ix-font-display) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+  color: var(--ix-ink) !important;
+  background: none !important;
+  -webkit-text-fill-color: unset !important;
+  text-shadow: none !important;
+  filter: none !important;
+  font-size: 1.15rem !important;
+  line-height: 1.25 !important;
+}
+
+body:not(.login-theme) .app-page-navbar-description,
+body:not(.login-theme) .navbar-subtitle,
+body:not(.login-theme) .page-subtitle,
+body:not(.login-theme) .supplier-hero p {
+  color: var(--ix-muted) !important;
+  font-size: 0.82rem !important;
+  line-height: 1.4 !important;
+}
+
+body:not(.login-theme) .navbar-meta,
+body:not(.login-theme) .navbar-meta strong {
+  color: var(--ix-cyan-hi) !important;
+  text-shadow: none !important;
+  font-size: 0.8rem !important;
 }
 
 body:not(.login-theme) .page-header::after,
 body:not(.login-theme) .supplier-hero::after,
 body:not(.login-theme) .supplier-dossier-header::after {
+  background: linear-gradient(90deg, #00e6b4, transparent) !important;
   height: 2px !important;
-  background: linear-gradient(
-    90deg,
-    var(--ix-cyan),
-    var(--ix-cyan-hi),
-    var(--ix-blue),
-    transparent
-  ) !important;
-  box-shadow: 0 0 16px rgba(13, 216, 255, 0.5) !important;
-}
-
-body:not(.login-theme) .page-subtitle,
-body:not(.login-theme) .supplier-hero p {
-  color: #b8e4ff !important;
-  font-size: 1rem !important;
+  opacity: 0.65 !important;
+  box-shadow: none !important;
 }
 
 body:not(.login-theme) .supplier-hero-kicker,
-body:not(.login-theme) .helper-label {
-  color: var(--ix-cyan-hi) !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.1em !important;
-  line-height: 1.5 !important;
-  text-shadow: none !important;
-}
-
-/* Cabeçalhos dos cards — estilo limpo (barra lateral, sem pílula) */
+body:not(.login-theme) .helper-label,
 body:not(.login-theme) .dashboard-card-eyebrow {
-  display: block !important;
-  margin: 0 0 6px !important;
-  padding: 0 0 0 11px !important;
-  border: 0 !important;
-  border-left: 3px solid var(--ix-cyan-hi) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  font-size: 0.72rem !important;
-  font-weight: 600 !important;
-  line-height: 1.5 !important;
-  letter-spacing: 0.1em !important;
+  color: var(--ix-cyan) !important;
+  font-family: var(--ix-font-body) !important;
+  font-size: 0.66rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
-  color: #8ecae8 !important;
   text-shadow: none !important;
-  overflow: visible !important;
-  box-shadow: none !important;
 }
 
+/* ═══════════════════════════════════════
+   CARDS / PAINÉIS
+   ═══════════════════════════════════════ */
 body:not(.login-theme) .dashboard-panel-heading {
-  margin-bottom: 16px !important;
-  padding-bottom: 14px !important;
-  border: 0 !important;
-  border-bottom: 1px solid rgba(13, 216, 255, 0.14) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  overflow: visible !important;
-}
-
-body:not(.login-theme) .dashboard-panel-heading > div,
-body:not(.login-theme) .dashboard-panel > div:first-child,
-body:not(.login-theme) .dashboard-mini-panel > div:first-child {
-  display: grid !important;
-  gap: 6px !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-  overflow: visible !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-bottom: 1px solid var(--ix-line-soft) !important;
+  margin-bottom: 10px !important;
+  padding-bottom: 10px !important;
 }
 
 body:not(.login-theme) .dashboard-panel h3,
 body:not(.login-theme) .dashboard-mini-panel h3,
 body:not(.login-theme) .dashboard-panel-heading h3 {
   margin: 0 !important;
-  padding: 2px 0 0 !important;
-  color: #f4fbff !important;
-  font-family: "Space Grotesk", "Inter", sans-serif !important;
-  font-size: 1.15rem !important;
-  font-weight: 600 !important;
-  line-height: 1.45 !important;
-  letter-spacing: 0.01em !important;
-  overflow: visible !important;
-  background: none !important;
-  -webkit-background-clip: unset !important;
-  background-clip: unset !important;
-  -webkit-text-fill-color: #f4fbff !important;
-  text-shadow: none !important;
-  filter: none !important;
+  color: var(--ix-ink) !important;
+  font-family: var(--ix-font-display) !important;
+  font-size: 0.98rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
 }
 
-body:not(.login-theme) .dashboard-panel,
-body:not(.login-theme) .dashboard-stat-card,
-body:not(.login-theme) .dashboard-chart-card,
-body:not(.login-theme) .dashboard-table-panel {
-  overflow: visible !important;
-}
-
-body:not(.login-theme) .dashboard-chart-wrap,
-body:not(.login-theme) .dashboard-table-wrap {
-  overflow: auto;
-  border-radius: 18px;
-}
-
-/* ═══════════════════════════════════════
-   CARDS — superfície neon + cantos tech
-   ═══════════════════════════════════════ */
 body:not(.login-theme) .navbar,
 body:not(.login-theme) .dashboard-panel,
 body:not(.login-theme) .dashboard-stat-card,
 body:not(.login-theme) .dashboard-chart-card,
+body:not(.login-theme) .dashboard-table-panel,
 body:not(.login-theme) .supplier-list-card,
 body:not(.login-theme) .supplier-form-panel,
 body:not(.login-theme) .supplier-dossier-card,
@@ -585,589 +421,815 @@ body:not(.login-theme) .app-page-content [class*="-panel"]:not(.dashboard-panel-
 body:not(.login-theme) .app-page-content [class*="-card"]:not(.login-card):not([class*="login-"]),
 body:not(.login-theme) .app-page-content [class*="-hero"],
 body:not(.login-theme) .app-page-content [class*="-shell"] {
-  border: 1px solid var(--ix-glass-border) !important;
-  border-radius: 22px !important;
+  border: 1px solid var(--ix-line-soft) !important;
+  border-radius: var(--ix-radius) !important;
   background:
-    linear-gradient(145deg, rgba(0, 230, 180, 0.1) 0%, transparent 38%),
-    linear-gradient(220deg, rgba(30, 160, 255, 0.08) 0%, transparent 45%),
-    linear-gradient(180deg, rgba(8, 28, 54, 0.9), rgba(3, 12, 30, 0.95)) !important;
+    linear-gradient(165deg, rgba(13, 216, 255, 0.04), transparent 42%),
+    var(--ix-panel) !important;
+  box-shadow: var(--ix-shadow-sm) !important;
+  backdrop-filter: none !important;
+  color: var(--ix-ink) !important;
+}
+
+body:not(.login-theme) .supplier-dossier-card--nfs {
+  border-color: rgba(13, 216, 255, 0.42) !important;
+  background:
+    linear-gradient(165deg, rgba(13, 216, 255, 0.12), transparent 46%),
+    var(--ix-panel) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(0, 230, 180, 0.08),
-    0 24px 64px rgba(0, 0, 0, 0.55),
-    0 0 48px rgba(13, 216, 255, 0.1),
-    0 0 80px rgba(0, 230, 180, 0.06) !important;
-  backdrop-filter: blur(20px) saturate(150%) !important;
+    0 0 0 1px rgba(13, 216, 255, 0.14),
+    var(--ix-shadow-sm) !important;
 }
 
-/* Cards de KPI — visual estável, sem pulso */
-body:not(.login-theme) .dashboard-stat-card::before {
-  display: none !important;
+body:not(.login-theme) .supplier-dossier-metric--nfs strong {
+  color: var(--ix-cyan, #0dd8ff) !important;
 }
 
-body:not(.login-theme) .dashboard-stat-card {
-  animation: none !important;
-  padding: 18px 20px !important;
-  min-height: 108px !important;
+body:not(.login-theme) .supplier-nfs-kicker {
+  color: var(--ix-cyan, #0dd8ff) !important;
 }
 
-body:not(.login-theme) .dashboard-stat-card strong {
-  display: block !important;
-  margin-top: 10px !important;
-  color: #ffffff !important;
-  font-family: "Space Grotesk", sans-serif !important;
-  font-size: clamp(1.85rem, 2.6vw, 2.75rem) !important;
-  font-weight: 700 !important;
-  line-height: 1.15 !important;
-  background: none !important;
-  -webkit-background-clip: unset !important;
-  background-clip: unset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  filter: none !important;
-  text-shadow: none !important;
+body:not(.login-theme) .supplier-nfs-heading p {
+  color: var(--ix-muted, #9eb4d4) !important;
 }
 
-body:not(.login-theme) .dashboard-stat-card p {
-  color: #7eb8dc !important;
-  font-weight: 500 !important;
-  text-shadow: none !important;
+body:not(.login-theme) .supplier-nfs-table tbody tr:hover {
+  background: rgba(13, 216, 255, 0.07) !important;
 }
 
-body:not(.login-theme) .panel-heading h3 {
+body:not(.login-theme) .dashboard-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+body:not(.login-theme) .dashboard-shell--lean {
+  gap: 18px;
+  width: 100%;
+  max-width: none;
+}
+
+body:not(.login-theme) .dashboard-shell--showcase {
+  gap: 16px;
+  width: 100%;
+  max-width: none;
+}
+
+body:not(.login-theme) .dashboard-kpi-strip--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+body:not(.login-theme) .dashboard-showcase-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.78fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+body:not(.login-theme) .dashboard-showcase-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+body:not(.login-theme) .dashboard-showcase-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 14px;
+}
+
+body:not(.login-theme) .dashboard-chart-wrap--tall {
+  min-height: 280px;
+  height: 300px;
+}
+
+body:not(.login-theme) .dashboard-status-chart {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+body:not(.login-theme) .dashboard-status-chart-canvas {
+  position: relative;
+  width: 132px;
+  height: 132px;
+}
+
+body:not(.login-theme) .dashboard-status-chart-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+body:not(.login-theme) .dashboard-status-chart-center strong {
+  font-family: var(--ix-font-display) !important;
+  font-size: 1.15rem !important;
   color: #f4fbff !important;
-  font-family: "Space Grotesk", sans-serif !important;
-  text-shadow: none !important;
+  line-height: 1 !important;
 }
 
-body:not(.login-theme) .dashboard-chart-wrap {
-  height: 300px !important;
-  padding: 10px 12px 6px !important;
-  border: 1px solid rgba(13, 216, 255, 0.12) !important;
-  background: rgba(4, 14, 32, 0.45) !important;
-  border-radius: 14px !important;
-  box-shadow: none !important;
-  overflow: hidden !important;
+body:not(.login-theme) .dashboard-status-chart-center span {
+  color: var(--ix-muted) !important;
+  font-size: 0.68rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-body:not(.login-theme) .dashboard-risk-chart {
-  height: 100% !important;
+body:not(.login-theme) .dashboard-status-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+body:not(.login-theme) .dashboard-status-legend li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--ix-muted);
+}
+
+body:not(.login-theme) .dashboard-status-legend strong {
+  color: #f4fbff !important;
+  font-size: 0.82rem !important;
+}
+
+body:not(.login-theme) .dashboard-status-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+body:not(.login-theme) .dashboard-overview-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 2px 2px;
+}
+
+body:not(.login-theme) .dashboard-overview-header h1 {
+  margin: 4px 0 6px !important;
+  font-family: var(--ix-font-display) !important;
+  font-size: 1.55rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: #f4fbff !important;
+  line-height: 1.15 !important;
+}
+
+body:not(.login-theme) .dashboard-overview-header p {
+  margin: 0 !important;
+  color: var(--ix-muted) !important;
+  font-size: 0.84rem !important;
+  max-width: 52ch;
+}
+
+body:not(.login-theme) .dashboard-overview-date {
+  flex-shrink: 0;
+  color: var(--ix-muted) !important;
+  font-size: 0.78rem !important;
+  text-transform: capitalize;
+  padding: 8px 12px;
+  border: 1px solid var(--ix-line-soft);
+  border-radius: 999px;
+  background: rgba(1, 8, 16, 0.35);
+}
+
+body:not(.login-theme) .dashboard-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+body:not(.login-theme) .dashboard-kpi-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 112px;
+  padding: 16px !important;
+  border: 1px solid var(--ix-line) !important;
+  border-radius: var(--ix-radius) !important;
+  background:
+    linear-gradient(180deg, rgba(13, 216, 255, 0.05), transparent 42%),
+    var(--ix-panel) !important;
+  box-shadow: var(--ix-shadow-sm) !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  transition: transform 0.2s ease, border-color 0.2s ease !important;
+}
+
+body:not(.login-theme) .dashboard-kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00e6b4, transparent 72%);
+}
+
+body:not(.login-theme) .dashboard-kpi-card:nth-child(2)::before {
+  background: linear-gradient(90deg, #0dd8ff, transparent 72%);
+}
+
+body:not(.login-theme) .dashboard-kpi-card:nth-child(3)::before {
+  background: linear-gradient(90deg, #1ea0ff, transparent 72%);
+}
+
+body:not(.login-theme) .dashboard-kpi-card:nth-child(4)::before {
+  background: linear-gradient(90deg, #7ad7ff, transparent 72%);
+}
+
+body:not(.login-theme) .dashboard-kpi-card:nth-child(5)::before {
+  background: linear-gradient(90deg, #ffb45c, transparent 72%);
+}
+
+body:not(.login-theme) .dashboard-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(13, 216, 255, 0.35) !important;
+}
+
+body:not(.login-theme) .dashboard-kpi-card strong {
+  font-family: var(--ix-font-display) !important;
+  font-size: 1.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: #f4fbff !important;
+  line-height: 1.05 !important;
+}
+
+body:not(.login-theme) .dashboard-kpi-card p {
+  margin: 0 !important;
+  color: var(--ix-muted) !important;
+  font-size: 0.74rem !important;
+  line-height: 1.35 !important;
+}
+
+body:not(.login-theme) .dashboard-kpi-card--warn strong {
+  color: #f5c76a !important;
+}
+
+body:not(.login-theme) .dashboard-kpi-card--danger strong {
+  color: #ff8f8f !important;
+}
+
+body:not(.login-theme) .dashboard-kpi-card--compact strong {
+  font-size: 1.15rem !important;
+  letter-spacing: -0.01em !important;
+  word-break: break-word;
+}
+
+body:not(.login-theme) .dashboard-lean-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+body:not(.login-theme) .dashboard-inline-link {
+  color: var(--ix-cyan-hi) !important;
+  font-size: 0.76rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+
+body:not(.login-theme) .dashboard-inline-link:hover {
+  color: #ffffff !important;
+}
+
+body:not(.login-theme) .dashboard-priority-list,
+body:not(.login-theme) .dashboard-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+body:not(.login-theme) .dashboard-priority-item,
+body:not(.login-theme) .dashboard-rank-item {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--ix-line-soft);
+  border-radius: 12px;
+  background: rgba(1, 8, 16, 0.32);
+}
+
+body:not(.login-theme) .dashboard-priority-item {
+  border-left: 3px solid rgba(13, 216, 255, 0.55);
+}
+
+body:not(.login-theme) .dashboard-priority-item--warn {
+  border-left-color: #f5c76a;
+}
+
+body:not(.login-theme) .dashboard-priority-item--danger {
+  border-left-color: #ff8f8f;
+}
+
+body:not(.login-theme) .dashboard-priority-item strong,
+body:not(.login-theme) .dashboard-rank-copy strong {
+  color: var(--ix-ink) !important;
+  font-size: 0.84rem !important;
+  font-weight: 650 !important;
+}
+
+body:not(.login-theme) .dashboard-priority-item p,
+body:not(.login-theme) .dashboard-rank-copy small {
+  margin: 0 !important;
+  color: var(--ix-muted) !important;
+  font-size: 0.74rem !important;
+}
+
+body:not(.login-theme) .dashboard-rank-item {
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+body:not(.login-theme) .dashboard-rank-index {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(0, 230, 180, 0.12);
+  color: var(--ix-cyan);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+body:not(.login-theme) .dashboard-rank-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+body:not(.login-theme) .dashboard-rank-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body:not(.login-theme) .dashboard-rank-metrics {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+body:not(.login-theme) .dashboard-rank-metrics span {
+  color: #f4fbff !important;
+  font-family: var(--ix-font-display) !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+body:not(.login-theme) .dashboard-rank-metrics small {
+  color: var(--ix-muted) !important;
+  font-size: 0.68rem !important;
 }
 
 body:not(.login-theme) .dashboard-top-grid {
-  gap: 18px !important;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
-body:not(.login-theme) .dashboard-main-grid,
-body:not(.login-theme) .dashboard-shell,
-body:not(.login-theme) .page-grid {
-  gap: 20px !important;
+body:not(.login-theme) .dashboard-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.9fr);
+  gap: 12px;
 }
 
-/* Hover cartões — lift + glow intenso */
-body:not(.login-theme) .dashboard-stat-card:hover,
-body:not(.login-theme) .dashboard-panel:hover,
-body:not(.login-theme) .table-card:hover,
-body:not(.login-theme) .supplier-list-card:hover,
-body:not(.login-theme) .supplier-form-panel:hover,
-body:not(.login-theme) .admin-hero:hover,
-body:not(.login-theme) .app-page-content [class*="-card"]:hover:not([class*="login-"]) {
-  transform: translateY(-2px) !important;
-  border-color: rgba(13, 216, 255, 0.32) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(13, 216, 255, 0.12),
-    0 20px 48px rgba(0, 0, 0, 0.45),
-    0 0 32px rgba(13, 216, 255, 0.08) !important;
+body:not(.login-theme) .dashboard-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* ═══════════════════════════════════════
-   TABELAS
-   ═══════════════════════════════════════ */
-body:not(.login-theme) .table-card th,
-body:not(.login-theme) .supplier-table th,
-body:not(.login-theme) .dashboard-table th,
-body:not(.login-theme) .admin-table-card th {
-  padding: 14px 16px !important;
-  color: var(--ix-cyan-hi) !important;
-  font-family: "Oxanium", sans-serif !important;
-  font-size: 0.7rem !important;
+body:not(.login-theme) .dashboard-stat-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 108px;
+  padding: 16px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  transition: transform 0.2s ease, border-color 0.2s ease !important;
+}
+
+body:not(.login-theme) .dashboard-stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00e6b4, transparent 70%);
+}
+
+body:not(.login-theme) .dashboard-stat-card:nth-child(2)::before {
+  background: linear-gradient(90deg, #0dd8ff, transparent 70%);
+}
+
+body:not(.login-theme) .dashboard-stat-card:nth-child(3)::before {
+  background: linear-gradient(90deg, #1ea0ff, transparent 70%);
+}
+
+body:not(.login-theme) .dashboard-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(13, 216, 255, 0.3) !important;
+}
+
+body:not(.login-theme) .dashboard-stat-card strong {
+  font-family: var(--ix-font-display) !important;
+  font-size: 1.55rem !important;
   font-weight: 700 !important;
-  letter-spacing: 0.14em !important;
-  text-transform: uppercase !important;
-  background: linear-gradient(180deg, rgba(0, 230, 180, 0.16), rgba(13, 216, 255, 0.08)) !important;
-  border-bottom: 2px solid rgba(13, 216, 255, 0.35) !important;
-  text-shadow: 0 0 12px rgba(13, 216, 255, 0.3) !important;
-}
-
-body:not(.login-theme) .table-card td,
-body:not(.login-theme) .supplier-table td,
-body:not(.login-theme) .dashboard-table td {
-  padding: 14px 16px !important;
-  color: #e4f4ff !important;
-  border-color: rgba(13, 216, 255, 0.12) !important;
-}
-
-body:not(.login-theme) .table-card tbody tr:nth-child(even),
-body:not(.login-theme) .supplier-table tbody tr:nth-child(even) {
-  background: rgba(13, 216, 255, 0.05) !important;
-}
-
-body:not(.login-theme) .table-card tbody tr:hover,
-body:not(.login-theme) .supplier-table tbody tr:hover {
-  background: rgba(0, 230, 180, 0.12) !important;
-  box-shadow: inset 0 0 24px rgba(13, 216, 255, 0.06) !important;
-}
-
-body:not(.login-theme) .table-card td strong {
-  color: #ffffff !important;
-}
-
-/* ═══════════════════════════════════════
-   FORMULÁRIOS
-   ═══════════════════════════════════════ */
-body:not(.login-theme) .supplier-filter-input,
-body:not(.login-theme) .supplier-filter-select,
-body:not(.login-theme) .supplier-form-input,
-body:not(.login-theme) .supplier-form-textarea,
-body:not(.login-theme) .category-form-textarea,
-body:not(.login-theme) .input,
-body:not(.login-theme) .select,
-body:not(.login-theme) .textarea,
-body:not(.login-theme) .admin-form-field input,
-body:not(.login-theme) .admin-form-field select,
-body:not(.login-theme) .admin-form-field textarea {
-  border: 1px solid rgba(13, 216, 255, 0.32) !important;
-  background: rgba(2, 12, 28, 0.92) !important;
+  letter-spacing: 0 !important;
   color: #f4fbff !important;
-  border-radius: 14px !important;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+  line-height: 1.1 !important;
 }
 
-body:not(.login-theme) .supplier-filter-input:focus,
-body:not(.login-theme) .supplier-form-input:focus,
-body:not(.login-theme) .input:focus,
-body:not(.login-theme) .select:focus,
-body:not(.login-theme) .textarea:focus,
-body:not(.login-theme) .admin-form-field input:focus {
-  border-color: var(--ix-cyan) !important;
-  box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.3),
-    0 0 0 3px rgba(0, 230, 180, 0.18),
-    0 0 32px rgba(13, 216, 255, 0.2) !important;
-  outline: none !important;
+body:not(.login-theme) .dashboard-stat-card p,
+body:not(.login-theme) .dashboard-footnote,
+body:not(.login-theme) .dashboard-empty-copy {
+  color: var(--ix-muted) !important;
+  margin: 0 !important;
+  font-size: 0.78rem !important;
 }
 
-/* ═══════════════════════════════════════
-   BOTÕES
-   ═══════════════════════════════════════ */
-body:not(.login-theme) .button,
-body:not(.login-theme) .supplier-save-button,
-body:not(.login-theme) .supplier-toolbar-button-primary {
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  background: linear-gradient(
-    110deg,
-    var(--ix-cyan) 0%,
-    var(--ix-cyan-hi) 35%,
-    var(--ix-blue) 70%,
-    var(--ix-cyan-hi) 100%
-  ) !important;
-  background-size: 200% auto !important;
-  color: #021018 !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.04em !important;
-  text-transform: uppercase !important;
-  font-size: 0.82rem !important;
-  border-radius: 14px !important;
-  box-shadow:
-    0 14px 36px rgba(13, 216, 255, 0.35),
-    0 0 40px rgba(0, 230, 180, 0.25) !important;
-  animation: ixShimmerBtn 5s linear infinite !important;
+body:not(.login-theme) .dashboard-chart-wrap,
+body:not(.login-theme) .dashboard-table-wrap {
+  border: 1px solid var(--ix-line-soft) !important;
+  border-radius: var(--ix-radius-sm) !important;
+  background: rgba(1, 8, 16, 0.35) !important;
+  padding: 10px !important;
 }
 
-body:not(.login-theme) .button:hover,
-body:not(.login-theme) .supplier-save-button:hover {
-  transform: translateY(-3px) !important;
-  box-shadow:
-    0 20px 48px rgba(13, 216, 255, 0.45),
-    0 0 56px rgba(0, 230, 180, 0.35) !important;
-}
-
-body:not(.login-theme) .ghost-button,
-body:not(.login-theme) .supplier-cancel-button,
-body:not(.login-theme) .supplier-filter-button,
-body:not(.login-theme) .supplier-row-button,
-body:not(.login-theme) .supplier-toolbar-button-muted {
-  border: 1px solid rgba(13, 216, 255, 0.35) !important;
-  background: rgba(3, 16, 36, 0.9) !important;
-  color: #d8f4ff !important;
-  border-radius: 14px !important;
-}
-
-body:not(.login-theme) .ghost-button:hover,
-body:not(.login-theme) .supplier-filter-button:hover {
-  border-color: var(--ix-cyan) !important;
-  background: rgba(0, 230, 180, 0.12) !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 28px rgba(13, 216, 255, 0.2) !important;
-}
-
-/* ═══════════════════════════════════════
-   BADGES & ALERTAS
-   ═══════════════════════════════════════ */
-body:not(.login-theme) .badge,
-body:not(.login-theme) .status-pill,
-body:not(.login-theme) .status-tag,
-body:not(.login-theme) .supplier-pill,
-body:not(.login-theme) .supplier-status-badge {
-  border: 1px solid rgba(0, 230, 180, 0.4) !important;
-  background: linear-gradient(90deg, rgba(0, 230, 180, 0.2), rgba(13, 216, 255, 0.12)) !important;
-  color: #d4fff8 !important;
-  font-weight: 600 !important;
-  box-shadow: 0 0 20px rgba(0, 230, 180, 0.15) !important;
-}
-
-body:not(.login-theme) .status-pill.blocked,
-body:not(.login-theme) .status-tag.blocked,
-body:not(.login-theme) .supplier-status-badge-blocked {
-  border-color: rgba(255, 100, 130, 0.5) !important;
-  background: linear-gradient(90deg, rgba(255, 70, 100, 0.25), rgba(255, 140, 80, 0.15)) !important;
-  color: #ffe0e8 !important;
-  box-shadow: 0 0 20px rgba(255, 80, 120, 0.2) !important;
-}
-
-body:not(.login-theme) .alert-card,
-body:not(.login-theme) .info-strip {
-  border-left: 4px solid var(--ix-cyan-hi) !important;
-  box-shadow: inset 4px 0 24px rgba(13, 216, 255, 0.08) !important;
+body:not(.login-theme) .dashboard-alert-item {
+  border: 1px solid var(--ix-line-soft) !important;
+  border-radius: 10px !important;
+  background: rgba(1, 8, 16, 0.3) !important;
+  padding: 10px 12px !important;
+  box-shadow: none !important;
 }
 
 body:not(.login-theme) .dashboard-alert-item strong {
-  color: #ffffff !important;
+  color: var(--ix-ink) !important;
+  font-family: var(--ix-font-body) !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0 !important;
+}
+
+body:not(.login-theme) .dashboard-alert-item p {
+  color: var(--ix-muted) !important;
+  margin: 3px 0 0 !important;
+  font-size: 0.76rem !important;
+}
+
+body:not(.login-theme) .dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem !important;
+}
+
+body:not(.login-theme) .dashboard-table th {
+  color: var(--ix-cyan) !important;
+  font-family: var(--ix-font-body) !important;
+  font-size: 0.68rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid var(--ix-line-soft) !important;
+  padding: 10px 8px !important;
+  background: transparent !important;
+}
+
+body:not(.login-theme) .dashboard-table td {
+  color: rgba(232, 244, 251, 0.9) !important;
+  border-bottom: 1px solid rgba(154, 204, 224, 0.08) !important;
+  padding: 10px 8px !important;
+  font-size: 0.82rem !important;
+}
+
+body:not(.login-theme) .dashboard-table tbody tr:hover td {
+  background: rgba(13, 216, 255, 0.05) !important;
+}
+
+body:not(.login-theme) .dashboard-status-text {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(0, 230, 180, 0.14);
+  color: var(--ix-cyan) !important;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+@media (max-width: 1180px) {
+  body:not(.login-theme) .dashboard-kpi-strip,
+  body:not(.login-theme) .dashboard-kpi-strip--four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body:not(.login-theme) .dashboard-showcase-main,
+  body:not(.login-theme) .dashboard-showcase-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  body:not(.login-theme) .dashboard-overview-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  body:not(.login-theme) .dashboard-kpi-strip,
+  body:not(.login-theme) .dashboard-kpi-strip--four,
+  body:not(.login-theme) .dashboard-lean-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body:not(.login-theme) .dashboard-status-chart {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
 }
 
 /* ═══════════════════════════════════════
-   ADMIN
+   FORMULÁRIOS / BOTÕES / TABELAS
    ═══════════════════════════════════════ */
-body:not(.login-theme) .admin-tab-link {
-  border: 1px solid rgba(13, 216, 255, 0.25) !important;
-  background: rgba(3, 14, 32, 0.85) !important;
-  color: #8eb8d8 !important;
+body:not(.login-theme) input,
+body:not(.login-theme) select,
+body:not(.login-theme) textarea,
+body:not(.login-theme) .supplier-form-input,
+body:not(.login-theme) .supplier-filter-input,
+body:not(.login-theme) .supplier-filter-select,
+body:not(.login-theme) .admin-form input,
+body:not(.login-theme) .admin-form select,
+body:not(.login-theme) .admin-form textarea {
+  border: 1px solid rgba(30, 160, 255, 0.28) !important;
+  border-radius: 10px !important;
+  background: rgba(5, 18, 40, 0.85) !important;
+  color: var(--ix-ink) !important;
+  box-shadow: none !important;
+  font-size: 0.86rem !important;
 }
 
-body:not(.login-theme) .admin-tab-link.active,
-body:not(.login-theme) .admin-tab-link:hover {
-  border-color: rgba(0, 230, 180, 0.5) !important;
-  background: linear-gradient(135deg, rgba(0, 230, 180, 0.18), rgba(13, 216, 255, 0.1)) !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 32px rgba(13, 216, 255, 0.2) !important;
+body:not(.login-theme) input:focus,
+body:not(.login-theme) select:focus,
+body:not(.login-theme) textarea:focus,
+body:not(.login-theme) .supplier-form-input:focus,
+body:not(.login-theme) .supplier-filter-input:focus,
+body:not(.login-theme) .supplier-filter-select:focus {
+  outline: none !important;
+  border-color: #00e6b4 !important;
+  box-shadow: 0 0 0 3px rgba(0, 230, 180, 0.16) !important;
 }
 
-body:not(.login-theme) .admin-activity-item,
-body:not(.login-theme) .admin-setting-card,
-body:not(.login-theme) .admin-permission-item {
-  border: 1px solid rgba(13, 216, 255, 0.2) !important;
-  background: rgba(4, 18, 38, 0.85) !important;
-  border-radius: 18px !important;
+body:not(.login-theme) button,
+body:not(.login-theme) .btn,
+body:not(.login-theme) .primary-button,
+body:not(.login-theme) .supplier-primary-button,
+body:not(.login-theme) .admin-primary-button {
+  border-radius: 10px !important;
+  font-family: var(--ix-font-body) !important;
+  font-weight: 650 !important;
+  font-size: 0.84rem !important;
+  letter-spacing: 0 !important;
 }
 
-body:not(.login-theme) .admin-companies-panel {
-  width: 100% !important;
-  max-width: none !important;
+body:not(.login-theme) .primary-button,
+body:not(.login-theme) .supplier-primary-button,
+body:not(.login-theme) .admin-primary-button,
+body:not(.login-theme) button.primary,
+body:not(.login-theme) .btn-primary {
+  background: linear-gradient(135deg, #00e6b4 0%, #1ea0ff 100%) !important;
+  border: 1px solid rgba(0, 230, 180, 0.7) !important;
+  color: #03111f !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
-body:not(.login-theme) .admin-company-card {
-  border-color: rgba(13, 216, 255, 0.28) !important;
-  transition:
-    transform 0.28s ease,
-    box-shadow 0.28s ease,
-    border-color 0.28s ease !important;
+body:not(.login-theme) .primary-button:hover,
+body:not(.login-theme) .supplier-primary-button:hover,
+body:not(.login-theme) .admin-primary-button:hover,
+body:not(.login-theme) button.primary:hover,
+body:not(.login-theme) .btn-primary:hover {
+  background: linear-gradient(135deg, #1af0c0 0%, #3bb0ff 100%) !important;
+  transform: translateY(-1px);
 }
 
-body:not(.login-theme) .admin-company-card:hover {
-  transform: translateY(-4px) !important;
-  border-color: rgba(0, 230, 180, 0.4) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 24px 48px rgba(0, 0, 0, 0.45),
-    0 0 32px rgba(13, 216, 255, 0.12) !important;
+body:not(.login-theme) table {
+  font-size: 0.82rem !important;
 }
 
-body:not(.login-theme) .admin-permission-chip.is-selected {
-  border-color: rgba(0, 230, 180, 0.55) !important;
-  background: linear-gradient(135deg, rgba(0, 230, 180, 0.15), rgba(13, 216, 255, 0.08)) !important;
-  box-shadow: 0 0 24px rgba(0, 230, 180, 0.15) !important;
+body:not(.login-theme) table th {
+  color: var(--ix-cyan) !important;
+  background: rgba(1, 8, 16, 0.35) !important;
+  font-size: 0.72rem !important;
 }
 
-body:not(.login-theme) .admin-modal-overlay,
-body:not(.login-theme) .rnc-modal-overlay {
-  background: rgba(2, 8, 20, 0.88) !important;
-  backdrop-filter: blur(20px) saturate(140%) !important;
+body:not(.login-theme) table td {
+  color: rgba(232, 244, 251, 0.9) !important;
+  font-size: 0.82rem !important;
 }
 
-body:not(.login-theme) .admin-modal-card,
-body:not(.login-theme) .rnc-modal-panel {
-  border: 1px solid rgba(13, 216, 255, 0.4) !important;
-  background:
-    linear-gradient(160deg, rgba(0, 230, 180, 0.1), transparent 40%),
-    linear-gradient(180deg, rgba(7, 28, 56, 0.98), rgba(2, 10, 26, 0.99)) !important;
-  box-shadow:
-    0 40px 100px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(0, 230, 180, 0.15),
-    0 0 80px rgba(13, 216, 255, 0.15) !important;
-}
-
-/* ═══════════════════════════════════════
-   MISC — texto, loading, scrollbar
-   ═══════════════════════════════════════ */
-body:not(.login-theme) p,
-body:not(.login-theme) li,
-body:not(.login-theme) label,
-body:not(.login-theme) .helper-text,
-body:not(.login-theme) .empty-state {
-  color: #b0d4ec !important;
+body:not(.login-theme) .badge,
+body:not(.login-theme) .chip,
+body:not(.login-theme) .tag,
+body:not(.login-theme) .status-pill {
+  border-radius: 999px !important;
+  border: 1px solid rgba(0, 230, 180, 0.25) !important;
+  background: rgba(0, 230, 180, 0.1) !important;
+  box-shadow: none !important;
+  font-size: 0.72rem !important;
 }
 
 body:not(.login-theme) .route-loading {
-  color: var(--ix-cyan-hi) !important;
-  font-family: "Oxanium", sans-serif !important;
-  letter-spacing: 0.2em !important;
-  text-transform: uppercase !important;
-  text-shadow: 0 0 24px rgba(13, 216, 255, 0.5) !important;
+  color: var(--ix-muted) !important;
+  font-family: var(--ix-font-body) !important;
+  font-size: 0.86rem !important;
 }
 
-body:not(.login-theme) .theme-preset-control select {
-  border: 1px solid rgba(13, 216, 255, 0.4) !important;
-  background: rgba(2, 12, 28, 0.95) !important;
-  color: var(--ix-cyan-hi) !important;
-  font-weight: 600 !important;
+body:not(.login-theme) .list-filters-panel,
+body:not(.login-theme) .filters-panel,
+body:not(.login-theme) .admin-tabs,
+body:not(.login-theme) .tabs {
+  background: var(--ix-panel) !important;
+  border: 1px solid var(--ix-line-soft) !important;
+  border-radius: var(--ix-radius) !important;
+  box-shadow: var(--ix-shadow-sm) !important;
 }
 
-/* Sidebar recolhida — alinhamento central, sem decorações extras */
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-nav .nav-list {
-  padding: 0 !important;
-  gap: 8px !important;
+body:not(.login-theme) .admin-tab,
+body:not(.login-theme) .tab-button {
+  color: var(--ix-muted) !important;
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
 }
 
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-nav {
-  overflow-x: visible !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link:hover,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  transform: none !important;
-  border-radius: 12px !important;
-  min-height: 48px !important;
-  max-height: 48px !important;
-  height: 48px !important;
-  width: 48px !important;
-  min-width: 48px !important;
-  max-width: 48px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  padding: 0 !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active {
-  background: rgba(13, 216, 255, 0.14) !important;
-  border: 1px solid rgba(13, 216, 255, 0.42) !important;
+body:not(.login-theme) .admin-tab.active,
+body:not(.login-theme) .tab-button.active,
+body:not(.login-theme) .admin-tab[aria-selected="true"] {
+  color: #03111f !important;
+  background: linear-gradient(135deg, #00e6b4, #1ea0ff) !important;
   box-shadow: none !important;
 }
 
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link::before,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link::after,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active::before,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active::after {
-  display: none !important;
-  content: none !important;
-  opacity: 0 !important;
-  width: 0 !important;
-  height: 0 !important;
+body:not(.login-theme) a:not(.nav-link):not(.sidebar-brand-home) {
+  color: var(--ix-cyan-hi);
 }
 
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link i {
+body:not(.login-theme) a:not(.nav-link):not(.sidebar-brand-home):hover {
+  color: var(--ix-cyan);
+}
+
+body:not(.login-theme) .empty-state,
+body:not(.login-theme) .helper-text,
+body:not(.login-theme) .supplier-helper-text,
+body:not(.login-theme) .supplier-form-heading p,
+body:not(.login-theme) .muted,
+body:not(.login-theme) .text-muted {
+  color: var(--ix-muted) !important;
+  font-size: 0.8rem !important;
+}
+
+body:not(.login-theme) p,
+body:not(.login-theme) label,
+body:not(.login-theme) span,
+body:not(.login-theme) small,
+body:not(.login-theme) li,
+body:not(.login-theme) td,
+body:not(.login-theme) th,
+body:not(.login-theme) h1,
+body:not(.login-theme) h2,
+body:not(.login-theme) h3,
+body:not(.login-theme) h4 {
+  text-shadow: none !important;
+}
+
+@media (max-width: 1100px) {
+  body:not(.login-theme) .dashboard-top-grid,
+  body:not(.login-theme) .dashboard-main-grid,
+  body:not(.login-theme) .dashboard-showcase-main,
+  body:not(.login-theme) .dashboard-showcase-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Status badges — Notas Fiscais */
+body:not(.login-theme) .nfs-status-review {
+  color: #f5c76a;
+}
+
+body:not(.login-theme) .nfs-status-approved {
+  color: var(--ix-cyan);
+}
+
+body:not(.login-theme) .nfs-status-pending {
+  color: var(--ix-danger);
+}
+
+body:not(.login-theme) .nfs-status-cancelled {
+  color: #9aa7b8;
+}
+
+/* ═══════════════════════════════════════
+   NAVBAR + TOGGLE DE TEMA (pós-login)
+   ═══════════════════════════════════════ */
+body:not(.login-theme) .app-page-navbar {
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
-  width: 24px !important;
-  height: 24px !important;
-  margin: 0 !important;
-  transform: none !important;
-  filter: none !important;
-}
-
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link:hover i,
-body:not(.login-theme) .sidebar--integraxx.is-collapsed .sidebar-menu-link.active i {
-  color: #ffffff !important;
-  transform: none !important;
-  filter: none !important;
-}
-
-/* Presets — intensificar cyber */
-body:not(.login-theme)[data-theme-preset="cyber-neon"] .main-shell::before,
-body:not(.login-theme)[data-theme-preset="ultra-futuristic"] .main-shell::before {
-  opacity: 0.65 !important;
-}
-
-body:not(.login-theme)[data-theme-preset="ultra-futuristic"] .dashboard-stat-card {
-  animation: ixNeonPulse 2.5s ease-in-out infinite !important;
-}
-
-/* ═══════════════════════════════════════
-   TECH CLEAN — tom LED suave (site inteiro)
-   ═══════════════════════════════════════ */
-body:not(.login-theme)[data-theme-preset="tech-clean"] .main-shell::before {
-  opacity: 0.24 !important;
-  animation: ixGridPulse 14s ease-in-out infinite !important;
-}
-
-body:not(.login-theme)[data-theme-preset="tech-clean"] .app-tech-orb {
-  opacity: 0.42 !important;
-  filter: blur(48px) saturate(130%) !important;
-}
-
-body:not(.login-theme)[data-theme-preset="tech-clean"] .app-page-content::before {
-  display: none !important;
-}
-
-body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-stat-card {
-  animation: none !important;
-}
-
-body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-stat-card::before {
-  display: none !important;
-}
-
-body:not(.login-theme)[data-theme-preset="tech-clean"] .button,
-body:not(.login-theme)[data-theme-preset="tech-clean"] .supplier-save-button {
-  animation: none !important;
-}
-
-body:not(.login-theme)[data-theme-preset="tech-clean"] .navbar,
-body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-panel,
-body:not(.login-theme)[data-theme-preset="tech-clean"] .dashboard-stat-card,
-body:not(.login-theme)[data-theme-preset="tech-clean"] .table-card,
-body:not(.login-theme)[data-theme-preset="tech-clean"] .supplier-list-card {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px rgba(13, 216, 255, 0.14),
-    0 16px 40px rgba(0, 0, 0, 0.42),
-    0 0 28px rgba(13, 216, 255, 0.06) !important;
-}
-
-/* ═══════════════════════════════════════
-   NAVBAR — título da janela (simples)
-   ═══════════════════════════════════════ */
-body:not(.login-theme) .app-page-navbar.navbar {
-  display: block !important;
-  padding: 20px 24px !important;
-  margin-bottom: 4px !important;
-  border: 1px solid rgba(13, 216, 255, 0.32) !important;
-  border-radius: 18px !important;
-  background:
-    linear-gradient(180deg, rgba(6, 24, 46, 0.88), rgba(3, 14, 32, 0.94)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 0 0 1px rgba(0, 230, 180, 0.08),
-    0 0 24px rgba(13, 216, 255, 0.08) !important;
-  backdrop-filter: blur(16px) saturate(140%) !important;
-}
-
-body:not(.login-theme) .app-page-navbar::before {
-  width: 3px !important;
-  opacity: 0.9 !important;
-  box-shadow: 0 0 12px rgba(13, 216, 255, 0.45) !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
 }
 
 body:not(.login-theme) .app-page-navbar-copy {
-  display: grid;
-  gap: 6px;
   min-width: 0;
+  flex: 1;
 }
 
-body:not(.login-theme) .app-page-navbar-title {
-  margin: 0 !important;
-  padding: 0 !important;
-  font-family: "Space Grotesk", "Inter", sans-serif !important;
-  font-size: clamp(1.65rem, 2.4vw, 2.15rem) !important;
-  font-weight: 700 !important;
-  line-height: 1.15 !important;
-  letter-spacing: 0.02em !important;
-  color: #f4fbff !important;
-  background: none !important;
-  -webkit-text-fill-color: #f4fbff !important;
-  filter: none !important;
-  text-shadow: 0 0 20px rgba(13, 216, 255, 0.18) !important;
+body:not(.login-theme) .app-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 4px;
+  border: 1px solid var(--ix-line-soft);
+  border-radius: 999px;
+  background: rgba(1, 8, 16, 0.35);
 }
 
-body:not(.login-theme) .app-page-navbar-description {
-  margin: 0 !important;
-  max-width: 52ch;
-  font-size: 0.88rem !important;
-  line-height: 1.5 !important;
-  color: #8eb8d8 !important;
-  font-weight: 400 !important;
+body:not(.login-theme) .app-theme-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ix-muted);
+  font-family: var(--ix-font-body);
+  font-size: 0.76rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
-body:not(.login-theme) .navbar-meta,
-body:not(.login-theme) .theme-preset-control {
-  display: none !important;
+body:not(.login-theme) .app-theme-toggle-button i {
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
-body:not(.login-theme) .navbar strong:first-child,
-body:not(.login-theme) .navbar-subtitle {
-  display: none !important;
+body:not(.login-theme) .app-theme-toggle-button:hover {
+  color: var(--ix-ink);
 }
 
-/* Esconde cabeçalhos duplicados nas páginas — contexto fica no navbar */
-body:not(.login-theme) .page-header,
-body:not(.login-theme) .admin-hero {
-  display: none !important;
+body:not(.login-theme) .app-theme-toggle-button.is-active {
+  color: #03111f;
+  background: linear-gradient(135deg, #00e6b4 0%, #1ea0ff 100%);
+  box-shadow: 0 6px 16px rgba(13, 216, 255, 0.18);
 }
 
-body:not(.login-theme) .supplier-shell > .supplier-hero > div:first-child,
-body:not(.login-theme) .category-shell > .supplier-hero > div:first-child,
-body:not(.login-theme) .rnc-shell > .supplier-hero {
-  display: none !important;
-}
-
-body:not(.login-theme) .supplier-shell > .supplier-hero,
-body:not(.login-theme) .category-shell > .supplier-hero {
-  display: flex !important;
-  justify-content: flex-end !important;
-  align-items: center !important;
-  gap: 10px !important;
-  margin: 0 0 14px !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  animation: none !important;
-}
-
-body:not(.login-theme) .supplier-shell > .supplier-hero::before,
-body:not(.login-theme) .category-shell > .supplier-hero::before {
-  display: none !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body:not(.login-theme) .main-shell::before,
-  body:not(.login-theme) .app-tech-orb,
-  body:not(.login-theme) .app-page-content::before,
-  body:not(.login-theme) .dashboard-stat-card,
-  body:not(.login-theme) .dashboard-stat-card::before,
-  body:not(.login-theme) .button {
-    animation: none !important;
+@media (max-width: 720px) {
+  body:not(.login-theme) .app-page-navbar {
+    flex-direction: column;
+    align-items: stretch !important;
   }
 
-  body:not(.login-theme) .dashboard-stat-card:hover,
-  body:not(.login-theme) .table-card:hover {
-    transform: none !important;
+  body:not(.login-theme) .app-theme-toggle {
+    align-self: flex-end;
+  }
+
+  body:not(.login-theme) .app-theme-toggle-button span {
+    display: none;
+  }
+
+  body:not(.login-theme) .app-theme-toggle-button {
+    padding: 8px 10px;
   }
 }

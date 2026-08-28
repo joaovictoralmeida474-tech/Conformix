@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useStoredUser } from "../hooks/useStoredUser";
 import { api } from "../services/api";
 import { cachedGet } from "../services/cachedApi";
@@ -27,15 +28,6 @@ const initialSupplierForm = {
   nextReview: "",
   reactivationJustification: ""
 };
-
-const initialEvaluationForm = {
-  evaluationDate: new Date().toISOString().slice(0, 10),
-  invoiceNumber: "",
-  observations: "",
-  answers: {}
-};
-
-const scoreOptions = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
 
 const supplierTypeOptions = [
   { value: "CRITICO", label: "Critico", cadence: 30 },
@@ -181,20 +173,22 @@ function escapeHtml(value) {
 }
 
 export default function Suppliers() {
+  const navigate = useNavigate();
   const currentUser = useStoredUser();
   const role = normalizeRole(currentUser?.role);
   const canManageSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_MANAGE);
   const canEvaluateSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_EVALUATE);
   const canExportSuppliers = hasPermission(currentUser, PERMISSIONS.SUPPLIERS_EXPORT);
+  const canViewNfs = hasPermission(currentUser, PERMISSIONS.NFS_VIEW);
   const [suppliers, setSuppliers] = useState([]);
   const [supplierDetails, setSupplierDetails] = useState({});
   const [categories, setCategories] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [supplierForm, setSupplierForm] = useState(initialSupplierForm);
-  const [evaluationForm, setEvaluationForm] = useState(initialEvaluationForm);
   const [documentEntries, setDocumentEntries] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [activePanel, setActivePanel] = useState("list");
   const [filters, setFilters] = useState({ search: "", status: "" });
   const [error, setError] = useState("");
@@ -202,7 +196,6 @@ export default function Suppliers() {
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [savingSupplier, setSavingSupplier] = useState(false);
   const [loadingSupplierDetails, setLoadingSupplierDetails] = useState(false);
-  const [evaluationFile, setEvaluationFile] = useState(null);
 
   const selectedSupplier = useMemo(
     () => supplierDetails[selectedId] || suppliers.find((supplier) => supplier.id === selectedId) || null,
@@ -520,6 +513,7 @@ export default function Suppliers() {
 
   function viewSupplier(supplier) {
     setSelectedId(supplier.id);
+    setSelectedInvoice(null);
     setActivePanel("details");
     setMessage("");
     setError("");
@@ -528,15 +522,16 @@ export default function Suppliers() {
 
   function openEvaluation(supplier) {
     if (!canEvaluateSuppliers) return;
-    setSelectedId(supplier.id);
-    setActivePanel("evaluation");
-    setEvaluationForm(initialEvaluationForm);
-    setEvaluationFile(null);
-    setMessage("");
-    setError("");
-    if (!categories.length) {
-      void loadCategories();
-    }
+    navigate(`/evaluations?supplierId=${supplier.id}`);
+  }
+
+  async function downloadInvoiceFile(invoice, kind = "pdf") {
+    if (!invoice?.id || !canViewNfs) return;
+    const fallback =
+      kind === "xml"
+        ? invoice.xmlOriginalName || `nf-${invoice.number || invoice.id}.xml`
+        : invoice.pdfOriginalName || `nf-${invoice.number || invoice.id}.pdf`;
+    void triggerSecureDownload(`/nfs/${invoice.id}/files/${kind}/download`, fallback);
   }
 
   async function deleteSupplier(id) {
@@ -611,45 +606,6 @@ export default function Suppliers() {
   function exportar() {
     if (!canExportSuppliers) return;
     void triggerSecureDownload("/suppliers/export/excel", "fornecedores.xlsx");
-  }
-
-  async function submitEvaluation() {
-    if (!selectedSupplier) return;
-
-    try {
-      setError("");
-      setMessage("");
-      const answers = (selectedCategory?.questions || []).map((question) => ({
-        questionId: question.id,
-        questionText: question.prompt,
-        score: Number(evaluationForm.answers[question.id] || 0)
-      }));
-
-      const formData = new FormData();
-      formData.append("evaluationDate", evaluationForm.evaluationDate);
-      formData.append("invoiceNumber", evaluationForm.invoiceNumber);
-      formData.append("observations", evaluationForm.observations);
-      formData.append("supplierType", selectedSupplier.supplierType);
-      formData.append("answers", JSON.stringify(answers));
-
-      if (evaluationFile) {
-        formData.append("evaluationDocument", evaluationFile);
-      }
-
-      const response = await api.post(`/suppliers/${selectedSupplier.id}/evaluations`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-
-      setEvaluationForm(initialEvaluationForm);
-      setEvaluationFile(null);
-      setActivePanel("details");
-      setMessage("Avaliacao registrada com sucesso.");
-      void loadSupplierDetails(selectedSupplier.id);
-    } catch (err) {
-      setError(err.response?.data?.error || "Nao foi possivel registrar a avaliacao.");
-    }
   }
 
   function downloadDocument(documentId) {
@@ -806,6 +762,9 @@ export default function Suppliers() {
   }
 
   if (activePanel === "details" && selectedSupplier) {
+    const supplierInvoices = selectedSupplier.serviceInvoices || [];
+    const invoicesAmount = supplierInvoices.reduce((sum, item) => sum + Number(item.netAmount || 0), 0);
+
     return (
       <div className="supplier-shell">
         <section className="supplier-dossier">
@@ -827,7 +786,11 @@ export default function Suppliers() {
                 Voltar
               </button>
               {canEvaluateSuppliers ? (
-                <button className="supplier-toolbar-button supplier-toolbar-button-primary" type="button" onClick={() => openEvaluation(selectedSupplier)}>
+                <button
+                  className="supplier-toolbar-button supplier-toolbar-button-primary"
+                  type="button"
+                  onClick={() => openEvaluation(selectedSupplier)}
+                >
                   Avaliar
                 </button>
               ) : null}
@@ -866,6 +829,16 @@ export default function Suppliers() {
               <span>Proxima avaliacao</span>
               <strong>{formatDate(selectedSupplier.nextReview)}</strong>
             </article>
+            <article className="supplier-dossier-metric supplier-dossier-metric--nfs">
+              <span>Notas fiscais</span>
+              <strong>{supplierInvoices.length}</strong>
+              <small>
+                {invoicesAmount.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                })}
+              </small>
+            </article>
             <article className="supplier-dossier-metric">
               <span>Documentos em dia</span>
               <strong>
@@ -879,6 +852,182 @@ export default function Suppliers() {
                 {selectedSupplier.documentsSummary?.missing || 0} pendente(s)
               </small>
             </article>
+          </section>
+
+          <section className="supplier-dossier-card supplier-dossier-card--nfs">
+            <div className="supplier-nfs-heading">
+              <div>
+                <span className="supplier-nfs-kicker">Vinculadas ao CNPJ</span>
+                <h2>Notas Fiscais</h2>
+                <p>
+                  {supplierInvoices.length
+                    ? `${supplierInvoices.length} nota(s) · total liquido ${invoicesAmount.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL"
+                      })}`
+                    : "Nenhuma nota fiscal vinculada a este fornecedor ainda."}
+                </p>
+              </div>
+              {canViewNfs ? (
+                <Link className="supplier-row-button" to="/nfs">
+                  Abrir modulo NFS
+                </Link>
+              ) : null}
+            </div>
+
+            <div className="supplier-dossier-history-table-wrap">
+              <table className="supplier-dossier-history-table supplier-nfs-table">
+                <thead>
+                  <tr>
+                    <th>Numero</th>
+                    <th>Servico</th>
+                    <th>Emissao</th>
+                    <th>Competencia</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {supplierInvoices.length ? (
+                    supplierInvoices.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <strong>
+                            {item.number}
+                            {item.series ? ` / ${item.series}` : ""}
+                          </strong>
+                        </td>
+                        <td>{item.serviceDescription || "-"}</td>
+                        <td>{formatDate(item.issueDate)}</td>
+                        <td>{formatDate(item.competenceDate)}</td>
+                        <td>
+                          {Number(item.netAmount || 0).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL"
+                          })}
+                        </td>
+                        <td>
+                          <span className="supplier-pill">{item.status || "-"}</span>
+                        </td>
+                        <td>
+                          <div className="supplier-action-row">
+                            <button
+                              className="supplier-row-button"
+                              type="button"
+                              onClick={() => setSelectedInvoice(item)}
+                            >
+                              Ver NF
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="dashboard-empty-copy">
+                        Nenhuma nota fiscal vinculada.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {selectedInvoice ? (
+              <div className="supplier-form-panel supplier-nfs-detail" style={{ marginTop: "1rem" }}>
+                <div className="supplier-form-heading">
+                  <div>
+                    <span className="dashboard-card-eyebrow supplier-hero-kicker">Detalhe da NF</span>
+                    <h2>
+                      NF {selectedInvoice.number}
+                      {selectedInvoice.series ? ` / ${selectedInvoice.series}` : ""}
+                    </h2>
+                    <p>{selectedSupplier.name}</p>
+                  </div>
+                  <div className="supplier-hero-actions supplier-hero-actions-right">
+                    <button
+                      className="supplier-toolbar-button supplier-toolbar-button-muted"
+                      type="button"
+                      onClick={() => setSelectedInvoice(null)}
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+
+                <div className="supplier-dossier-data-table">
+                  <div>
+                    <span>Status</span>
+                    <strong>{selectedInvoice.status || "-"}</strong>
+                  </div>
+                  <div>
+                    <span>Emissao</span>
+                    <strong>{formatDate(selectedInvoice.issueDate)}</strong>
+                  </div>
+                  <div>
+                    <span>Competencia</span>
+                    <strong>{formatDate(selectedInvoice.competenceDate)}</strong>
+                  </div>
+                  <div>
+                    <span>Valor liquido</span>
+                    <strong>
+                      {Number(selectedInvoice.netAmount || 0).toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL"
+                      })}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Valor bruto</span>
+                    <strong>
+                      {Number(selectedInvoice.grossAmount || 0).toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL"
+                      })}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Servico</span>
+                    <strong>{selectedInvoice.serviceDescription || "-"}</strong>
+                  </div>
+                </div>
+
+                {selectedInvoice.observations ? (
+                  <p className="dashboard-empty-copy" style={{ marginTop: "0.75rem" }}>
+                    {selectedInvoice.observations}
+                  </p>
+                ) : null}
+
+                <div className="supplier-action-row" style={{ marginTop: "1rem", gap: "0.75rem", flexWrap: "wrap" }}>
+                  {canViewNfs && selectedInvoice.pdfFilename ? (
+                    <button
+                      className="supplier-row-button"
+                      type="button"
+                      onClick={() => downloadInvoiceFile(selectedInvoice, "pdf")}
+                    >
+                      Baixar PDF
+                    </button>
+                  ) : (
+                    <span className="dashboard-empty-copy">PDF nao anexado</span>
+                  )}
+                  {canViewNfs && selectedInvoice.xmlFilename ? (
+                    <button
+                      className="supplier-row-button"
+                      type="button"
+                      onClick={() => downloadInvoiceFile(selectedInvoice, "xml")}
+                    >
+                      Baixar XML
+                    </button>
+                  ) : null}
+                  {canViewNfs ? (
+                    <Link className="supplier-row-button" to="/nfs">
+                      Abrir modulo NFS
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </section>
 
           <section className="supplier-dossier-card">
@@ -1298,122 +1447,13 @@ export default function Suppliers() {
     );
   }
 
-  if (activePanel === "evaluation" && selectedSupplier) {
-    return (
-      <div className="supplier-shell">
-        <section className="supplier-form-panel">
-          <div className="supplier-form-heading">
-            <div>
-              <span className="dashboard-card-eyebrow supplier-hero-kicker">Avaliacao</span>
-              <h2>Avaliar fornecedor</h2>
-              <p>A pontuacao segue as perguntas vinculadas a categoria de {selectedSupplier.name}.</p>
-            </div>
-            <div className="supplier-hero-actions supplier-hero-actions-right">
-              <button className="supplier-toolbar-button supplier-toolbar-button-muted" type="button" onClick={() => setActivePanel("details")}>
-                Voltar
-              </button>
-            </div>
-          </div>
-
-          <div className="supplier-form-grid">
-            <div className="supplier-form-two-columns">
-              <div className="supplier-form-field">
-                <label>Data da avaliacao</label>
-                <input
-                  className="supplier-form-input"
-                  type="date"
-                  value={evaluationForm.evaluationDate}
-                  onChange={(event) => setEvaluationForm((current) => ({ ...current, evaluationDate: event.target.value }))}
-                />
-              </div>
-              <div className="supplier-form-field">
-                <label>Numero da nota fiscal</label>
-                <input
-                  className="supplier-form-input"
-                  value={evaluationForm.invoiceNumber}
-                  onChange={(event) => setEvaluationForm((current) => ({ ...current, invoiceNumber: event.target.value }))}
-                />
-              </div>
-            </div>
-
-            {(selectedCategory?.questions || []).map((question) => (
-              <div key={question.id} className="supplier-form-field supplier-form-field-full">
-                <label>{question.prompt}</label>
-                <select
-                  className="supplier-form-input"
-                  value={evaluationForm.answers[question.id] || ""}
-                  onChange={(event) =>
-                    setEvaluationForm((current) => ({
-                      ...current,
-                      answers: {
-                        ...current.answers,
-                        [question.id]: event.target.value
-                      }
-                    }))
-                  }
-                >
-                  <option value="">Selecione a nota</option>
-                  {scoreOptions.map((score) => (
-                    <option key={score} value={score}>
-                      {score}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-
-            {!selectedCategory?.questions?.length ? (
-              <p className="dashboard-empty-copy">A categoria deste fornecedor ainda nao possui perguntas cadastradas.</p>
-            ) : null}
-
-              <div className="supplier-form-field supplier-form-field-full">
-                <label>Observacoes</label>
-                <textarea className="supplier-form-textarea" value={evaluationForm.observations} onChange={(event) => setEvaluationForm((current) => ({ ...current, observations: event.target.value }))} />
-              </div>
-
-              <div className="supplier-form-field supplier-form-field-full">
-                <label>Anexo da avaliacao em PDF</label>
-                <div className="supplier-document-card">
-                  <div className="supplier-document-header">
-                    <strong>Documento recebido para alimentar a avaliacao</strong>
-                    <span>{evaluationFile?.name || "Nenhum arquivo selecionado"}</span>
-                  </div>
-                  <div className="supplier-document-fields">
-                    <input
-                      className="supplier-form-input"
-                      type="file"
-                      accept=".pdf"
-                      onChange={(event) => setEvaluationFile(event.target.files?.[0] || null)}
-                    />
-                    <div className="info-strip">
-                      <strong>Uso</strong>
-                      <span>Anexe o PDF da avaliacao recebida para manter o historico consultavel no fornecedor.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            <div className="supplier-form-actions">
-              <button className="supplier-save-button" type="button" onClick={submitEvaluation} disabled={!selectedCategory?.questions?.length}>
-                Registrar avaliacao
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {error ? <p className="error-text">{error}</p> : null}
-        {message ? <p className="success-text">{message}</p> : null}
-      </div>
-    );
-  }
-
   return (
     <div className="supplier-shell">
       <header className="supplier-hero">
         <div>
-          <span className="dashboard-card-eyebrow supplier-hero-kicker">Cadastro e rastreabilidade</span>
+          <span className="dashboard-card-eyebrow supplier-hero-kicker">Gestao de terceiros</span>
           <h1>Fornecedores</h1>
-          <p>Consulte, filtre e acompanhe o status da base homologada.</p>
+          <p>Consulte, cadastre e acompanhe os fornecedores da base homologada.</p>
         </div>
 
         <div className="supplier-hero-actions">
@@ -1460,9 +1500,7 @@ export default function Suppliers() {
                 <th>CNPJ</th>
                 <th>Categoria</th>
                 <th>Tipo</th>
-                <th>Cidade/UF</th>
                 <th>Status</th>
-                <th>Proxima avaliacao</th>
                 <th>Acoes</th>
               </tr>
             </thead>
@@ -1481,23 +1519,16 @@ export default function Suppliers() {
                     <td>
                       <span className="supplier-pill">{getTypeLabel(supplier.supplierType)}</span>
                     </td>
-                    <td>{formatCityState(supplier)}</td>
                     <td>
                       <span className={isBlockedStatus(supplier.status) ? "supplier-status-badge supplier-status-badge-blocked" : "supplier-status-badge"}>
                         {getStatusLabel(supplier.status)}
                       </span>
                     </td>
-                    <td>{formatDate(supplier.nextReview)}</td>
                     <td>
                       <div className="supplier-action-row">
                         <button className="supplier-row-button" type="button" onClick={() => viewSupplier(supplier)}>
                           Ver
                         </button>
-                        {canEvaluateSuppliers ? (
-                          <button className="supplier-row-button" type="button" onClick={() => openEvaluation(supplier)}>
-                            Avaliar
-                          </button>
-                        ) : null}
                         {canManageSuppliers ? (
                           <button className="supplier-row-button" type="button" onClick={() => editSupplier(supplier)}>
                             Editar
@@ -1514,7 +1545,7 @@ export default function Suppliers() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="dashboard-empty-copy">
+                  <td colSpan="6" className="dashboard-empty-copy">
                     Nenhum fornecedor encontrado.
                   </td>
                 </tr>
